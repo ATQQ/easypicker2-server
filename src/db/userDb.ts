@@ -1,7 +1,7 @@
 import { query } from '@/lib/dbConnect/mysql'
 import { insertTableByModel, selectTableByModel } from '@/utils/sqlUtil'
 import { OkPacket } from 'mysql'
-import { User } from './modal/user'
+import { User } from './model/user'
 
 export function selectUserByAccount(account: string): Promise<User[]> {
     const { sql, params } = selectTableByModel('user', {

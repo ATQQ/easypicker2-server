@@ -1,5 +1,5 @@
 import { encryption } from './stringUtil'
-import { User } from '@/db/modal/user'
+import { User } from '@/db/model/user'
 import { expiredRedisKey, getRedisVal, setRedisValue } from '@/db/redisDb'
 /**
  * Token(身份令牌)工具类

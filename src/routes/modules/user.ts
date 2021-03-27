@@ -1,5 +1,5 @@
 import { UserError } from '@/constants/errorMsg'
-import { User, USER_STATUS } from '@/db/modal/user'
+import { User, USER_STATUS } from '@/db/model/user'
 import { expiredRedisKey, getRedisVal } from '@/db/redisDb'
 import { insertUser, selectUserByAccount, selectUserByPhone } from '@/db/userDb'
 import Router from '@/lib/Router'
@@ -105,7 +105,7 @@ router.post('login', async (req, res) => {
 
     }
     // TODO:权限判断
-
+    // TODO:更新最后登录信息
     const token = tokenUtil.createToken(user)
     res.success({
         token
