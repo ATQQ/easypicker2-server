@@ -1,8 +1,8 @@
 import { UserError } from '@/constants/errorMsg'
+import { expiredRedisKey, getRedisVal } from '@/db/redisDb'
 import { insertUser, selectUserByAccount, selectUserByPhone } from '@/db/userDb'
 import Router from '@/lib/Router'
 import { rMobilePhone } from '@/utils/regExp'
-import storageUtil from '@/utils/storageUtil'
 import { encryption } from '@/utils/stringUtil'
 
 const router = new Router('user')
@@ -25,8 +25,8 @@ router.post('register', async (req, res) => {
             res.failWithError(UserError.mobile.fault)
             return
         }
-
-        if (!code || code !== storageUtil.getItem(phone)?.value) {
+        const rightCode = await getRedisVal(phone)
+        if (!code || code !== rightCode) {
             res.failWithError(UserError.code.fault)
             return
         }
@@ -39,7 +39,7 @@ router.post('register', async (req, res) => {
             return
         }
         // 过期验证码
-        storageUtil.expireItem(phone)
+        expiredRedisKey(phone)
     }
 
     // 不存在则加入
