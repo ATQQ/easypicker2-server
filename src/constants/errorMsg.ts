@@ -7,7 +7,8 @@ export const UserError = {
     },
     account: {
         exist: codeMsg(1001, 'Account already exist'),
-        notExist: codeMsg(1005, 'Account not exist')
+        notExist: codeMsg(1005, 'Account not exist'),
+        fault: codeMsg(1007, 'Account is fault'),
     },
     code: {
         fault: codeMsg(1003, 'Error code')

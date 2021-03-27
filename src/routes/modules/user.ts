@@ -1,15 +1,23 @@
 import { UserError } from '@/constants/errorMsg'
+import { User, USER_STATUS } from '@/db/modal/user'
 import { expiredRedisKey, getRedisVal } from '@/db/redisDb'
 import { insertUser, selectUserByAccount, selectUserByPhone } from '@/db/userDb'
 import Router from '@/lib/Router'
-import { rMobilePhone } from '@/utils/regExp'
+import { rAccount, rMobilePhone, rPassword } from '@/utils/regExp'
 import { encryption } from '@/utils/stringUtil'
+import tokenUtil from '@/utils/tokenUtil'
 
 const router = new Router('user')
 
+/**
+ * 注册
+ */
 router.post('register', async (req, res) => {
     const { account, pwd, bindPhone, phone, code } = req.data
-
+    if (!rAccount.test(account)) {
+        res.failWithError(UserError.account.fault)
+        return
+    }
     // 检查账号是否存在
     let [user] = await selectUserByAccount(account)
 
@@ -52,4 +60,55 @@ router.post('register', async (req, res) => {
     })
 })
 
+/**
+ * 登录
+ */
+router.post('login', async (req, res) => {
+    const { account = '', pwd = '' } = req.data
+    const isAccount = rAccount.test(account)
+    const isPhone = rMobilePhone.test(account)
+    // 帐号不正确
+    if (account.length !== 11 && !isAccount) {
+        res.failWithError(UserError.account.fault)
+        return
+    }
+    // 手机号不正确
+    if (account.length === 11 && !isPhone) {
+        res.failWithError(UserError.mobile.fault)
+        return
+    }
+    // 密码不正确
+    if (!rPassword.test(pwd)) {
+        res.failWithError(UserError.pwd.fault)
+        return
+    }
+    let user: User
+    if (isAccount) {
+        ([user] = await selectUserByAccount(account))
+    }
+    if (isPhone) {
+        ([user] = await selectUserByPhone(account))
+    }
+    if (!user) {
+        res.failWithError(account.length === 11 ? UserError.mobile.fault : UserError.account.fault)
+        return
+    }
+    if (user.password !== encryption(pwd)) {
+        res.failWithError(UserError.pwd.fault)
+        return
+    }
+    // TODO:状态判断
+    if (user.status === USER_STATUS.BAN) {
+
+    }
+    if (user.status === USER_STATUS.FREEZE) {
+
+    }
+    // TODO:权限判断
+
+    const token = tokenUtil.createToken(user)
+    res.success({
+        token
+    })
+})
 export default router
