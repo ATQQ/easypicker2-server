@@ -6,5 +6,6 @@ create table task_info (
     format varchar(1024) null comment '文件名格式',
     info varchar(1024) null comment '提交必填的内容(表单)',
     ddl timestamp null comment '截止日期',
-    share_key varchar(128) not null comment '用于分享的链接'
+    share_key varchar(128) not null comment '用于分享的链接',
+    limit_people tinyint default 0 not null comment '是否限制提交人员'
 ) comment '任务附加属性';
