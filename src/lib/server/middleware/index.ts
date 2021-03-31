@@ -5,7 +5,7 @@ import { ServerOptions } from 'http'
 
 export interface SuperRequest {
     query?: any
-    data?: any
+    body?: any
     params?: any
     route?: Route
 }
@@ -47,7 +47,7 @@ export function printRequest(req: FWRequest): void {
 
 export async function wrapperRequest(req: FWRequest): Promise<void> {
     requestQuery(req)
-    req.data = await getBodyContent(req)
+    req.body = await getBodyContent(req)
 }
 
 /**

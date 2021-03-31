@@ -13,7 +13,7 @@ const router = new Router('user')
  * 注册
  */
 router.post('register', async (req, res) => {
-    const { account, pwd, bindPhone, phone, code } = req.data
+    const { account, pwd, bindPhone, phone, code } = req.body
     if (!rAccount.test(account)) {
         res.failWithError(UserError.account.fault)
         return
@@ -64,7 +64,7 @@ router.post('register', async (req, res) => {
  * 登录
  */
 router.post('login', async (req, res) => {
-    const { account = '', pwd = '' } = req.data
+    const { account = '', pwd = '' } = req.body
     const isAccount = rAccount.test(account)
     const isPhone = rMobilePhone.test(account)
     // 帐号不正确

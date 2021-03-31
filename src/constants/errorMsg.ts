@@ -17,3 +17,7 @@ export const UserError = {
         fault: codeMsg(1004, 'error pwd')
     }
 }
+
+export const CategoryError = {
+    exist: codeMsg(2001, 'category already exist')
+}

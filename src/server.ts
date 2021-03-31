@@ -50,5 +50,8 @@ app.addRoutes(routes)
 
 app.listen(serverConfig.port, serverConfig.hostname, () => {
     console.log('-----', new Date().toLocaleString(), '-----')
+    if (process.env.NODE_ENV === 'development') {
+        // 写入测试用逻辑
+    }
     console.log('server start success', `http://${serverConfig.hostname}:${serverConfig.port}`)
 })

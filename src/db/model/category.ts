@@ -3,5 +3,5 @@ export interface Category {
     name?: string
     user_id?: number
     userId?: number
-    key?: string
+    k?: string
 }
