@@ -41,7 +41,7 @@ export function insertTableByModel(table: string, model: unknown): SqlData {
     const keys = Object.keys(model)
     const values = keys.map(key => model[key])
 
-    const sql = `insert into ${table} (${keys.join(',')}) values (${new Array(keys.length).fill('?').join(',')})`
+    const sql = `insert into ${table} (${keys.map(lowCamel2Underscore).join(',')}) values (${new Array(keys.length).fill('?').join(',')})`
     return {
         sql,
         params: values
@@ -57,7 +57,7 @@ export function updateTableByModel(table: string, model: unknown, query: unknown
     values = values.concat(queryModelKeys.map(key => query[key]))
 
     const where = `where ${queryModelKeys.map(key => `${lowCamel2Underscore(key)} = ?`).join(' and ')}`
-    const sql = `update ${table} set ${updateModelKeys.map(key => `${key} = ?`).join(',')} ${where}`
+    const sql = `update ${table} set ${updateModelKeys.map(key => `${lowCamel2Underscore(key)} = ?`).join(',')} ${where}`
     return {
         sql,
         params: values

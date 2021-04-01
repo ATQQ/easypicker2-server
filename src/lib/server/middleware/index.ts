@@ -183,12 +183,10 @@ function getBodyContent(req: FWRequest) {
             try {
                 switch (true) {
                     case contentType.includes(ContentType.formData):
-                        data = qs.parse(buffer.toString('utf-8'))
-
+                        data = qs.parse(buffer.toString('utf-8') || '{}')
                         break
                     case contentType.includes(ContentType.jsonData):
-                        data = JSON.parse(buffer.toString('utf-8'))
-
+                        data = JSON.parse(buffer.toString('utf-8') || '{}')
                         break
                     case contentType.includes(ContentType.multipart):
                         data = parseMultipartFromData(contentType, buffer.toString('utf-8'))

@@ -5,5 +5,5 @@ export interface Task {
     category_key?: string
     categoryKey?: string
     name?: string
-    key?: string
+    k?: string
 }
