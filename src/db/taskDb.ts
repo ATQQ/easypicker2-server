@@ -3,13 +3,18 @@ import { deleteTableByModel, insertTableByModel, selectTableByModel, updateTable
 import { getUniqueKey } from '@/utils/stringUtil'
 import { OkPacket } from 'mysql'
 import { Task } from './model/task'
+import { insertTaskInfo } from './taskInfo'
 
 export function insertTask(task: Task) {
     const data = Object.assign({
         k: getUniqueKey()
     }, task)
     const { sql, params } = insertTableByModel('task', data)
-    console.log(sql, params)
+    // 新增附加属性
+    insertTaskInfo({
+        taskKey: data.k,
+        userId: data.userId
+    })
     return query<OkPacket>(sql, ...params)
 }
 

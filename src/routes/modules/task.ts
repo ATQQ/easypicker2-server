@@ -5,7 +5,6 @@ import { getUserInfo } from '@/utils/userUtil'
 const router = new Router('task')
 
 router.post('create', async (req, res) => {
-    // TODO: 创建附加属性
     const { name, category } = req.body
     const { id } = await getUserInfo(req)
     const options: Task = {

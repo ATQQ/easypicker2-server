@@ -2,8 +2,10 @@ import { BOOLEAN } from './public'
 
 export interface TaskInfo {
     id?: number
-    task_id?: number
-    taskId?: number
+    user_id?: number
+    userId?: number
+    task_key?: string
+    taskKey?: string
     template?: string
     rewrite?: BOOLEAN
     format?: string

@@ -1,6 +1,7 @@
 create table task_info (
     id int auto_increment primary key,
-    task_id int not null comment '关联任务的id',
+    user_id int not null comment '关联user_id',
+    task_key varchar(256) not null comment '关联任务的key',
     template varchar(512) null comment '模板文件名称',
     rewrite tinyint default 0 not null comment '自动重命名',
     format varchar(1024) null comment '文件名格式',
