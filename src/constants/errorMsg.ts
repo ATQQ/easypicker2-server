@@ -21,3 +21,9 @@ export const UserError = {
 export const CategoryError = {
     exist: codeMsg(2001, 'category already exist')
 }
+
+export const publicError = {
+    file: {
+        notSupport: codeMsg(3001, 'file type is not support')
+    }
+}

@@ -7,6 +7,7 @@ export interface SuperRequest {
     query?: any
     body?: any
     params?: any
+    buffer: Buffer
     route?: Route
 }
 interface CodeMsg {
@@ -188,9 +189,9 @@ function getBodyContent(req: FWRequest) {
                     case contentType.includes(ContentType.jsonData):
                         data = JSON.parse(buffer.toString('utf-8') || '{}')
                         break
-                    case contentType.includes(ContentType.multipart):
-                        data = parseMultipartFromData(contentType, buffer.toString('utf-8'))
-                        break
+                    // case contentType.includes(ContentType.multipart):
+                    //     data = parseMultipartFromData(contentType, buffer.toString('utf-8'))
+                    //     break
                     default:
                         data = buffer
                         break
@@ -199,6 +200,7 @@ function getBodyContent(req: FWRequest) {
                 console.error(error)
                 data = buffer
             } finally {
+                req.buffer = buffer
                 resolve(data)
             }
         })
