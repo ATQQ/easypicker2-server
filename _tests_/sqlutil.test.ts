@@ -1,4 +1,4 @@
-import { selectTableByModel, deleteTableByModel, insertTableByModel, updateTableByModel } from '../src/utils/sqlUtil'
+import { selectTableByModel, deleteTableByModel, insertTableByModel, updateTableByModel, insertTableByModelMany } from '../src/utils/sqlUtil'
 
 test('selectTableByModel("user")', () => {
     const { sql, params } = selectTableByModel('user')
@@ -90,4 +90,10 @@ test('updateTableByModel("user",{name:"xm",age:18},{id:1})', () => {
     const { sql, params } = updateTableByModel('user', { name: 'xm', age: 18 }, { id: 1 })
     expect(sql).toBe('update user set name = ?,age = ? where id = ?')
     expect(params).toEqual(['xm', 18, 1])
+})
+
+test('insertMany', () => {
+    const { sql, params } = insertTableByModelMany('people', [{ name: 'xm', age: 18 }, { name: 'kk', age: 19 }, { name: 'ds', age: 20 }])
+    expect(sql).toBe('insert into people (name,age) values (?,?),(?,?),(?,?)')
+    expect(params).toEqual(['xm', 18, 'kk', 19, 'ds', 20])
 })

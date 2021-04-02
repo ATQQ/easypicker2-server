@@ -54,6 +54,21 @@ export function insertTableByModel(table: string, model: unknown): SqlData {
     }
 }
 
+export function insertTableByModelMany(table: string, model: unknown[]): SqlData {
+    if (model.length === 0 || !isOkModel(model[0])) return { sql: '', params: [] }
+    const keys = Object.keys(model[0])
+
+    const values = model.reduce<string[]>((pre, value) => {
+        return pre.concat(keys.map(key => value[key]))
+    }, [])
+    const sqlValues = `values ${Array.from({ length: model.length }).map(() => (`(${new Array(keys.length).fill('?').join(',')})`)).join(',')}`
+    const sql = `insert into ${table} (${keys.map(lowCamel2Underscore).join(',')}) ${sqlValues}`
+    return {
+        sql,
+        params: values
+    }
+}
+
 export function updateTableByModel(table: string, model: unknown, query: unknown): SqlData {
     if (!isOkModel(model) || !isOkModel(query)) return { sql: '', params: [] }
     model = removeUndefKey(model)

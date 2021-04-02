@@ -1,4 +1,4 @@
-import { selectTaskInfo, updateTaskInfo } from '@/db/taskInfo'
+import { selectTaskInfo, updateTaskInfo } from '@/db/taskInfoDb'
 import Router from '@/lib/Router'
 import { getUniqueKey } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'

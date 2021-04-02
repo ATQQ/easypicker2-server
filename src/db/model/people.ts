@@ -2,8 +2,8 @@ import { BOOLEAN } from './public'
 
 export interface People {
     id?: number
-    task_id?: number
-    taskId?: number
+    task_key?: number
+    taskKey?: number
     user_id?: number
     userId?: number
     name?: string

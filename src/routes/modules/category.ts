@@ -1,5 +1,5 @@
 import { CategoryError } from '@/constants/errorMsg'
-import { deleteCategory, insertCategory, selectCategory } from '@/db/category'
+import { deleteCategory, insertCategory, selectCategory } from '@/db/categoryDb'
 import Router from '@/lib/Router'
 import { getUserInfo } from '@/utils/userUtil'
 
