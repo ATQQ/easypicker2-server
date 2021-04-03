@@ -6,7 +6,7 @@ targetDir="/www/wwwroot/ep2.sugarat.top/server"     # 目标目录
 echo "开始-----部署"
 ssh -p22 ${user}@${origin} "rm -rf ${targetDir}/* && tar -zvxf ${compressFile} -C ${targetDir}"
 echo "开始-----安装依赖"
-ssh -p22 ${user}@${origin} "cd ${targetDir} && yarn install --production"
+ssh -p22 ${user}@${origin} "cd ${targetDir} && yarn install"
 echo "开始-----重新启动"
 ssh -p22 ${user}@${origin} "bash ${targetDir}/../runServer.sh"
 echo "清理-----临时的文件"
