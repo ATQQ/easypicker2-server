@@ -7,7 +7,9 @@
     "dev": "export NODE_ENV=development && tsnd -P ./tsconfig.json --respawn ./src/server.ts",
     "start": "ts-node -P ./tsconfig.json  ./src/server.ts",
     "lint": "eslint --fix ./src",
-    "test": "jest --verbose ./_tests_"
+    "test": "jest --verbose ./_tests_",
+    "deploy": "bash ./build/deploy.sh",
+    "compress": "bash ./build/compress.sh"
   },
   "keywords": [],
   "author": "",
