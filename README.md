@@ -1,106 +1,86 @@
-# node-server
+# <h1 align="center">EasyPicker2.0:轻取</h1>
 
-## 简介
-适用于中小型web应用,demo演示等等的服务端开发脚手架
+<p align="center">为提高在线文件收取效率而生</p>
+<p align="center">
+ 	<a href="https://ep.sugarat.top">
+		<img src="https://img.shields.io/badge/status-updating-success.svg"
+			 alt="Status">
+	</a>
+</p>
 
-基于node+ts实现,不依赖第三方Web服务端框架
 
-开箱即用
-## 快速食用
-1. 克隆仓库到本地
+## 项目简介
+
+在原有[EasyPicker1.0](https://ep.sugarat.top)的功能基础上,使用新技术进行功能的拓展
+
+## 项目背景
+校园学习或者工作场景中会出现以下几个场景:
+* 每次碰到上机课的时候,都会遇到收取实验报告。
+* 需要收取每个人填写的各种电子表格。
+* 需要通过QQ/微信等等收集各种截图
+* 类似场景还有不少就不列举了。。。
+
+通常的方式是,通过QQ/微信/邮箱等收取,弊端显而易见,太过于麻烦且不方便整理统计。还占用电脑/手机内存。为了解决这个问题,此项目应运而生。
+
+## 开发计划
+* [接口文档](https://w5iv.w.eolinker.com/#/share/index?shareCode=7SF9Na) 
+
+## 本地运行
+<details>
+
+1. clone仓库到本地
 ```sh
-git clone https://github.com/ATQQ/node-server.git
+git clone https://github.com/ATQQ/easypicker2-server.git
 ```
-
-2. 进入目录
+2. 安装依赖
 ```sh
-cd node-server
+yarn
 ```
+3. 本地启动
 
-3. 安装相关依赖
 ```sh
-yarn install
-```
-
-4. 启动项目
-```sh
-# -------prod--------
-npm run start
-# or
-yarn start
-
-# -------dev--------
-npm run dev
-# or
 yarn dev
 ```
----
 
-## 自定义实现
-* [x] router(路由)
-* [x] localStorage(本地存储)
-* [x] tokenUtil
-* [x] 拦截器
-  * [x] 全局拦截
-  * [x] 路由拦截
-* [x] 单元测试 - jest
-* [x] 数据库方法包装
-  * [x] mysql
-  * [x] redis
-  * [x] mongodb
+4. 其它指令
 
-## 数据库相关
-* [x] mysql:完成基本配置与测试用例的编写
-* [x] redis
-* [x] mongodb
-* ...
+| 名称  | 作用                  |
+| :---: | :-------------------- |
+|  dev  | 本地启动服务-自动重启 |
+| start | 本地启动服务          |
+| lint  | 代码格式化            |
+| test  | 跑测试用例            |
 
-## 错误处理
-* 运行时的错误
-  * [x] 同步
-  * [x] Promise rejection
-  * [x] async await
+</details>
 
-## 目录简介
+## 线上地址
+1. 正式环境：https://ep2.sugarat.top
+2. 测试环境：https://ep2.test.sugarat.top
 
-```sh
-src
-├── config            # 配置文件
-│   └── index.ts
-├── constants         # 常量
-│   ├── dbModalParam.ts
-│   ├── errorMsg.ts
-│   └── index.ts
-├── db                # 数据库操作
-│   ├── modal
-│   │   └── index.ts
-│   └── userDb.ts
-├── lib               # 自己封装的模块
-│   ├── dbConnect     # 链接数据库
-│   │   └── mysql.ts  # mysql
-│   ├── README.md     
-│   ├── Router        # 路由
-│   │   └── index.ts
-│   └── server        # 服务框架
-│       ├── index.ts
-│       ├── middleware
-│       │   └── index.ts
-│       └── types
-│           └── index.d.ts
-├── middleware              # 中间件
-│   ├── index.ts
-│   ├── routeInterceptor.ts # 路由拦截
-│   └── serverInterceptor.ts  # 全局拦截
-├── routes              # 路由
-│   ├── index.ts          # 对外统一暴露
-│   └── modules 
-│       └── test.ts     # 各个子模块
-├── server.ts           # 入口启动文件
-└── utils               # 工具方法
-    ├── qiniuUtil.ts
-    ├── randUtil.ts
-    ├── regExp.ts
-    ├── storageUtil.ts
-    ├── stringUtil.ts
-    └── tokenUtil.ts
-```
+注：两环境数据不互通,新功能会先在测试环境进行实验
+
+## 技术栈
+1. 前端:Vue3,Typescript,Vite - [模板仓库](https://github.com/ATQQ/vite-vue3-template)
+2. 服务端:Typescript,Node.js - [模板仓库](https://github.com/ATQQ/node-server)
+
+## 相关仓库
+### [EasyPicker1.0](https://ep.sugarat.top/)
+1. ~~服务端(Java-已弃用)：https://github.com/ATQQ/EasyPicker~~
+2. 客户端(web) ：https://github.com/ATQQ/EasyPicker-webpack
+3. 服务端（Node.js）：https://github.com/ATQQ/easypicker-server
+
+### [EasyPicker2.0](https://ep2.sugarat.top)
+1. 客户端(Web):https://github.com/ATQQ/easypicker2-client
+2. 服务端(Node.js):https://github.com/ATQQ/easypicker2-server
+
+## 相关文档
+* 使用手册
+* 更新日志
+* 数据库相关
+* 接口文档
+## 其他链接
+问卷反馈:https://www.wenjuan.com/s/UZBZJvA040/
+
+## 欢迎体验分享,反馈Bug
+
+![TIM图片20191015225526-20191015](https://img.cdn.sugarat.top/TIM图片20191015225526-20191015.gif)
