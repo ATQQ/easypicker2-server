@@ -80,7 +80,7 @@ export function expandHttpRespPrototype(http: ServerOptions): void {
     }
 
     resp.success = function (data?) {
-        this.json(new Result(200, 'ok', data))
+        this.json(new Result(0, 'ok', data))
     }
 
     resp.fail = function (code, msg, data) {
