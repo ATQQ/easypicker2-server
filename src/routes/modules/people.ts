@@ -4,7 +4,7 @@ import { getUserInfo } from '@/utils/userUtil'
 import path from 'path'
 import fs from 'fs'
 import { People } from '@/db/model/people'
-import { insertPeople, selectPeople } from '@/db/peopleDb'
+import { deletePeople, insertPeople, selectPeople } from '@/db/peopleDb'
 
 const router = new Router('people')
 const fileDir = path.resolve(__dirname, '../../upload')
@@ -25,6 +25,7 @@ router.post('/:key', async (req, res) => {
     switch (type) {
         case 'text/plain':
             const fileContent = fs.readFileSync(filepath, { encoding: 'utf-8' })
+            fs.rmSync(filepath)
             const defaultData: People = { taskKey: key, userId }
             // 文件中的名单
             const peopleData: string[] = fileContent.split('\n')
@@ -37,7 +38,7 @@ router.post('/:key', async (req, res) => {
             peopleData.forEach(p => {
                 if (alreadyPeople.includes(p)) {
                     fail.push(p)
-                } else {
+                } else if (!!p) {
                     success.push(p)
                 }
             })
@@ -87,5 +88,19 @@ router.get('/check/:key', async (req, res) => {
     res.success({
         exist: people.length !== 0
     })
+})
+
+router.delete('/:key', async (req, res) => {
+    const { key } = req.params
+    const { id } = req.body
+    const { id: userId } = await getUserInfo(req)
+    if (key && id && userId) {
+        deletePeople({
+            id,
+            userId,
+            taskKey: key
+        })
+    }
+    res.success()
 })
 export default router

@@ -21,7 +21,11 @@ const interceptor: Middleware = async (req, res) => {
                 resolve('ok')
             })
         })
-        await p
+        try {
+            await p
+        } catch (error) {
+            res.end(JSON.stringify({code:500,msg:error}))
+        }
     }
 }
 export default interceptor

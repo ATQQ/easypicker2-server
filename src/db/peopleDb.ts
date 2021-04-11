@@ -21,7 +21,7 @@ export function insertPeople(people: People[], defaultData: People = {}) {
     return query<OkPacket>(sql, ...params)
 }
 
-// export function deleteCategory(category: Category) {
-//     const { sql, params } = deleteTableByModel('category', category)
-//     return query<OkPacket>(sql, ...params)
-// }
+export function deletePeople(people: People) {
+    const { sql, params } = deleteTableByModel('people', people)
+    return query<OkPacket>(sql, ...params)
+}
