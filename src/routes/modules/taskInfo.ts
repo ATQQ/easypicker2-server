@@ -1,5 +1,6 @@
 import { selectTaskInfo, updateTaskInfo } from '@/db/taskInfoDb'
 import Router from '@/lib/Router'
+import { deleteFiles } from '@/utils/qiniuUtil'
 import { getUniqueKey } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
 const router = new Router('task_info')
@@ -27,6 +28,10 @@ router.put('/:key', async (req, res) => {
 
     if (share !== undefined) {
         share = getUniqueKey()
+    }
+    if(!template){
+        // 删除旧模板文件
+        deleteFiles(`easypicker2/${key}_template/`)
     }
     await updateTaskInfo({
         template, rewrite, format, info, ddl, shareKey: share, limitPeople: people

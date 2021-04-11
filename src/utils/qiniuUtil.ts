@@ -1,12 +1,12 @@
 import { qiniuConfig } from '@/config'
 import qiniu from 'qiniu'
 // [node-sdk文档地址](https://developer.qiniu.com/kodo/1289/nodejs#server-upload)
-const privateBucketDomain = 'https://example.com'
+const privateBucketDomain = 'https://easypicker.file.sugarat.top'
 const getDeadline = () => {
     // 12小时过期
     return Math.floor(Date.now() / 1000) + 3600 * 12
 }
-const bucket = 'bucketName'
+const bucket = 'easypicker'
 const mac = new qiniu.auth.digest.Mac(qiniuConfig.accessKey, qiniuConfig.secretKey)
 const { urlsafeBase64Encode } = qiniu.util
 
@@ -27,6 +27,8 @@ export function createDownloadUrl(key: string, expiredTime = getDeadline()): str
 export function getUploadToken(): string {
     const putPolicy = new qiniu.rs.PutPolicy({
         scope: bucket,
+        // returnBody: '{"key":"$(key)","hash":"$(etag)","fsize":$(fsize),"bucket":"$(bucket)","name":"$(x:name)"}'
+        returnBody: '{"hash":"$(etag)","fsize":$(fsize)}'
     })
     return putPolicy.uploadToken(mac)
 }
