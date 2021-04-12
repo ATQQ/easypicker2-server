@@ -1,5 +1,6 @@
 import { CategoryError } from '@/constants/errorMsg'
 import { deleteCategory, insertCategory, selectCategory } from '@/db/categoryDb'
+import { updateTask } from '@/db/taskDb'
 import Router from '@/lib/Router'
 import { getUserInfo } from '@/utils/userUtil'
 
@@ -46,6 +47,12 @@ router.delete('/:key', async (req, res) => {
         k: key,
         user_id
     }).then(() => {
+        // 删掉的分类下的所有任务变为默认分类
+        updateTask({
+            categoryKey: 'default'
+        }, {
+            categoryKey: key
+        })
         res.success()
     })
 })
