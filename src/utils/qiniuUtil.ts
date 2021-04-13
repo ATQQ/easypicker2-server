@@ -102,6 +102,7 @@ export function makeZip(prefix: string, zipName: string, keys: string[] = []): P
             const content = files.filter(file => keys.includes(file.key)).map(file => {
                 // 拼接原始url
                 // 链接加密并进行Base64编码，别名去除前缀目录。
+                // TODO: 判断别名是否存在,存在则后缀+数字自增
                 const safeUrl = `/url/${urlsafeBase64Encode(createDownloadUrl(file.key))}/alias/${urlsafeBase64Encode(file.key.substr(prefix.length))}`
                 return safeUrl
             }).join('\n')

@@ -6,9 +6,9 @@ create table user (
     power tinyint default 6 not null comment '账户权限',
     status tinyint default 0 not null comment '账户权限',
     join_time timestamp default CURRENT_TIMESTAMP not null comment '注册时间',
-    login_time timestamp default CURRENT_TIMESTAMP not null comment '最后登录时间',
+    login_time timestamp null comment '最后登录时间',
     login_count int default 1 not null comment '登陆次数',
-    open_time timestamp default CURRENT_TIMESTAMP not null comment '解封时间',
+    open_time timestamp null comment '解封时间',
     constraint user_account_uindex unique (account),
     constraint user_phone_uindex unique (phone)
 ) comment '用户表';

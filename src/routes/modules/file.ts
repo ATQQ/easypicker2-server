@@ -3,7 +3,7 @@ import { insertFile, selectFiles } from '@/db/fileDb'
 import { File } from '@/db/model/file'
 import { selectTasks } from '@/db/taskDb'
 import Router from '@/lib/Router'
-import { getUploadToken } from '@/utils/qiniuUtil'
+import { createDownloadUrl, getUploadToken, judgeFileIsExist } from '@/utils/qiniuUtil'
 import { getUserInfo } from '@/utils/userUtil'
 
 const router = new Router('file')
@@ -41,6 +41,18 @@ router.get('list', async (req, res) => {
         })
     }).catch(err => {
         res.fail(500, err)
+    })
+})
+
+router.get('template',async (req,res)=>{
+    const {template,key} = req.query
+    const k = `easypicker2/${key}_template/${template}`
+    const isExist =  await judgeFileIsExist(k)
+    if(!isExist){
+        res.failWithError(publicError.file.notExist)
+    }
+    res.success({
+        link:createDownloadUrl(k)
     })
 })
 export default router
