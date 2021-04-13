@@ -25,5 +25,8 @@ export const CategoryError = {
 export const publicError = {
     file: {
         notSupport: codeMsg(3001, 'file type is not support')
+    },
+    request:{
+        errorParams :codeMsg(3002,'error request params')
     }
 }

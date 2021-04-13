@@ -1,17 +1,13 @@
 export interface File {
     id?: number
-    task_id?: number
-    taskId?: number
+    task_key?: string
+    taskKey?: string
     task_name?: string
     taskName?: string
-    category_id?: number
-    categoryId?: number
-    category_name?: string
-    categoryName?: string
+    category_key?: string
+    categoryKey?: string
     user_id?: number
     userId?: number
-    user_account?: string
-    userAccount?: string
     name?: string
     info?: string
     hash?: string
