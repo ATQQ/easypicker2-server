@@ -4,7 +4,8 @@ import { getUserInfo } from '@/utils/userUtil'
 import path from 'path'
 import fs from 'fs'
 import { People } from '@/db/model/people'
-import { deletePeople, insertPeople, selectPeople } from '@/db/peopleDb'
+import { deletePeople, insertPeople, selectPeople, updatePeople } from '@/db/peopleDb'
+import { selectFiles } from '@/db/fileDb'
 
 const router = new Router('people')
 const fileDir = path.resolve(__dirname, '../../upload')
@@ -101,6 +102,31 @@ router.delete('/:key', async (req, res) => {
             taskKey: key
         })
     }
+    res.success()
+})
+
+router.put('/:key', async (req, res) => {
+    const { key } = req.params
+    const { name, filename } = req.body
+    if (!name || !filename || !key) {
+        res.failWithError(publicError.request.errorParams)
+        return
+    }
+    const files = await selectFiles({
+        taskKey: key,
+        name: filename
+    })
+    if (files.length === 0) {
+        res.failWithError(publicError.request.errorParams)
+        return
+    }
+    await updatePeople({
+        status: 1,
+        submitDate:new Date()
+    }, {
+        name,
+        taskKey: key
+    })
     res.success()
 })
 export default router

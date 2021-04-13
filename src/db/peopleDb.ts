@@ -1,5 +1,5 @@
 import { query } from '@/lib/dbConnect/mysql'
-import { deleteTableByModel, insertTableByModelMany, selectTableByModel } from '@/utils/sqlUtil'
+import { deleteTableByModel, insertTableByModelMany, selectTableByModel, updateTableByModel } from '@/utils/sqlUtil'
 import { getUniqueKey } from '@/utils/stringUtil'
 import { OkPacket } from 'mysql'
 import { People } from './model/people'
@@ -23,5 +23,10 @@ export function insertPeople(people: People[], defaultData: People = {}) {
 
 export function deletePeople(people: People) {
     const { sql, params } = deleteTableByModel('people', people)
+    return query<OkPacket>(sql, ...params)
+}
+
+export function updatePeople(people: People, q: People) {
+    const { sql, params } = updateTableByModel('people', people, q)
     return query<OkPacket>(sql, ...params)
 }
