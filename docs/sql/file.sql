@@ -1,4 +1,3 @@
--- auto-generated definition
 create table files (
     id int auto_increment primary key,
     task_key varchar(256) not null comment '所属任务',
@@ -9,5 +8,6 @@ create table files (
     info varchar(1024) not null comment '提交填写的信息',
     hash varchar(512) not null comment '文件hash',
     date timestamp default CURRENT_TIMESTAMP not null comment '上传日期',
-    size int not null comment '文件大小'
+    size int not null comment '文件大小',
+    people varchar(256) null comment '人员姓名'
 ) comment '用户提交的问题';
