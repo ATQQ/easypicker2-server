@@ -39,7 +39,7 @@ router.post('/:key', async (req, res) => {
             peopleData.forEach(p => {
                 if (alreadyPeople.includes(p)) {
                     fail.push(p)
-                } else if (!!p) {
+                } else if (!!p && !success.includes(p)) {
                     success.push(p)
                 }
             })

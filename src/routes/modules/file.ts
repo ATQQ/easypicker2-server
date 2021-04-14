@@ -1,9 +1,10 @@
 import { publicError } from '@/constants/errorMsg'
-import { insertFile, selectFiles } from '@/db/fileDb'
+import { deleteFileRecord, insertFile, selectFiles } from '@/db/fileDb'
 import { File } from '@/db/model/file'
+import { selectPeople, updatePeople } from '@/db/peopleDb'
 import { selectTasks } from '@/db/taskDb'
 import Router from '@/lib/Router'
-import { createDownloadUrl, getUploadToken, judgeFileIsExist } from '@/utils/qiniuUtil'
+import { createDownloadUrl, deleteObjByKey, getUploadToken, judgeFileIsExist } from '@/utils/qiniuUtil'
 import { getUserInfo } from '@/utils/userUtil'
 
 const router = new Router('file')
@@ -44,15 +45,52 @@ router.get('list', async (req, res) => {
     })
 })
 
-router.get('template',async (req,res)=>{
-    const {template,key} = req.query
+router.get('template', async (req, res) => {
+    const { template, key } = req.query
     const k = `easypicker2/${key}_template/${template}`
-    const isExist =  await judgeFileIsExist(k)
-    if(!isExist){
+    const isExist = await judgeFileIsExist(k)
+    if (!isExist) {
         res.failWithError(publicError.file.notExist)
     }
     res.success({
-        link:createDownloadUrl(k)
+        link: createDownloadUrl(k)
+    })
+})
+
+router.delete('withdraw', async (req, res) => {
+    const { taskKey, taskName, filename, hash, peopleName, info } = req.body
+    const [file] = await selectFiles({
+        taskKey, taskName, name: filename, hash,
+        info,
+    })
+    if (!file || (file.people && file.people !== peopleName)) {
+        res.failWithError(publicError.file.notExist)
+        return
+    }
+
+    // 更新人员提交状态
+    if (peopleName) {
+        const [p] = await selectPeople({
+            name: peopleName,
+            status: 1,
+            taskKey
+        },['id'])
+        if (!p) {
+            res.failWithError(publicError.file.notExist)
+            return
+        }
+        await updatePeople({
+            status: 0
+        }, {
+            id:p.id
+        })
+    }
+    // 删除提交记录
+    // 删除文件
+    const key = `easypicker2/${taskKey}/${hash}/${filename}`
+    deleteObjByKey(key)
+    deleteFileRecord({ id: file.id }).then(() => {
+        res.success()
     })
 })
 export default router

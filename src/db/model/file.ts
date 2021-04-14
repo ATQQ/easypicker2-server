@@ -13,4 +13,5 @@ export interface File {
     hash?: string
     date?: Date
     size?: number
+    people?: string
 }

@@ -18,10 +18,10 @@ export function selectFiles(options: File) {
     return query<File[]>(sql, ...params)
 }
 
-// export function deleteTask(task: Task) {
-//     const { sql, params } = deleteTableByModel('task', task)
-//     return query<OkPacket>(sql, ...params)
-// }
+export function deleteFileRecord(file: File) {
+    const { sql, params } = deleteTableByModel('files', file)
+    return query<OkPacket>(sql, ...params)
+}
 
 // export function updateTask(task: Task, q: Task) {
 //     const { sql, params } = updateTableByModel('task', task, q)
