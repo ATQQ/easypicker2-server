@@ -51,12 +51,54 @@ router.get('template', async (req, res) => {
     const isExist = await judgeFileIsExist(k)
     if (!isExist) {
         res.failWithError(publicError.file.notExist)
+        return
     }
     res.success({
         link: createDownloadUrl(k)
     })
 })
 
+router.get('one', async (req, res) => {
+    const { id } = req.query
+    const { id: userId } = await getUserInfo(req)
+    const [file] = await selectFiles({
+        userId,
+        id:+id
+    })
+    if(!file){
+        res.failWithError(publicError.file.notExist)
+        return
+    }
+    const k = `easypicker2/${file.task_key}/${file.hash}/${file.name}`
+    const isExist = await judgeFileIsExist(k)
+    if (!isExist) {
+        res.failWithError(publicError.file.notExist)
+        return
+    }
+    res.success({
+        link: createDownloadUrl(k)
+    })
+})
+
+router.delete('one',async (req,res)=>{
+    const { id } = req.body
+    const { id: userId } = await getUserInfo(req)
+    const [file] = await selectFiles({
+        userId,
+        id
+    })
+    if(!file){
+        res.failWithError(publicError.file.notExist)
+        return
+    }
+    const k = `easypicker2/${file.task_key}/${file.hash}/${file.name}`
+    deleteObjByKey(k)
+    deleteFileRecord({
+        id
+    }).then(()=>{
+        res.success()
+    })
+})
 router.delete('withdraw', async (req, res) => {
     const { taskKey, taskName, filename, hash, peopleName, info } = req.body
     const [file] = await selectFiles({
@@ -74,7 +116,7 @@ router.delete('withdraw', async (req, res) => {
             name: peopleName,
             status: 1,
             taskKey
-        },['id'])
+        }, ['id'])
         if (!p) {
             res.failWithError(publicError.file.notExist)
             return
@@ -82,7 +124,7 @@ router.delete('withdraw', async (req, res) => {
         await updatePeople({
             status: 0
         }, {
-            id:p.id
+            id: p.id
         })
     }
     // 删除提交记录
