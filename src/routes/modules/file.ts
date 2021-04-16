@@ -193,4 +193,17 @@ router.delete('batch/del', async (req, res) => {
         res.success()
     })
 })
+
+router.post('compress/down',(req,res)=>{
+    const {key} = req.body
+    // TODO:need鉴权
+    if(typeof key==='string' && key.startsWith('easypicker2/temp_package/')){
+        res.success({
+            url: createDownloadUrl(key)
+        })
+        return
+    }
+
+    res.failWithError(publicError.file.notExist)
+})
 export default router
