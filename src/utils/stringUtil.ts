@@ -1,5 +1,6 @@
 import crypto from 'crypto'
 import { ObjectId } from 'mongodb'
+import path from 'path'
 /**
  * 加密字符串(md5+base64)
  * @param str 待加密的字符串
@@ -17,4 +18,11 @@ export function lowCamel2Underscore(word: string): string {
 
 export function getUniqueKey() {
     return new ObjectId().toHexString()
+}
+
+export function getKeyInfo(key: string) {
+    const { name, base, ext } = path.parse(key)
+    return {
+        name, base, ext
+    }
 }

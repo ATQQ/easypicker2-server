@@ -17,8 +17,8 @@ export function selectTableByModel(table: string, options: Options = {}): SqlDat
 
     const column = (columns?.length > 0) ? `${columns.join(',')}` : '*'
     const keys = Object.keys(data)
-    const where = (keys?.length > 0) ? `where ${keys.map(key => `${lowCamel2Underscore(key)} = ?`).join(' and ')}` : ''
-    const values = keys.map(key => data[key])
+    const where = (keys?.length > 0) ? `where ${keys.map(key => createWhereSql(key,data[key])).join(' and ')}` : ''
+    const values = keys.map(key => data[key]).flat()
     const sql = `select ${column} from ${table} ${where}`.trim()
     return {
         sql,
@@ -26,13 +26,23 @@ export function selectTableByModel(table: string, options: Options = {}): SqlDat
     }
 }
 
+export function createWhereSql(k,v){
+    if(!isObject(v)){
+        return `${lowCamel2Underscore(k)} = ?`
+    }
+    if(Array.isArray(v)){
+        return `${lowCamel2Underscore(k)} in (${Array.from({length:v.length}).fill('?').join(',')})`
+    }
+    throw new Error('not support Object')
+}
+
 export function deleteTableByModel(table: string, model: unknown): SqlData {
     if (!isOkModel(model)) return { sql: '', params: [] }
     model = removeUndefKey(model)
 
     const keys = Object.keys(model)
-    const where = `where ${keys.map(key => `${lowCamel2Underscore(key)} = ?`).join(' and ')}`
-    const values = keys.map(key => model[key])
+    const where = `where ${keys.map(key => createWhereSql(key,model[key])).join(' and ')}`
+    const values = keys.map(key => model[key]).flat()
     const sql = `delete from ${table} ${where}`.trim()
     return {
         sql,

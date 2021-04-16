@@ -4,8 +4,10 @@ import { File } from '@/db/model/file'
 import { selectPeople, updatePeople } from '@/db/peopleDb'
 import { selectTasks } from '@/db/taskDb'
 import Router from '@/lib/Router'
-import { createDownloadUrl, deleteObjByKey, getUploadToken, judgeFileIsExist } from '@/utils/qiniuUtil'
+import { batchDeleteFiles, checkFopTaskStatus, createDownloadUrl, deleteObjByKey, getUploadToken, judgeFileIsExist, makeZipWithKeys } from '@/utils/qiniuUtil'
 import { getUserInfo } from '@/utils/userUtil'
+
+// TODO: 统一对所有删除逻辑修改(保留记录用于统计查看,删除云上文件)
 
 const router = new Router('file')
 
@@ -63,9 +65,9 @@ router.get('one', async (req, res) => {
     const { id: userId } = await getUserInfo(req)
     const [file] = await selectFiles({
         userId,
-        id:+id
+        id: +id
     })
-    if(!file){
+    if (!file) {
         res.failWithError(publicError.file.notExist)
         return
     }
@@ -80,14 +82,14 @@ router.get('one', async (req, res) => {
     })
 })
 
-router.delete('one',async (req,res)=>{
+router.delete('one', async (req, res) => {
     const { id } = req.body
     const { id: userId } = await getUserInfo(req)
     const [file] = await selectFiles({
         userId,
         id
     })
-    if(!file){
+    if (!file) {
         res.failWithError(publicError.file.notExist)
         return
     }
@@ -95,7 +97,7 @@ router.delete('one',async (req,res)=>{
     deleteObjByKey(k)
     deleteFileRecord({
         id
-    }).then(()=>{
+    }).then(() => {
         res.success()
     })
 })
@@ -132,6 +134,62 @@ router.delete('withdraw', async (req, res) => {
     const key = `easypicker2/${taskKey}/${hash}/${filename}`
     deleteObjByKey(key)
     deleteFileRecord({ id: file.id }).then(() => {
+        res.success()
+    })
+})
+
+router.post('batch/down', async (req, res) => {
+    const { ids } = req.body
+    const { id: userId } = await getUserInfo(req)
+    const files = await selectFiles({
+        id: ids,
+        userId
+    })
+    if (files.length === 0) {
+        res.failWithError(publicError.file.notExist)
+        return
+    }
+    const keys = files.map(v => {
+        const { name, task_key, hash } = v
+        return `easypicker2/${task_key}/${hash}/${name}`
+    })
+    makeZipWithKeys(keys,`${Date.now()}`).then((v)=>{
+        res.success({
+            k:v
+        })
+    })
+})
+
+router.post('compress/status', (req, res) => {
+    const { id } = req.body
+    checkFopTaskStatus(id).then(data => {
+        res.success(data)
+    })
+})
+
+router.delete('batch/del', async (req, res) => {
+    const { ids } = req.body
+    const { id: userId } = await getUserInfo(req)
+    const files = await selectFiles({
+        id: ids,
+        userId
+    })
+    if (files.length === 0) {
+        res.success()
+        return
+    }
+    const keys = files.map(v => {
+        const { name, task_key, hash } = v
+        return `easypicker2/${task_key}/${hash}/${name}`
+    })
+
+    // 删除云上记录
+    batchDeleteFiles(keys)
+    // 删除记录
+    deleteFileRecord({
+        id:ids,
+        userId
+    }).then(()=>{
         res.success()
     })
 })

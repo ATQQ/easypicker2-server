@@ -1,4 +1,4 @@
-import { selectTableByModel, deleteTableByModel, insertTableByModel, updateTableByModel, insertTableByModelMany } from '../src/utils/sqlUtil'
+import { selectTableByModel, deleteTableByModel, insertTableByModel, updateTableByModel, insertTableByModelMany, createWhereSql } from '../src/utils/sqlUtil'
 
 test('selectTableByModel("user")', () => {
     const { sql, params } = selectTableByModel('user')
@@ -74,6 +74,15 @@ test('deleteTableByModel("user","")', () => {
     expect(params).toEqual([])
 })
 
+test('deleteTableByModel', () => {
+    const { sql, params } = deleteTableByModel('user', {
+        id:[1,2,3],
+        userId:5
+    })
+    expect(sql).toBe('delete from user where id in (?,?,?) and user_id = ?')
+    expect(params).toEqual([1,2,3,5])
+})
+
 test('insertTableByModel("user","")', () => {
     const { sql, params } = insertTableByModel('user', '')
     expect(sql).toBe('')
@@ -96,4 +105,8 @@ test('insertMany', () => {
     const { sql, params } = insertTableByModelMany('people', [{ name: 'xm', age: 18 }, { name: 'kk', age: 19 }, { name: 'ds', age: 20 }])
     expect(sql).toBe('insert into people (name,age) values (?,?),(?,?),(?,?)')
     expect(params).toEqual(['xm', 18, 'kk', 19, 'ds', 20])
+})
+test('createWhereSql', () => {
+    const sql = createWhereSql('ids',[1,2,34])
+    expect(sql).toBe('ids in (?,?,?)')
 })
