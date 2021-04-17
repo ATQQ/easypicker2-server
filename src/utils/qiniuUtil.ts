@@ -44,9 +44,10 @@ export function deleteFiles(prefix: string): void {
     }, (err, respBody) => {
         const files: any[] = respBody.items
         // 使用批量删除接口
-        files.forEach(file => {
-            deleteObjByKey(file.key)
-        })
+        batchDeleteFiles(files.map(f => f.key))
+        // files.forEach(file => {
+        //     deleteObjByKey(file.key)
+        // })
     })
 }
 
@@ -125,13 +126,24 @@ export function makeZipByPrefixWithKeys(prefix: string, zipName: string, keys: s
             const files: any[] = respBody.items
             // 删除旧的压缩文件
             deleteFiles(prefix.slice(0, -1) + '_package/')
-
+            const names = []
             // 上传内容,过滤掉数据库中不存在的
             const content = files.filter(file => keys.includes(file.key)).map(file => {
                 // 拼接原始url
                 // 链接加密并进行Base64编码，别名去除前缀目录。
-                // TODO: 判断别名是否存在,存在则后缀+数字自增
-                const safeUrl = `/url/${urlsafeBase64Encode(createDownloadUrl(file.key))}/alias/${urlsafeBase64Encode(file.key.substr(prefix.length))}`
+                const keyInfo = getKeyInfo(file.key)
+                const { name, ext } = keyInfo
+                let { base } = keyInfo
+
+                // 判断别名是否存在,存在则后缀+数字自增
+                let i = 1
+                while (names.includes(base)) {
+                    base = `${name}_${i}${ext}`
+                    i++
+                }
+                names.push(base)
+                // 判断别名是否存在,存在则后缀+数字自增
+                const safeUrl = `/url/${urlsafeBase64Encode(createDownloadUrl(file.key))}/alias/${urlsafeBase64Encode(base)}`
                 return safeUrl
             }).join('\n')
             const config = new qiniu.conf.Config({ zone: qiniu.zone.Zone_z2 })
@@ -262,14 +274,17 @@ export function checkFopTaskStatus(persistentId: string): Promise<{ code: number
         })
     })
 }
-interface FileStat{
-    code:number
-    data:{
-        md5?:string,
-        error?:string
+interface FileStat {
+    code: number
+    data: {
+        md5?: string,
+        error?: string
     }
 }
-export function batchFileStatus(keys: string[]):Promise<FileStat[]> {
+/**
+ * 批量查询文件状态
+ */
+export function batchFileStatus(keys: string[]): Promise<FileStat[]> {
     return new Promise((resolve, reject) => {
         const statOperations = keys.map(k => qiniu.rs.statOp(bucket, k))
         const config = new qiniu.conf.Config()

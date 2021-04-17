@@ -17,7 +17,7 @@ import routes from './routes'
 import { serverInterceptor, routeInterceptor } from './middleware'
 
 // 允许跨域访问的源
-const allowOrigins = ['http://localhost:8088', 'https://ep.sugarat.top', 'https://ep.dev.sugarat.top']
+const allowOrigins = ['http://localhost:8080', 'https://ep2.sugarat.top', 'https://ep2.dev.sugarat.top']
 
 const app = new FW((req, res) => {
     const { method } = req
