@@ -4,7 +4,7 @@ import { File } from '@/db/model/file'
 import { selectPeople, updatePeople } from '@/db/peopleDb'
 import { selectTasks } from '@/db/taskDb'
 import Router from '@/lib/Router'
-import { batchDeleteFiles, checkFopTaskStatus, createDownloadUrl, deleteObjByKey, getUploadToken, judgeFileIsExist, makeZipWithKeys } from '@/utils/qiniuUtil'
+import { batchDeleteFiles, batchFileStatus, checkFopTaskStatus, createDownloadUrl, deleteObjByKey, getUploadToken, judgeFileIsExist, makeZipWithKeys } from '@/utils/qiniuUtil'
 import { getUserInfo } from '@/utils/userUtil'
 
 // TODO: 统一对所有删除逻辑修改(保留记录用于统计查看,删除云上文件)
@@ -149,10 +149,20 @@ router.post('batch/down', async (req, res) => {
         res.failWithError(publicError.file.notExist)
         return
     }
-    const keys = files.map(v => {
+    let keys = files.map(v => {
         const { name, task_key, hash } = v
         return `easypicker2/${task_key}/${hash}/${name}`
     })
+    const filesStatus =await batchFileStatus(keys)
+    const md5List = filesStatus.filter(v=>v.code===200).map(v=>v.data.md5)
+    keys = keys.filter(v=>{
+        const md5 = md5List.find(m=>v.includes(`/${m}/`))
+        return md5
+    })
+    if (keys.length === 0) {
+        res.failWithError(publicError.file.notExist)
+        return
+    }
     makeZipWithKeys(keys,`${Date.now()}`).then((v)=>{
         res.success({
             k:v

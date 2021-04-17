@@ -180,7 +180,6 @@ export function makeZipByPrefixWithKeys(prefix: string, zipName: string, keys: s
 
 export function makeZipWithKeys(keys: string[], zipName: string): Promise<string> {
     return new Promise(res => {
-        // 上传内容,过滤掉数据库中不存在的
         const names = []
         const content = keys.map(key => {
             // 拼接原始url
@@ -259,6 +258,43 @@ export function checkFopTaskStatus(persistentId: string): Promise<{ code: number
             } else {
                 console.log(respInfo.statusCode)
                 console.log(respBody)
+            }
+        })
+    })
+}
+interface FileStat{
+    code:number
+    data:{
+        md5?:string,
+        error?:string
+    }
+}
+export function batchFileStatus(keys: string[]):Promise<FileStat[]> {
+    return new Promise((resolve, reject) => {
+        const statOperations = keys.map(k => qiniu.rs.statOp(bucket, k))
+        const config = new qiniu.conf.Config()
+        const bucketManager = new qiniu.rs.BucketManager(mac, config)
+        bucketManager.batch(statOperations, function (err, respBody, respInfo) {
+            if (err) {
+                console.log(err)
+                //throw err;
+            } else {
+                // 200 is success, 298 is part success
+                if (parseInt(`${respInfo.statusCode / 100}`) == 2) {
+                    resolve(respBody)
+                    // respBody.forEach(function (item) {
+                    //     if (item.code == 200) {
+                    //         console.log(item.data.fsize + '\t' + item.data.hash + '\t' +
+                    //             item.data.mimeType + '\t' + item.data.putTime + '\t' +
+                    //             item.data.type)
+                    //     } else {
+                    //         console.log(item.code + '\t' + item.data.error)
+                    //     }
+                    // })
+                } else {
+                    console.log(respInfo.statusCode)
+                    console.log(respBody)
+                }
             }
         })
     })
