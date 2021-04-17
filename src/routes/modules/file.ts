@@ -153,11 +153,11 @@ router.post('batch/down', async (req, res) => {
         const { name, task_key, hash } = v
         return `easypicker2/${task_key}/${hash}/${name}`
     })
-    const filesStatus =await batchFileStatus(keys)
-    const md5List = filesStatus.filter(v=>v.code===200).map(v=>v.data.md5)
-    keys = keys.filter(v=>{
-        const md5 = md5List.find(m=>v.includes(`/${m}/`))
-        return md5
+    const filesStatus = await batchFileStatus(keys)
+
+    keys = keys.filter((v, idx) => {
+        const { code, data: { md5 } } = filesStatus[idx]
+        return code === 200 && v.includes(`/${md5}/`)
     })
     if (keys.length === 0) {
         res.failWithError(publicError.file.notExist)
@@ -197,17 +197,17 @@ router.delete('batch/del', async (req, res) => {
     batchDeleteFiles(keys)
     // 删除记录
     deleteFileRecord({
-        id:ids,
+        id: ids,
         userId
-    }).then(()=>{
+    }).then(() => {
         res.success()
     })
 })
 
-router.post('compress/down',(req,res)=>{
-    const {key} = req.body
+router.post('compress/down', (req, res) => {
+    const { key } = req.body
     // TODO:need鉴权
-    if(typeof key==='string' && key.startsWith('easypicker2/temp_package/')){
+    if (typeof key === 'string' && key.startsWith('easypicker2/temp_package/')) {
         res.success({
             url: createDownloadUrl(key)
         })
