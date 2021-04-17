@@ -108,7 +108,7 @@ export function getFileCount(prefix: string): Promise<number> {
             limit: 10,
             prefix
         }, (err, respBody) => {
-            res(respBody?.items?.length || 0)
+            res(respBody.items.length || 0)
         })
     })
 }
