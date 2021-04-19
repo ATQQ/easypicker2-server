@@ -128,7 +128,7 @@ router.post('login/code', async (req, res) => {
     // TODO:权限判断
     // TODO:更新最后登录信息
     const token = tokenUtil.createToken(user)
-    setRedisValue(`code-${phone}`,'',1)
+    expiredRedisKey(`code-${phone}`)
     res.success({
         token
     })
