@@ -1,5 +1,5 @@
 import { query } from '@/lib/dbConnect/mysql'
-import { insertTableByModel, selectTableByModel } from '@/utils/sqlUtil'
+import { insertTableByModel, selectTableByModel, updateTableByModel } from '@/utils/sqlUtil'
 import { OkPacket } from 'mysql'
 import { User } from './model/user'
 
@@ -24,5 +24,10 @@ export function selectUserByPhone(phone: string): Promise<User[]> {
 export function insertUser(options: User): Promise<OkPacket> {
     const modal = Object.assign({}, options)
     const { sql, params } = insertTableByModel('user', modal)
+    return query<OkPacket>(sql, ...params)
+}
+
+export function updateUser(options: User, q: User): Promise<OkPacket> {
+    const { sql, params } = updateTableByModel('user', options, q)
     return query<OkPacket>(sql, ...params)
 }

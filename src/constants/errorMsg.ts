@@ -3,7 +3,8 @@ import { codeMsg } from '.'
 export const UserError = {
     mobile: {
         fault: codeMsg(1006, 'Mobile is not right'),
-        exist: codeMsg(1002, 'Mobile already exist')
+        exist: codeMsg(1002, 'Mobile already exist'),
+        noExist: codeMsg(1008, 'Mobile not exist')
     },
     account: {
         exist: codeMsg(1001, 'Account already exist'),

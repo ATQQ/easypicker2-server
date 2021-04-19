@@ -1,7 +1,7 @@
 import { UserError } from '@/constants/errorMsg'
 import { User, USER_STATUS } from '@/db/model/user'
 import { expiredRedisKey, getRedisVal, setRedisValue } from '@/db/redisDb'
-import { insertUser, selectUserByAccount, selectUserByPhone } from '@/db/userDb'
+import { insertUser, selectUserByAccount, selectUserByPhone, updateUser } from '@/db/userDb'
 import Router from '@/lib/Router'
 import { rAccount, rMobilePhone, rPassword } from '@/utils/regExp'
 import { encryption } from '@/utils/stringUtil'
@@ -112,6 +112,9 @@ router.post('login', async (req, res) => {
     })
 })
 
+/**
+ * 验证码登录
+ */
 router.post('login/code', async (req, res) => {
     const { code, phone } = req.body
     const v = await getRedisVal(`code-${phone}`)
@@ -129,6 +132,38 @@ router.post('login/code', async (req, res) => {
     // TODO:更新最后登录信息
     const token = tokenUtil.createToken(user)
     expiredRedisKey(`code-${phone}`)
+    res.success({
+        token
+    })
+})
+
+/**
+ * 重置密码
+ */
+router.put('password', async (req, res) => {
+    const { code, phone, pwd } = req.body
+    const v = await getRedisVal(`code-${phone}`)
+    if (code !== v) {
+        res.failWithError(UserError.code.fault)
+        return
+    }
+    const [user] = await selectUserByPhone(phone)
+
+    if (!user) {
+        res.failWithError(UserError.mobile.noExist)
+        return
+    }
+    if(!rPassword.test(pwd)){
+        res.failWithError(UserError.pwd.fault)
+        return
+    }
+    await updateUser({
+        password: encryption(pwd)
+    }, {
+        id: user.id
+    })
+    expiredRedisKey(`code-${phone}`)
+    const token = tokenUtil.createToken(user)
     res.success({
         token
     })
