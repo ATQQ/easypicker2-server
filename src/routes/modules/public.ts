@@ -15,7 +15,7 @@ router.get('code', (req, res) => {
     const code = randomNumStr(4)
     // TODO:发送验证码
     console.log(code)
-    setRedisValue(phone, code, 120)
+    setRedisValue(`code-${phone}`, code, 120)
     res.success()
 })
 
