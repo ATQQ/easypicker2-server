@@ -5,12 +5,17 @@ import { selectPeople, updatePeople } from '@/db/peopleDb'
 import { selectTasks } from '@/db/taskDb'
 import Router from '@/lib/Router'
 import { batchDeleteFiles, batchFileStatus, checkFopTaskStatus, createDownloadUrl, deleteObjByKey, getUploadToken, judgeFileIsExist, makeZipWithKeys } from '@/utils/qiniuUtil'
+import { randomNumStr } from '@/utils/randUtil'
+import { getUniqueKey } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
 
 // TODO: 统一对所有删除逻辑修改(保留记录用于统计查看,删除云上文件)
 
 const router = new Router('file')
 
+/**
+ * 获取上传令牌
+ */
 router.get('token', (req, res) => {
     const token = getUploadToken()
     res.success({
@@ -18,6 +23,9 @@ router.get('token', (req, res) => {
     })
 })
 
+/**
+ * 记录提交的文件信息
+ */
 router.post('info', async (req, res) => {
     const data: File = req.body
     const [task] = await selectTasks({
@@ -33,6 +41,9 @@ router.post('info', async (req, res) => {
     res.success()
 })
 
+/**
+ * 获取文件列表
+ */
 router.get('list', async (req, res) => {
     const { id: userId } = await getUserInfo(req)
     selectFiles({
@@ -44,8 +55,13 @@ router.get('list', async (req, res) => {
     }).catch(err => {
         res.fail(500, err)
     })
+},{
+    needLogin: true
 })
 
+/**
+ * 获取模板文件下载链接
+ */
 router.get('template', async (req, res) => {
     const { template, key } = req.query
     const k = `easypicker2/${key}_template/${template}`
@@ -59,6 +75,9 @@ router.get('template', async (req, res) => {
     })
 })
 
+/**
+ * 下载单个文件
+ */
 router.get('one', async (req, res) => {
     const { id } = req.query
     const { id: userId } = await getUserInfo(req)
@@ -79,8 +98,13 @@ router.get('one', async (req, res) => {
     res.success({
         link: createDownloadUrl(k)
     })
+},{
+    needLogin: true
 })
 
+/**
+ * 删除某个文件
+ */
 router.delete('one', async (req, res) => {
     const { id } = req.body
     const { id: userId } = await getUserInfo(req)
@@ -99,7 +123,13 @@ router.delete('one', async (req, res) => {
     }).then(() => {
         res.success()
     })
+},{
+    needLogin: true
 })
+
+/**
+ * 撤回提交的文件
+ */
 router.delete('withdraw', async (req, res) => {
     const { taskKey, taskName, filename, hash, peopleName, info } = req.body
     const [file] = await selectFiles({
@@ -137,6 +167,9 @@ router.delete('withdraw', async (req, res) => {
     })
 })
 
+/**
+ * 批量下载
+ */
 router.post('batch/down', async (req, res) => {
     const { ids } = req.body
     const { id: userId } = await getUserInfo(req)
@@ -162,20 +195,30 @@ router.post('batch/down', async (req, res) => {
         res.failWithError(publicError.file.notExist)
         return
     }
-    makeZipWithKeys(keys,`${Date.now()}`).then((v)=>{
+    makeZipWithKeys(keys,`${getUniqueKey()}`).then((v)=>{
         res.success({
             k:v
         })
     })
+},{
+    needLogin: true
 })
 
+/**
+ * 查询文件归档进度
+ */
 router.post('compress/status', (req, res) => {
     const { id } = req.body
     checkFopTaskStatus(id).then(data => {
         res.success(data)
     })
+},{
+    needLogin: true
 })
 
+/**
+ * 批量删除
+ */
 router.delete('batch/del', async (req, res) => {
     const { ids } = req.body
     const { id: userId } = await getUserInfo(req)
@@ -201,11 +244,12 @@ router.delete('batch/del', async (req, res) => {
     }).then(() => {
         res.success()
     })
+},{
+    needLogin: true
 })
 
 router.post('compress/down', (req, res) => {
     const { key } = req.body
-    // TODO:need鉴权
     if (typeof key === 'string' && key.startsWith('easypicker2/temp_package/')) {
         res.success({
             url: createDownloadUrl(key)
@@ -214,5 +258,7 @@ router.post('compress/down', (req, res) => {
     }
 
     res.failWithError(publicError.file.notExist)
+},{
+    needLogin: true
 })
 export default router

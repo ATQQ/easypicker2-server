@@ -13,6 +13,9 @@ const fileDir = path.resolve(__dirname, '../../upload')
 // TODO: excel格式支持
 const supportType = ['text/plain']
 
+/**
+ * 上传人员名单
+ */
 router.post('/:key', async (req, res) => {
     const { filename, type } = req.body
     const { id: userId } = await getUserInfo(req)
@@ -55,9 +58,13 @@ router.post('/:key', async (req, res) => {
             break
     }
     res.success()
+}, {
+    needLogin: true
 })
 
-
+/**
+ * 获取人员列表
+ */
 router.get('/:key', async (req, res) => {
     const { id: userId } = await getUserInfo(req)
     const { key } = req.params
@@ -77,8 +84,13 @@ router.get('/:key', async (req, res) => {
     res.success({
         people
     })
+}, {
+    needLogin: true
 })
 
+/**
+ * 查看人员是否在提交名单中
+ */
 router.get('/check/:key', async (req, res) => {
     const { key } = req.params
     const { name } = req.query
@@ -91,6 +103,9 @@ router.get('/check/:key', async (req, res) => {
     })
 })
 
+/**
+ * 删除指定人员
+ */
 router.delete('/:key', async (req, res) => {
     const { key } = req.params
     const { id } = req.body
@@ -103,18 +118,24 @@ router.delete('/:key', async (req, res) => {
         })
     }
     res.success()
+}, {
+    needLogin: true
 })
 
+/**
+ * 更新人员提交信息
+ */
 router.put('/:key', async (req, res) => {
     const { key } = req.params
-    const { name, filename } = req.body
-    if (!name || !filename || !key) {
+    const { name, filename, hash } = req.body
+    if (!name || !filename || !key || !hash) {
         res.failWithError(publicError.request.errorParams)
         return
     }
     const files = await selectFiles({
         taskKey: key,
-        name: filename
+        name: filename,
+        hash
     })
     if (files.length === 0) {
         res.failWithError(publicError.request.errorParams)
@@ -122,7 +143,7 @@ router.put('/:key', async (req, res) => {
     }
     await updatePeople({
         status: 1,
-        submitDate:new Date()
+        submitDate: new Date()
     }, {
         name,
         taskKey: key

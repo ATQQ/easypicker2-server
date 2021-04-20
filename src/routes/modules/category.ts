@@ -24,6 +24,8 @@ router.post('create', async (req, res) => {
     }).then(() => {
         res.success()
     })
+},{
+    needLogin: true
 })
 
 router.get('', async (req, res) => {
@@ -38,6 +40,8 @@ router.get('', async (req, res) => {
             categories
         })
     })
+},{
+    needLogin: true
 })
 
 router.delete('/:key', async (req, res) => {
@@ -55,5 +59,7 @@ router.delete('/:key', async (req, res) => {
         })
         res.success()
     })
+},{
+    needLogin: true
 })
 export default router

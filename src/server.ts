@@ -21,8 +21,6 @@ const allowOrigins = ['http://localhost:8080', 'https://ep2.sugarat.top', 'https
 
 const app = new FW((req, res) => {
     const { method } = req
-    console.log(`构造函数:${req.method} - ${req.url}`)
-
     if (allowOrigins.includes(req.headers.origin)) {
         // 允许跨域
         res.setHeader('Access-Control-Allow-Origin', req.headers.origin)

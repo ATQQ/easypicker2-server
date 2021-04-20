@@ -29,6 +29,7 @@ export const publicError = {
         notExist: codeMsg(3003, 'file not exist')
     },
     request: {
-        errorParams: codeMsg(3002, 'error request params')
+        errorParams: codeMsg(3002, 'error request params'),
+        notLogin: codeMsg(3004, 'user not login'),
     }
 }

@@ -5,6 +5,9 @@ import { getUniqueKey } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
 const router = new Router('task_info')
 
+/**
+ * 获取任务附加属性
+ */
 router.get('/:key', async (req, res) => {
     const { key } = req.params
     const [taskInfo] = await selectTaskInfo({
@@ -20,6 +23,9 @@ router.get('/:key', async (req, res) => {
     )
 })
 
+/**
+ * 更新附加属性信息
+ */
 router.put('/:key', async (req, res) => {
     const { template, rewrite, format, info, ddl, people } = req.body
     let { share } = req.body
@@ -37,6 +43,8 @@ router.put('/:key', async (req, res) => {
         template, rewrite, format, info, ddl, shareKey: share, limitPeople: people
     }, { taskKey: key, userId })
     res.success()
+},{
+    needLogin:true
 })
 
 export default router
