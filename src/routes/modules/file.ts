@@ -34,7 +34,6 @@ router.post('info', async (req, res) => {
 })
 
 router.get('list', async (req, res) => {
-    console.log(req.headers['token'])
     const { id: userId } = await getUserInfo(req)
     selectFiles({
         userId
