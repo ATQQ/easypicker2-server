@@ -1,11 +1,12 @@
 import { UserError } from '@/constants/errorMsg'
-import { User, USER_STATUS } from '@/db/model/user'
+import { User, USER_POWER, USER_STATUS } from '@/db/model/user'
 import { expiredRedisKey, getRedisVal, setRedisValue } from '@/db/redisDb'
 import { insertUser, selectUserByAccount, selectUserByPhone, updateUser } from '@/db/userDb'
 import Router from '@/lib/Router'
 import { rAccount, rMobilePhone, rPassword } from '@/utils/regExp'
 import { encryption } from '@/utils/stringUtil'
 import tokenUtil from '@/utils/tokenUtil'
+import { getUserInfo } from '@/utils/userUtil'
 
 const router = new Router('user')
 
@@ -167,5 +168,15 @@ router.put('password', async (req, res) => {
     res.success({
         token
     })
+})
+
+/**
+ * 判断是否超级管理员
+ */
+router.get('power/super',async (req,res)=>{
+    const user = await getUserInfo(req)
+    res.success(user.power === USER_POWER.SUPER)
+},{
+    needLogin:true,
 })
 export default router
