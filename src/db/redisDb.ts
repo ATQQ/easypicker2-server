@@ -21,7 +21,7 @@ export function setRedisValue(k: string, v: string, expiredTime = -1) {
 export function getRedisVal(k: string): Promise<string> {
     return new Promise(resolve => {
         const v = storage.getItem(k)
-        if (v?.value) {
+        if (v && v.value) {
             resolve(v.value)
             return
         }
