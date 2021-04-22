@@ -3,6 +3,7 @@ import { rMobilePhone } from '@/utils/regExp'
 import { UserError } from '@/constants/errorMsg'
 import { randomNumStr } from '@/utils/randUtil'
 import { setRedisValue } from '@/db/redisDb'
+import { sendMessage } from '@/utils/tencent'
 const router = new Router('public')
 
 router.get('code', (req, res) => {
@@ -13,7 +14,8 @@ router.get('code', (req, res) => {
         return
     }
     const code = randomNumStr(4)
-    // TODO:发送验证码
+
+    sendMessage(phone, code, 2)
     console.log(code)
     setRedisValue(`code-${phone}`, code, 120)
     res.success()
