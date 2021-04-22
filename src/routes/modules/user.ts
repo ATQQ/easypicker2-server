@@ -66,16 +66,13 @@ router.post('register', async (req, res) => {
  */
 router.post('login', async (req, res) => {
     const { account = '', pwd = '' } = req.body
-    const isAccount = rAccount.test(account)
+    // const isAccount = rAccount.test(account)
+    // 兼容旧平台数据不校验账号格式
+    const isAccount = true
     const isPhone = rMobilePhone.test(account)
     // 帐号不正确
-    if (account.length !== 11 && !isAccount) {
+    if (!isAccount) {
         res.failWithError(UserError.account.fault)
-        return
-    }
-    // 手机号不正确
-    if (account.length === 11 && !isPhone) {
-        res.failWithError(UserError.mobile.fault)
         return
     }
     // 密码不正确
@@ -87,11 +84,16 @@ router.post('login', async (req, res) => {
     if (isAccount) {
         ([user] = await selectUserByAccount(account))
     }
-    if (isPhone) {
+    // 手机号不正确
+    if (!user && !isPhone) {
+        res.failWithError(UserError.mobile.fault)
+        return
+    }
+    if (!user && isPhone) {
         ([user] = await selectUserByPhone(account))
     }
     if (!user) {
-        res.failWithError(account.length === 11 ? UserError.mobile.fault : UserError.account.fault)
+        res.failWithError(isPhone ? UserError.mobile.fault : UserError.account.fault)
         return
     }
     if (user.password !== encryption(pwd)) {
@@ -154,7 +156,7 @@ router.put('password', async (req, res) => {
         res.failWithError(UserError.mobile.noExist)
         return
     }
-    if(!rPassword.test(pwd)){
+    if (!rPassword.test(pwd)) {
         res.failWithError(UserError.pwd.fault)
         return
     }
@@ -173,10 +175,10 @@ router.put('password', async (req, res) => {
 /**
  * 判断是否超级管理员
  */
-router.get('power/super',async (req,res)=>{
+router.get('power/super', async (req, res) => {
     const user = await getUserInfo(req)
     res.success(user.power === USER_POWER.SUPER)
-},{
-    needLogin:true,
+}, {
+    needLogin: true,
 })
 export default router
