@@ -45,13 +45,20 @@ export default class FW extends Router {
       }
     }
 
-    public interceptor: Middleware
+    public beforeRouteMatchInterceptor: Middleware
+
+    public async _execBeforeRouteMatchInterceptor(req: FWRequest, res: FWResponse) {
+      // 拦截器
+      if (this.beforeRouteMatchInterceptor) {
+        await this.beforeRouteMatchInterceptor(req, res)
+      }
+    }
 
     constructor(afterRequestCallback?: Middleware, beforeRouteCallback?: Middleware) {
       super()
       // 初始化
       this._middleWares = []
-
+      this.beforeRouteMatchInterceptor = null
       // 通过各种中间件包装req与res
       // 通过中间件对请求进行处理
       if (afterRequestCallback) {
@@ -62,6 +69,8 @@ export default class FW extends Router {
       this.use(wrapperRequest)
       // 打印请求信息
       this.use(printRequest)
+      // 拦截器
+      this.use(this._execBeforeRouteMatchInterceptor.bind(this))
       // 路由匹配
       this.use(matchRoute.bind(this, this._routes))
       // beforeRunRouteInterceptor
@@ -72,10 +81,6 @@ export default class FW extends Router {
       this.use(runRoute)
       this._server = http.createServer(async (req: FWRequest, res: FWResponse) => {
         // default config
-        // 拦截器
-        if (this.interceptor) {
-          await this.interceptor(req, res)
-        }
         this._execMiddleware(req, res)
       })
     }

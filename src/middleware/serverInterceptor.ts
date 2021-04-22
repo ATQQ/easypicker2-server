@@ -2,7 +2,31 @@ import { Middleware } from '@/lib/server/types'
 import formidable from 'formidable'
 import path from 'path'
 
+// 允许跨域访问的源
+const allowOrigins = ['http://localhost:8080', 'https://ep2.sugarat.top', 'https://ep2.dev.sugarat.top']
+
 const interceptor: Middleware = async (req, res) => {
+  // 开启CORS
+  const { method } = req
+  if (allowOrigins.includes(req.headers.origin)) {
+    // 允许跨域
+    res.setHeader('Access-Control-Allow-Origin', req.headers.origin)
+  }
+  // 跨域允许的header类型
+  res.setHeader('Access-Control-Allow-Headers', '*')
+  // 允许跨域携带cookie
+  res.setHeader('Access-Control-Allow-Credentials', 'true')
+  // 允许的方法
+  res.setHeader('Access-Control-Allow-Methods', 'PUT, GET, POST, DELETE, OPTIONS')
+  // 设置响应头
+  res.setHeader('Content-Type', 'application/json;charset=utf-8')
+  // 对预检请求放行
+  if (method === 'OPTIONS') {
+    res.statusCode = 204
+    res.end()
+    return
+  }
+
   // 处理文件上传
   if (req.url === '/public/upload') {
     const form = formidable({ multiples: true, uploadDir: path.resolve(__dirname, '../upload'), keepExtensions: true })
