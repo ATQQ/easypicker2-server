@@ -5,7 +5,6 @@ import { selectPeople, updatePeople } from '@/db/peopleDb'
 import { selectTasks } from '@/db/taskDb'
 import Router from '@/lib/Router'
 import { batchDeleteFiles, batchFileStatus, checkFopTaskStatus, createDownloadUrl, deleteObjByKey, getUploadToken, judgeFileIsExist, makeZipWithKeys } from '@/utils/qiniuUtil'
-import { randomNumStr } from '@/utils/randUtil'
 import { getUniqueKey } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
 
@@ -55,7 +54,7 @@ router.get('list', async (req, res) => {
     }).catch(err => {
         res.fail(500, err)
     })
-},{
+}, {
     needLogin: true
 })
 
@@ -89,7 +88,10 @@ router.get('one', async (req, res) => {
         res.failWithError(publicError.file.notExist)
         return
     }
-    const k = `easypicker2/${file.task_key}/${file.hash}/${file.name}`
+    let k = `easypicker2/${file.task_key}/${file.hash}/${file.name}`
+    if (file.category_key) {
+        k = file.category_key
+    }
     const isExist = await judgeFileIsExist(k)
     if (!isExist) {
         res.failWithError(publicError.file.notExist)
@@ -98,7 +100,7 @@ router.get('one', async (req, res) => {
     res.success({
         link: createDownloadUrl(k)
     })
-},{
+}, {
     needLogin: true
 })
 
@@ -116,14 +118,17 @@ router.delete('one', async (req, res) => {
         res.failWithError(publicError.file.notExist)
         return
     }
-    const k = `easypicker2/${file.task_key}/${file.hash}/${file.name}`
+    let k = `easypicker2/${file.task_key}/${file.hash}/${file.name}`
+    if (file.category_key) {
+        k = file.category_key
+    }
     deleteObjByKey(k)
     deleteFileRecord({
         id
     }).then(() => {
         res.success()
     })
-},{
+}, {
     needLogin: true
 })
 
@@ -182,25 +187,29 @@ router.post('batch/down', async (req, res) => {
         return
     }
     let keys = files.map(v => {
-        const { name, task_key, hash } = v
+        const { name, task_key, hash, category_key } = v
+        // 兼容老板平台数据
+        if (category_key) {
+            return category_key
+        }
         return `easypicker2/${task_key}/${hash}/${name}`
     })
     const filesStatus = await batchFileStatus(keys)
 
     keys = keys.filter((v, idx) => {
-        const { code, data: { md5 } } = filesStatus[idx]
-        return code === 200 && v.includes(`/${md5}/`)
+        const { code } = filesStatus[idx]
+        return code === 200
     })
     if (keys.length === 0) {
         res.failWithError(publicError.file.notExist)
         return
     }
-    makeZipWithKeys(keys,`${getUniqueKey()}`).then((v)=>{
+    makeZipWithKeys(keys, `${getUniqueKey()}`).then((v) => {
         res.success({
-            k:v
+            k: v
         })
     })
-},{
+}, {
     needLogin: true
 })
 
@@ -212,7 +221,7 @@ router.post('compress/status', (req, res) => {
     checkFopTaskStatus(id).then(data => {
         res.success(data)
     })
-},{
+}, {
     needLogin: true
 })
 
@@ -231,7 +240,10 @@ router.delete('batch/del', async (req, res) => {
         return
     }
     const keys = files.map(v => {
-        const { name, task_key, hash } = v
+        const { name, task_key, hash, category_key } = v
+        if (category_key) {
+            return category_key
+        }
         return `easypicker2/${task_key}/${hash}/${name}`
     })
 
@@ -244,7 +256,7 @@ router.delete('batch/del', async (req, res) => {
     }).then(() => {
         res.success()
     })
-},{
+}, {
     needLogin: true
 })
 
@@ -258,7 +270,7 @@ router.post('compress/down', (req, res) => {
     }
 
     res.failWithError(publicError.file.notExist)
-},{
+}, {
     needLogin: true
 })
 export default router
