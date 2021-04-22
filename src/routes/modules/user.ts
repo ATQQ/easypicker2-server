@@ -1,6 +1,6 @@
 import { UserError } from '@/constants/errorMsg'
 import { User, USER_POWER, USER_STATUS } from '@/db/model/user'
-import { expiredRedisKey, getRedisVal, setRedisValue } from '@/db/redisDb'
+import { expiredRedisKey, getRedisVal } from '@/db/redisDb'
 import { insertUser, selectUserByAccount, selectUserByPhone, updateUser } from '@/db/userDb'
 import Router from '@/lib/Router'
 import { rAccount, rMobilePhone, rPassword } from '@/utils/regExp'
@@ -107,8 +107,12 @@ router.post('login', async (req, res) => {
     if (user.status === USER_STATUS.FREEZE) {
 
     }
-    // TODO:权限判断
-    // TODO:更新最后登录信息
+    await updateUser({
+        loginCount: user.login_count + 1,
+        loginTime: new Date()
+    }, {
+        id: user.id
+    })
     const token = tokenUtil.createToken(user)
     res.success({
         token
@@ -131,9 +135,13 @@ router.post('login/code', async (req, res) => {
         res.failWithError(UserError.mobile.fault)
         return
     }
-    // TODO:权限判断
-    // TODO:更新最后登录信息
     const token = tokenUtil.createToken(user)
+    await updateUser({
+        loginCount: user.login_count + 1,
+        loginTime: new Date()
+    }, {
+        id: user.id
+    })
     expiredRedisKey(`code-${phone}`)
     res.success({
         token
