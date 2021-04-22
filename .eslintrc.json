@@ -4,6 +4,8 @@
         "node": true
     },
     "extends": [
+        "airbnb-base",
+        "eslint:recommended",
         "plugin:@typescript-eslint/recommended"
     ],
     "plugins": [
@@ -14,7 +16,7 @@
         "@typescript-eslint/no-explicit-any": [
             "off"
         ],
-        "@typescript-eslint/explicit-module-boundary-types":"off",
+        "@typescript-eslint/explicit-module-boundary-types": "off",
         "todo-ddl/diy": [
             "warn"
         ],
@@ -25,6 +27,24 @@
         "semi": [
             "warn",
             "never"
-        ]
+        ],
+        "import/extensions": "off",
+        "import/no-unresolved": "off",
+        "import/prefer-default-export": "off",
+        "no-param-reassign": "warn",
+        "import/no-extraneous-dependencies": "off",
+        "max-len": "warn",
+        "no-restricted-syntax": "off",
+        "no-bitwise": "off",
+        "no-await-in-loop": "off",
+        "class-methods-use-this": "off",
+        "no-lonely-if": "off",
+        "no-console": "off",
+        "no-use-before-define": "off",
+        "camelcase": "off",
+        "no-underscore-dangle": "off",
+        "no-shadow": "off",
+        "no-useless-escape": "off",
+        "import/first":"off"
     }
 }

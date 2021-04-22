@@ -3,8 +3,8 @@ export interface CodeMsg {
     msg: string
 }
 export function codeMsg(code: number, msg: string): CodeMsg {
-    return {
-        code,
-        msg
-    }
+  return {
+    code,
+    msg,
+  }
 }
