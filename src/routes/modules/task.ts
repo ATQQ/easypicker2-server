@@ -1,3 +1,4 @@
+import { selectFilesLimitCount } from '@/db/fileDb'
 import { Task } from '@/db/model/task'
 import { deleteTask, insertTask, selectTasks, updateTask } from '@/db/taskDb'
 import Router from '@/lib/Router'
@@ -17,8 +18,8 @@ router.post('create', async (req, res) => {
     }
     await insertTask(options)
     res.success()
-},{
-    needLogin:true
+}, {
+    needLogin: true
 })
 
 /**
@@ -26,23 +27,30 @@ router.post('create', async (req, res) => {
  */
 router.get('', async (req, res) => {
     const { id } = await getUserInfo(req)
-    selectTasks({
+    const data = await selectTasks({
         userId: id
-    }).then(data => {
-        const tasks = data.map(t => {
-            const { name, category_key: category, k: key } = t
-            return {
-                name,
-                category,
-                key
-            }
-        })
-        res.success({
-            tasks
-        })
     })
-},{
-    needLogin:true
+
+    const tasks = data.map(t => {
+        const { name, category_key: category, k: key } = t
+        return {
+            name,
+            category,
+            key
+        }
+    })
+    const recentSubmitLogCount = 4
+    for (const t of tasks) {
+        const files = await selectFilesLimitCount({
+            taskKey: t.key
+        }, recentSubmitLogCount)
+        t['recentLog'] = files.map(v => ({ filename: v.name, date: v.date }))
+    }
+    res.success({
+        tasks
+    })
+}, {
+    needLogin: true
 })
 
 /**
@@ -71,8 +79,8 @@ router.delete('/:key', async (req, res) => {
     })
     // TODO: 待定任务删除了,异步删除任务下的所有已经提交的文件
     res.success()
-},{
-    needLogin:true
+}, {
+    needLogin: true
 })
 
 /**
@@ -92,7 +100,7 @@ router.put('/:key', async (req, res) => {
     }
     await updateTask(task, query)
     res.success()
-},{
-    needLogin:true
+}, {
+    needLogin: true
 })
 export default router

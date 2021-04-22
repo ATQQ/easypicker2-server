@@ -9,7 +9,7 @@ interface Options {
     columns?: string[]
 }
 
-export function selectTableByModel(table: string, options: Options = {}): SqlData {
+export function selectTableByModel(table: string, options: Options = {}, limit = 0): SqlData {
     const { columns = [] } = options
     let { data = {} } = options
     if (!isObject(data)) return { sql: '', params: [] }
@@ -19,7 +19,8 @@ export function selectTableByModel(table: string, options: Options = {}): SqlDat
     const keys = Object.keys(data)
     const where = (keys.length > 0) ? `where ${keys.map(key => createWhereSql(key, data[key])).join(' and ')}` : ''
     const values = keys.map(key => data[key]).flat()
-    const sql = `select ${column} from ${table} ${where}`.trim()
+    const limitStr = (typeof limit === 'number' && limit > 0) ? `limit ${Math.ceil(limit)}` : ''
+    const sql = `select ${column} from ${table} ${where} ${limitStr}`.trim()
     return {
         sql,
         params: values

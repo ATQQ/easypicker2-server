@@ -62,6 +62,23 @@ test('selectTableByModel("user",{pwd:"123456",taskName:"task1"},["id", "name"])'
     expect(params).toEqual(['123456', 'task1'])
 })
 
+test('selectTableByModelLimit', () => {
+    const { sql, params } = selectTableByModel('user', {
+        data: { pwd: '123456', taskName: 'task1' },
+        columns: ['id', 'name']
+    },100)
+    expect(sql).toBe('select id,name from user where pwd = ? and task_name = ? limit 100')
+    expect(params).toEqual(['123456', 'task1'])
+})
+
+test('selectTableByModelLimit', () => {
+    const { sql, params } = selectTableByModel('user', {
+        data: { id:1 },
+    })
+    expect(sql).toBe('select * from user where id = ?')
+    expect(params).toEqual([1])
+})
+
 test('deleteTableByModel("user",{pwd:"123456",taskName:"task1"})', () => {
     const { sql, params } = deleteTableByModel('user', { pwd: '123456', taskName: 'task1' })
     expect(sql).toBe('delete from user where pwd = ? and task_name = ?')

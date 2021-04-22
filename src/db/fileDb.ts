@@ -18,6 +18,13 @@ export function selectFiles(options: File) {
     return query<File[]>(sql, ...params)
 }
 
+export function selectFilesLimitCount(options: File, count: number) {
+    const { sql, params } = selectTableByModel('files', {
+        data: options
+    }, count)
+    return query<File[]>(sql, ...params)
+}
+
 export function deleteFileRecord(file: File) {
     // 逻辑删
     const originData = JSON.stringify({
@@ -27,7 +34,7 @@ export function deleteFileRecord(file: File) {
     })
     const { sql, params } = updateTableByModel('files', {
         userId: 0,
-        taskKey:'local_trash',
+        taskKey: 'local_trash',
         categoryKey: originData
     }, {
         id: file.id
@@ -37,20 +44,20 @@ export function deleteFileRecord(file: File) {
     return query<OkPacket>(sql, ...params)
 }
 
-export function deleteFiles(files:File[]) {
-    const ids = files.map(v=>v.id)
+export function deleteFiles(files: File[]) {
+    const ids = files.map(v => v.id)
     // 逻辑删
     const { sql, params } = updateTableByModel('files', {
         userId: 0,
-        taskKey:'local_trash',
+        taskKey: 'local_trash',
     }, {
         id: ids
     })
-    // 异步办事
-    ;(async()=>{
-        for (const f of files) {
-            await deleteFileRecord(f)
-        }
-    })()
+        // 异步办事
+        ; (async () => {
+            for (const f of files) {
+                await deleteFileRecord(f)
+            }
+        })()
     return query<OkPacket>(sql, ...params)
 }
