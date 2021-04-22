@@ -1,5 +1,5 @@
 import { publicError } from '@/constants/errorMsg'
-import { deleteFileRecord, insertFile, selectFiles } from '@/db/fileDb'
+import { deleteFileRecord, deleteFiles, insertFile, selectFiles } from '@/db/fileDb'
 import { File } from '@/db/model/file'
 import { selectPeople, updatePeople } from '@/db/peopleDb'
 import { selectTasks } from '@/db/taskDb'
@@ -8,7 +8,6 @@ import { batchDeleteFiles, batchFileStatus, checkFopTaskStatus, createDownloadUr
 import { getUniqueKey } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
 
-// TODO: 统一对所有删除逻辑修改(保留记录用于统计查看,删除云上文件)
 
 const router = new Router('file')
 
@@ -122,12 +121,10 @@ router.delete('one', async (req, res) => {
     if (file.category_key) {
         k = file.category_key
     }
+    // 删除云上文件
     deleteObjByKey(k)
-    deleteFileRecord({
-        id
-    }).then(() => {
-        res.success()
-    })
+    await deleteFileRecord(file)
+    res.success()
 }, {
     needLogin: true
 })
@@ -167,9 +164,8 @@ router.delete('withdraw', async (req, res) => {
     // 删除文件
     const key = `easypicker2/${taskKey}/${hash}/${filename}`
     deleteObjByKey(key)
-    deleteFileRecord({ id: file.id }).then(() => {
-        res.success()
-    })
+    await deleteFileRecord(file)
+    res.success()
 })
 
 /**
@@ -249,13 +245,15 @@ router.delete('batch/del', async (req, res) => {
 
     // 删除云上记录
     batchDeleteFiles(keys)
+    await deleteFiles(files)
+    res.success()
     // 删除记录
-    deleteFileRecord({
-        id: ids,
-        userId
-    }).then(() => {
-        res.success()
-    })
+    // deleteFileRecord({
+    //     id: ids,
+    //     userId
+    // }).then(() => {
+    //     res.success()
+    // })
 }, {
     needLogin: true
 })

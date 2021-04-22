@@ -69,7 +69,7 @@ router.delete('/:key', async (req, res) => {
         userId: id,
         k: key
     })
-    // TODO:任务删除了,异步删除任务下的所有已经提交的文件
+    // TODO: 待定任务删除了,异步删除任务下的所有已经提交的文件
     res.success()
 },{
     needLogin:true
