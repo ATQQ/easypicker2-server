@@ -95,7 +95,11 @@ export function judgeFileIsExist(key: string): Promise<boolean> {
     const config = new qiniu.conf.Config()
     const bucketManager = new qiniu.rs.BucketManager(mac, config)
     bucketManager.stat(bucket, key, (err, respBody, respInfo) => {
-      res(respInfo.statusCode !== 612)
+      if(respInfo && respInfo.statusCode){
+        res(respInfo.statusCode !== 612)
+      }else{
+        res(false)
+      }
     })
   })
 }
