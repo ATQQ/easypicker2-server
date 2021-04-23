@@ -1,8 +1,53 @@
 // mongoDb
 // 日志
-type LogType = 'request' | 'behavior' | 'error'
+export type LogType = 'request' | 'behavior' | 'error'
+
+export type LogData = LogRequestData | LogBehaviorData | any
 export interface Log {
     id: string,
     type: LogType,
-    data: any
+    data: LogData
+}
+
+export interface LogRequestData {
+    method: string
+    url: string
+    query: any
+    params: any
+    body: any
+    userAgent: string
+    refer: string
+    ip: string
+    userId: number
+}
+
+// eslint-disable-next-line @typescript-eslint/no-namespace
+export declare namespace LogBehaviorData {
+
+    type BehaviorInfoModule = 'user' | 'taskInfo' | 'task' | 'people' | 'file' | 'category' | 'super'
+    interface Info {
+        /**
+         * 一句话描述
+         */
+        msg: string
+        module: BehaviorInfoModule
+        // 业务自定数据
+        data?: any
+    }
+
+    interface Request {
+        path: string
+        userAgent: string
+        refer: string
+        ip: string
+    }
+
+    interface User {
+        userId: number
+    }
+}
+export interface LogBehaviorData {
+    req: LogBehaviorData.Request
+    user: LogBehaviorData.User
+    info: LogBehaviorData.Info
 }
