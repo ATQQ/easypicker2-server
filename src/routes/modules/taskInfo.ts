@@ -1,3 +1,4 @@
+import { addBehavior } from '@/db/logDb'
 import { selectTaskInfo, updateTaskInfo } from '@/db/taskInfoDb'
 import Router from '@/lib/Router'
 import { deleteFiles } from '@/utils/qiniuUtil'
@@ -21,6 +22,13 @@ router.get('/:key', async (req, res) => {
   if (ddl) {
     ddl = new Date(ddl.getTime() + 8 * 60 * 60 * 1000)
   }
+  addBehavior(req, {
+    module: 'taskInfo',
+    msg: `获取任务属性 任务${key} 成功`,
+    data: {
+      key,
+    },
+  })
   res.success(
     {
       template, rewrite, format, info, share, ddl, people,
@@ -49,6 +57,13 @@ router.put('/:key', async (req, res) => {
   await updateTaskInfo({
     template, rewrite, format, info, ddl, shareKey: share, limitPeople: people,
   }, { taskKey: key, userId })
+  addBehavior(req, {
+    module: 'taskInfo',
+    msg: `更新任务属性 任务${key} 成功`,
+    data: {
+      key,
+    },
+  })
   res.success()
 }, {
   needLogin: true,

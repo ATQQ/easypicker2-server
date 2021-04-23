@@ -116,6 +116,6 @@ export async function addErrorLog(req: FWRequest, msg: string) {
   }
   insertCollection('log', getLogData('error', data))
 }
-function getClientIp(req: FWRequest): string {
+export function getClientIp(req: FWRequest): string {
   return (req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress) as string
 }
