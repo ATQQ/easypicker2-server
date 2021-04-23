@@ -25,10 +25,12 @@ app.beforeRouteMatchInterceptor = beforeRouteMatchInterceptor
 // 注册路由
 app.addRoutes(routes)
 
+console.time('server-start')
 app.listen(serverConfig.port, serverConfig.hostname, () => {
   console.log('-----', new Date().toLocaleString(), '-----')
   if (process.env.NODE_ENV === 'development') {
     // 写入测试用逻辑
   }
+  console.timeEnd('server-start')
   console.log('server start success', `http://${serverConfig.hostname}:${serverConfig.port}`)
 })

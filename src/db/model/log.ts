@@ -51,3 +51,8 @@ export interface LogBehaviorData {
     user: LogBehaviorData.User
     info: LogBehaviorData.Info
 }
+
+export interface LogErrorData{
+    req: LogRequestData,
+    msg:string
+}

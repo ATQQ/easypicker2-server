@@ -1,5 +1,6 @@
 import http from 'http'
 // types
+import { addErrorLog } from '@/db/logDb'
 import {
   FWRequest, FWResponse, Middleware, MiddlewarePosition,
 } from './types'
@@ -33,13 +34,17 @@ export default class FW extends Router {
           const p: any = middleware(req, res)
           if (p instanceof Promise) {
             p.catch((error) => {
+              // TODO: 对外暴露一个beforeErrorInterceptor
               res.fail(500, error.toString())
+              addErrorLog(req, error.toString())
             })
             await p
           }
         } catch (error) {
           if (!res.writableEnded) {
+            // TODO: 对外暴露一个beforeErrorInterceptor
             res.fail(500, error.toString())
+            addErrorLog(req, error.toString())
           }
         }
       }
