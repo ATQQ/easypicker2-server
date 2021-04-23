@@ -9,6 +9,8 @@ import {
   deletePeople, insertPeople, selectPeople, updatePeople,
 } from '@/db/peopleDb'
 import { selectFiles } from '@/db/fileDb'
+import { addBehavior, getClientIp } from '@/db/logDb'
+import { selectTasks } from '@/db/taskDb'
 
 const router = new Router('people')
 const fileDir = path.resolve(__dirname, '../../upload')
@@ -21,7 +23,7 @@ const supportType = ['text/plain']
  */
 router.post('/:key', async (req, res) => {
   const { filename, type } = req.body
-  const { id: userId } = await getUserInfo(req)
+  const { id: userId, account: logAccount } = await getUserInfo(req)
   const { key } = req.params
   const filepath = path.join(fileDir, filename)
 
@@ -60,6 +62,13 @@ router.post('/:key', async (req, res) => {
     default:
       break
   }
+  addBehavior(req, {
+    module: 'people',
+    msg: `导入人员名单 用户:${logAccount}`,
+    data: {
+      account: logAccount,
+    },
+  })
   res.success()
 }, {
   needLogin: true,
@@ -69,7 +78,7 @@ router.post('/:key', async (req, res) => {
  * 获取人员列表
  */
 router.get('/:key', async (req, res) => {
-  const { id: userId } = await getUserInfo(req)
+  const { id: userId, account: logAccount } = await getUserInfo(req)
   const { key } = req.params
   const people = (await selectPeople({
     userId,
@@ -81,7 +90,13 @@ router.get('/:key', async (req, res) => {
     lastDate: v.submit_date,
     count: v.submit_count,
   }))
-
+  addBehavior(req, {
+    module: 'people',
+    msg: `获取人员名单 用户:${logAccount}`,
+    data: {
+      account: logAccount,
+    },
+  })
   res.success({
     people,
   })
@@ -95,12 +110,31 @@ router.get('/:key', async (req, res) => {
 router.get('/check/:key', async (req, res) => {
   const { key } = req.params
   const { name } = req.query
+  const [task] = await selectTasks({
+    k: key,
+  })
+  if (!task) {
+    res.success({
+      exist: false,
+    })
+    return
+  }
   const people = await selectPeople({
     taskKey: key,
     name,
   })
+  const exist = people.length !== 0
+  addBehavior(req, {
+    module: 'people',
+    msg: `查询是否拥有提交权限 任务:${task.name} 成员姓名:${name} 权限:${exist ? '有' : '无'}`,
+    data: {
+      taskName: task.name,
+      name,
+      exist,
+    },
+  })
   res.success({
-    exist: people.length !== 0,
+    exist,
   })
 })
 
@@ -110,14 +144,38 @@ router.get('/check/:key', async (req, res) => {
 router.delete('/:key', async (req, res) => {
   const { key } = req.params
   const { id } = req.body
-  const { id: userId } = await getUserInfo(req)
+  const { id: userId, account: logAccount } = await getUserInfo(req)
   if (key && id && userId) {
-    deletePeople({
+    const [p] = await selectPeople({
       id,
-      userId,
-      taskKey: key,
     })
+    if (p) {
+      deletePeople({
+        id,
+        userId,
+        taskKey: key,
+      });
+
+      // 记录日志
+      (async () => {
+        const [task] = await selectTasks({
+          k: key,
+        })
+        if (task) {
+          addBehavior(req, {
+            module: 'people',
+            msg: `删除任务人员 用户:${logAccount} 任务:${task.name} 成员:${p.name}`,
+            data: {
+              account: logAccount,
+              taskName: task.name,
+              name: p.name,
+            },
+          })
+        }
+      })()
+    }
   }
+
   res.success()
 }, {
   needLogin: true,
@@ -127,9 +185,22 @@ router.delete('/:key', async (req, res) => {
  * 更新人员提交信息
  */
 router.put('/:key', async (req, res) => {
+  const logIp = getClientIp(req)
+
   const { key } = req.params
   const { name, filename, hash } = req.body
   if (!name || !filename || !key || !hash) {
+    addBehavior(req, {
+      module: 'people',
+      msg: `更新提交人员信息 ip:${logIp} 参数错误`,
+      data: {
+        ip: logIp,
+        key,
+        name,
+        filename,
+        hash,
+      },
+    })
     res.failWithError(publicError.request.errorParams)
     return
   }
@@ -139,6 +210,17 @@ router.put('/:key', async (req, res) => {
     hash,
   })
   if (files.length === 0) {
+    addBehavior(req, {
+      module: 'people',
+      msg: `更新提交人员信息 ip:${logIp} 参数错误`,
+      data: {
+        ip: logIp,
+        key,
+        name,
+        filename,
+        hash,
+      },
+    })
     res.failWithError(publicError.request.errorParams)
     return
   }
@@ -149,6 +231,25 @@ router.put('/:key', async (req, res) => {
     name,
     taskKey: key,
   })
+  selectTasks({
+    k: key,
+  }).then(([task]) => {
+    if (task) {
+      addBehavior(req, {
+        module: 'people',
+        msg: `更新提交人员信息 ip:${logIp} 成功 任务:${task.name} 姓名:${name}`,
+        data: {
+          ip: logIp,
+          key,
+          taskName: task.name,
+          name,
+          filename,
+          hash,
+        },
+      })
+    }
+  })
+
   res.success()
 })
 export default router
