@@ -24,7 +24,7 @@ export interface LogRequestData {
 // eslint-disable-next-line @typescript-eslint/no-namespace
 export declare namespace LogBehaviorData {
 
-    type BehaviorInfoModule = 'user' | 'taskInfo' | 'task' | 'people' | 'file' | 'category' | 'super' | 'public'
+    type BehaviorInfoModule = 'user' | 'taskInfo' | 'task' | 'people' | 'file' | 'category' | 'super' | 'public'|'interceptor'
     interface Info {
         /**
          * 一句话描述
