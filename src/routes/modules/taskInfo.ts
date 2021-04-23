@@ -50,7 +50,7 @@ router.put('/:key', async (req, res) => {
   if (share !== undefined) {
     share = getUniqueKey()
   }
-  if (!template) {
+  if (!template && template !== undefined) {
     // 删除旧模板文件
     deleteFiles(`easypicker2/${key}_template/`)
   }

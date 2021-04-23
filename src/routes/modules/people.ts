@@ -54,6 +54,16 @@ router.post('/:key', async (req, res) => {
       if (success.length > 0) {
         await insertPeople(success.map((name) => ({ name })), defaultData)
       }
+
+      addBehavior(req, {
+        module: 'people',
+        msg: `导入人员名单 用户:${logAccount} 成功:${success.length} 失败:${fail.length}`,
+        data: {
+          account: logAccount,
+          success: success.length,
+          fail: fail.length,
+        },
+      })
       res.success({
         success: success.length,
         fail,
@@ -62,13 +72,6 @@ router.post('/:key', async (req, res) => {
     default:
       break
   }
-  addBehavior(req, {
-    module: 'people',
-    msg: `导入人员名单 用户:${logAccount}`,
-    data: {
-      account: logAccount,
-    },
-  })
   res.success()
 }, {
   needLogin: true,
