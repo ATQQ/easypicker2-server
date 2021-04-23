@@ -99,7 +99,7 @@ export default class FW extends Router {
     }
 
     public listen(port = PORT, hostname = HOSTNAME, callback?: () => void): void {
-      console.log(this._routes)
+      // console.log(this._routes)
       this._server.listen(port, hostname, callback)
     }
 }
