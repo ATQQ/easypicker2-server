@@ -1,8 +1,8 @@
 // mongoDb
 // 日志
-export type LogType = 'request' | 'behavior' | 'error'
+export type LogType = 'request' | 'behavior' | 'error' | 'pv'
 
-export type LogData = LogRequestData | LogBehaviorData | any
+export type LogData = LogRequestData | LogBehaviorData | PvData |any
 export interface Log {
     id?: string,
     type?: LogType,
@@ -56,4 +56,14 @@ export interface LogErrorData{
     req: LogRequestData,
     msg:string
     stack:any
+}
+
+export interface PvData{
+    userAgent: string
+    refer: string
+    ip: string
+    /**
+     * 页面路径
+     */
+    path: string
 }

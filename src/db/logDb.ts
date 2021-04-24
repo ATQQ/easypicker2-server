@@ -4,7 +4,7 @@ import { getUniqueKey } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
 import { ObjectId } from 'bson'
 import {
-  Log, LogType, LogData, LogRequestData, LogBehaviorData, LogErrorData,
+  Log, LogType, LogData, LogRequestData, LogBehaviorData, LogErrorData, PvData,
 } from './model/log'
 
 function getLogData(type: LogType, data: LogData): Log {
@@ -120,6 +120,24 @@ export async function addErrorLog(req: FWRequest, msg: string, stack:any = {}) {
   }
   insertCollection('log', getLogData('error', data))
 }
+
+/**
+ * 记录页面访问日志
+ */
+export function addPvLog(req: FWRequest, path:string) {
+  const { headers } = req
+  const userAgent = headers['user-agent']
+  const refer = headers.referer
+  const ip = getClientIp(req)
+  const data: PvData = {
+    userAgent,
+    refer,
+    ip,
+    path,
+  }
+  insertCollection('log', getLogData('pv', data))
+}
+
 export function getClientIp(req: FWRequest): string {
   return (req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress) as string
 }
@@ -158,5 +176,27 @@ export function findLogReserve(q:Log) {
   return mongoDbQuery<Log[]>((db, resolve) => {
     db.collection<Log>('log').find(q).sort({ $natural: -1 }).toArray()
       .then(resolve)
+  })
+}
+
+export function findPvLogWithRange(start:Date, end?:Date) {
+  if (end) {
+    return mongoDbQuery<Log[]>((db, resolve) => {
+      db.collection<Log>('log').find({
+        type: 'pv',
+        _id: {
+          $gt: new ObjectId(timeToObjId(start)),
+          $lt: new ObjectId(timeToObjId(end)),
+        },
+      }).toArray().then(resolve)
+    })
+  }
+  return mongoDbQuery<Log[]>((db, resolve) => {
+    db.collection<Log>('log').find({
+      type: 'pv',
+      _id: {
+        $gt: new ObjectId(timeToObjId(start)),
+      },
+    }).toArray().then(resolve)
   })
 }

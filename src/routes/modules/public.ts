@@ -4,10 +4,13 @@ import { UserError } from '@/constants/errorMsg'
 import { randomNumStr } from '@/utils/randUtil'
 import { setRedisValue } from '@/db/redisDb'
 import { sendMessage } from '@/utils/tencent'
-import { addBehavior } from '@/db/logDb'
+import { addBehavior, addPvLog } from '@/db/logDb'
 
 const router = new Router('public')
 
+/**
+ * 获取验证码
+ */
 router.get('code', (req, res) => {
   const { phone } = req.query
   // 手机号不正确,直接返回
@@ -40,4 +43,12 @@ router.get('code', (req, res) => {
   res.success()
 })
 
+/**
+ * 记录页面访问日志
+ */
+router.post('report/pv', (req, res) => {
+  const { path } = req.body
+  addPvLog(req, path)
+  res.success()
+})
 export default router

@@ -1,6 +1,10 @@
 import { selectFiles } from '@/db/fileDb'
-import { findLogCount, findLogReserve, findLogWithTimeRange } from '@/db/logDb'
-import { LogBehaviorData, LogErrorData, LogRequestData } from '@/db/model/log'
+import {
+  findLogCount, findLogReserve, findLogWithTimeRange, findPvLogWithRange,
+} from '@/db/logDb'
+import {
+  LogBehaviorData, LogErrorData, LogRequestData, PvData,
+} from '@/db/model/log'
 import { USER_POWER } from '@/db/model/user'
 import { selectAllUser } from '@/db/userDb'
 import Router from '@/lib/Router'
@@ -22,6 +26,15 @@ router.get('count', async (req, res) => {
 
   const logCount = await findLogCount({})
   const logRecent = await findLogWithTimeRange(nowDate)
+
+  // 总
+  const pvList = await findLogReserve({
+    type: 'pv',
+  })
+  const uv = new Set(pvList.map((pv) => pv.data.ip)).size
+  // 当日
+  const todayPv = await findPvLogWithRange(nowDate)
+  const todayUv = new Set(todayPv.map((pv) => pv.data.ip)).size
   res.success({
     user: {
       sum: users.length,
@@ -34,6 +47,16 @@ router.get('count', async (req, res) => {
     log: {
       sum: logCount,
       recent: logRecent.length,
+    },
+    pv: {
+      today: {
+        sum: todayPv.length,
+        uv: todayUv,
+      },
+      all: {
+        sum: pvList.length,
+        uv,
+      },
     },
   })
 }, {
@@ -69,7 +92,19 @@ router.get('log', async (req, res) => {
         ip: (d && d.req && d.req.ip) || '未知',
       }
     }
+
+    if (type === 'pv') {
+      const d = data as PvData
+
+      return {
+        date,
+        type,
+        ip: d.ip,
+        msg: `${d.path}`,
+      }
+    }
     const d = data as LogErrorData
+
     // 默认是错误
     return {
       date,
