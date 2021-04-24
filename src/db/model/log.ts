@@ -55,4 +55,5 @@ export interface LogBehaviorData {
 export interface LogErrorData{
     req: LogRequestData,
     msg:string
+    stack:any
 }

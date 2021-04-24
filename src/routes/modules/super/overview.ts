@@ -65,7 +65,7 @@ router.get('log', async (req, res) => {
         date,
         type,
         msg: d.info.msg,
-        ip: d.req.ip,
+        ip: (d && d.req && d.req.ip) || '未知',
       }
     }
     const d = data as LogErrorData
@@ -74,7 +74,7 @@ router.get('log', async (req, res) => {
     return {
       date,
       type,
-      ip: d.req.ip,
+      ip: (d && d.req && d.req.ip) || '未知',
       msg: d.msg,
     }
   })

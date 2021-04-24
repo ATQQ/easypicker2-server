@@ -86,7 +86,7 @@ export async function addBehavior(req: FWRequest, info: LogBehaviorData.Info) {
 /**
  * 记录服务端错误日志
  */
-export async function addErrorLog(req: FWRequest, msg: string) {
+export async function addErrorLog(req: FWRequest, msg: string, stack:any = {}) {
   const {
     query = {}, params = {}, method, url,
   } = req
@@ -116,6 +116,7 @@ export async function addErrorLog(req: FWRequest, msg: string) {
       userId,
     },
     msg,
+    stack,
   }
   insertCollection('log', getLogData('error', data))
 }
