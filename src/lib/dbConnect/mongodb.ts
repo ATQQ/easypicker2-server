@@ -47,7 +47,7 @@ export function query<T>(callback: Callback<T>): Promise<T> {
   return p
 }
 
-const mongoDbQuery = query
+export const mongoDbQuery = query
 export function updateCollection<T>(collection: string, query: FilterQuery<T>, data: T, many = false): Promise<UpdateWriteOpResult> {
   return mongoDbQuery<UpdateWriteOpResult>((db, resolve) => {
     if (many) {

@@ -31,3 +31,11 @@ export function updateUser(options: User, q: User): Promise<OkPacket> {
   const { sql, params } = updateTableByModel('user', options, q)
   return query<OkPacket>(sql, ...params)
 }
+
+export function selectAllUser(columns:string[]): Promise<User[]> {
+  const { sql, params } = selectTableByModel('user', {
+    data: {},
+    columns,
+  })
+  return query<User[]>(sql, ...params)
+}

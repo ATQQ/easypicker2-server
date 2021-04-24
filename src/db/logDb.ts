@@ -1,7 +1,8 @@
-import { insertCollection } from '@/lib/dbConnect/mongodb'
+import { findCollection, insertCollection, mongoDbQuery } from '@/lib/dbConnect/mongodb'
 import { FWRequest } from '@/lib/server/types'
 import { getUniqueKey } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
+import { ObjectId } from 'bson'
 import {
   Log, LogType, LogData, LogRequestData, LogBehaviorData, LogErrorData,
 } from './model/log'
@@ -120,4 +121,41 @@ export async function addErrorLog(req: FWRequest, msg: string) {
 }
 export function getClientIp(req: FWRequest): string {
   return (req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress) as string
+}
+
+function timeToObjId(d:Date) {
+  const s = d.getTime() / 1000 // 转换成秒数
+  return `${s.toString(16)}0000000000000000` // 转换成16进制的字符串，再加补齐16个0
+}
+
+export function findLogCount(q:Log) {
+  return mongoDbQuery<number>((db, resolve) => {
+    db.collection<Log>('log').count(q).then(resolve)
+  })
+}
+export function findLogWithTimeRange(start:Date, end?:Date) {
+  if (end) {
+    return mongoDbQuery<Log[]>((db, resolve) => {
+      db.collection<Log>('log').find({
+        _id: {
+          $gt: new ObjectId(timeToObjId(start)),
+          $lt: new ObjectId(timeToObjId(end)),
+        },
+      }).toArray().then(resolve)
+    })
+  }
+  return mongoDbQuery<Log[]>((db, resolve) => {
+    db.collection<Log>('log').find({
+      _id: {
+        $gt: new ObjectId(timeToObjId(start)),
+      },
+    }).toArray().then(resolve)
+  })
+}
+
+export function findLogReserve(q:Log) {
+  return mongoDbQuery<Log[]>((db, resolve) => {
+    db.collection<Log>('log').find(q).sort({ $natural: -1 }).toArray()
+      .then(resolve)
+  })
 }

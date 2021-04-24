@@ -4,9 +4,9 @@ export type LogType = 'request' | 'behavior' | 'error'
 
 export type LogData = LogRequestData | LogBehaviorData | any
 export interface Log {
-    id: string,
-    type: LogType,
-    data: LogData
+    id?: string,
+    type?: LogType,
+    data?: LogData
 }
 
 export interface LogRequestData {

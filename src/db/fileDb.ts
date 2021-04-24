@@ -10,9 +10,10 @@ export function insertFile(file: File) {
   return query<OkPacket>(sql, ...params)
 }
 
-export function selectFiles(options: File) {
+export function selectFiles(options: File, columns:string[] = []) {
   const { sql, params } = selectTableByModel('files', {
     data: options,
+    columns,
   })
   return query<File[]>(sql, ...params)
 }
