@@ -117,5 +117,8 @@ router.get('log', async (req, res) => {
   res.success({
     logs: result,
   })
+}, {
+  userPower: USER_POWER.SUPER,
+  needLogin: true,
 })
 export default router
