@@ -1,4 +1,5 @@
-import { addBehavior } from '@/db/logDb'
+import { addBehavior, getClientIp } from '@/db/logDb'
+import { selectTasks } from '@/db/taskDb'
 import { selectTaskInfo, updateTaskInfo } from '@/db/taskInfoDb'
 import Router from '@/lib/Router'
 import { deleteFiles } from '@/utils/qiniuUtil'
@@ -22,13 +23,23 @@ router.get('/:key', async (req, res) => {
   if (ddl) {
     ddl = new Date(ddl.getTime() + 8 * 60 * 60 * 1000)
   }
-  addBehavior(req, {
-    module: 'taskInfo',
-    msg: `获取任务属性 任务${key} 成功`,
-    data: {
-      key,
-    },
+  const logIp = getClientIp(req)
+  selectTasks({
+    k: key,
+  }).then(([task]) => {
+    if (task) {
+      addBehavior(req, {
+        module: 'taskInfo',
+        msg: `获取任务属性 ip:${logIp} 任务:${task.name} 成功`,
+        data: {
+          key,
+          name: task.name,
+          ip: logIp,
+        },
+      })
+    }
   })
+
   res.success(
     {
       template, rewrite, format, info, share, ddl, people,
@@ -45,7 +56,7 @@ router.put('/:key', async (req, res) => {
   } = req.body
   let { share } = req.body
   const { key } = req.params
-  const { id: userId } = await getUserInfo(req)
+  const { id: userId, account: logAccount } = await getUserInfo(req)
 
   if (share !== undefined) {
     share = getUniqueKey()
@@ -54,16 +65,37 @@ router.put('/:key', async (req, res) => {
     // 删除旧模板文件
     deleteFiles(`easypicker2/${key}_template/`)
   }
-  await updateTaskInfo({
+  const options = {
     template, rewrite, format, info, ddl, shareKey: share, limitPeople: people,
-  }, { taskKey: key, userId })
-  addBehavior(req, {
-    module: 'taskInfo',
-    msg: `更新任务属性 任务${key} 成功`,
-    data: {
-      key,
-    },
+  }
+  await updateTaskInfo(options, { taskKey: key, userId })
+
+  // 日志
+  selectTasks({
+    k: key,
+  }).then(([task]) => {
+    const [ks] = Object.keys(options).filter((o) => options[o] !== undefined)
+    const bType = {
+      template: '修改模板',
+      rewrite: '设置自动重命名',
+      info: '设置提交必填信息',
+      ddl: '设置截止日期',
+      limitPeople: '限制提交人员',
+    }
+
+    if (task) {
+      addBehavior(req, {
+        module: 'taskInfo',
+        msg: `更新任务属性 ${bType[ks]} 用户:${logAccount} 任务:${task.name} 成功`,
+        data: {
+          key,
+          name: task.name,
+          account: logAccount,
+        },
+      })
+    }
   })
+
   res.success()
 }, {
   needLogin: true,

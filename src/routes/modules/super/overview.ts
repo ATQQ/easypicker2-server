@@ -61,21 +61,21 @@ router.get('log', async (req, res) => {
     if (type === 'behavior') {
       const d = data as LogBehaviorData
 
+      // TODO: 优化
       return {
         date,
         type,
-        msg: d.info.msg,
+        msg: (d && d.info && d.info.msg) || '未知',
         ip: (d && d.req && d.req.ip) || '未知',
       }
     }
     const d = data as LogErrorData
-
     // 默认是错误
     return {
       date,
       type,
       ip: (d && d.req && d.req.ip) || '未知',
-      msg: d.msg,
+      msg: (d && d.msg) || '未知',
     }
   })
 
