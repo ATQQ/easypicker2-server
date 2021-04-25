@@ -48,7 +48,7 @@ export interface User {
     /**
      * 解封时间
      */
-    open_Time?: Date
+    openTime?: Date
     login_count?: number
     loginCount?: number
 }

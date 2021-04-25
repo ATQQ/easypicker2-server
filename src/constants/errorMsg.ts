@@ -10,6 +10,8 @@ export const UserError = {
     exist: codeMsg(1001, 'Account already exist'),
     notExist: codeMsg(1005, 'Account not exist'),
     fault: codeMsg(1007, 'Account is fault'),
+    freeze: codeMsg(1009, 'Account is freeze'),
+    ban: codeMsg(1010, 'Account is ban'),
   },
   code: {
     fault: codeMsg(1003, 'Error code'),

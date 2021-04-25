@@ -7,7 +7,7 @@ import {
 } from '@/db/userDb'
 import Router from '@/lib/Router'
 import { rAccount, rMobilePhone, rPassword } from '@/utils/regExp'
-import { encryption } from '@/utils/stringUtil'
+import { encryption, formatDate } from '@/utils/stringUtil'
 import tokenUtil from '@/utils/tokenUtil'
 import { getUserInfo } from '@/utils/userUtil'
 
@@ -102,6 +102,7 @@ router.post('register', async (req, res) => {
   insertUser({
     password: encryption(pwd),
     account,
+    loginCount: 0,
     ...(bindPhone ? { phone } : {}),
   }).then(() => {
     res.success()
@@ -183,12 +184,39 @@ router.post('login', async (req, res) => {
     res.failWithError(UserError.pwd.fault)
     return
   }
-  // TODO:状态判断
   if (user.status === USER_STATUS.BAN) {
-    console.log('判断状态')
+    addBehavior(req, {
+      module: 'user',
+      msg: `用户登录失败 账号:${account} 已被封禁`,
+      data: {
+        account,
+      },
+    })
+    res.failWithError(UserError.account.ban)
+    return
   }
   if (user.status === USER_STATUS.FREEZE) {
-    console.log('冻结')
+    const openDate = new Date(user.open_time)
+    if (openDate.getTime() > Date.now()) {
+      addBehavior(req, {
+        module: 'user',
+        msg: `用户登录失败 账号:${account} 已被冻结 解冻时间${formatDate(openDate)}`,
+        data: {
+          account,
+          openDate,
+        },
+      })
+      res.fail(UserError.account.freeze.code, UserError.account.freeze.msg, {
+        openTime: user.open_time,
+      })
+      return
+    }
+    updateUser({
+      status: USER_STATUS.NORMAL,
+      open_time: null,
+    }, {
+      id: user.id,
+    })
   }
   await updateUser({
     loginCount: user.login_count + 1,

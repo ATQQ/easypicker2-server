@@ -1,3 +1,5 @@
+console.time('server-start')
+
 // 读取配置的环境变量
 import dotenv from 'dotenv'
 
@@ -25,7 +27,6 @@ app.beforeRouteMatchInterceptor = beforeRouteMatchInterceptor
 // 注册路由
 app.addRoutes(routes)
 
-console.time('server-start')
 app.listen(serverConfig.port, serverConfig.hostname, () => {
   console.log('-----', new Date().toLocaleString(), '-----')
   if (process.env.NODE_ENV === 'development') {

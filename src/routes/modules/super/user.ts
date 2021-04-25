@@ -1,12 +1,6 @@
-import { selectFiles } from '@/db/fileDb'
-import {
-  findLogCount, findLogReserve, findLogWithTimeRange, findPvLogWithRange,
-} from '@/db/logDb'
-
-import { USER_POWER } from '@/db/model/user'
-import { selectAllUser } from '@/db/userDb'
+import { USER_POWER, USER_STATUS } from '@/db/model/user'
+import { selectAllUser, updateUser } from '@/db/userDb'
 import Router from '@/lib/Router'
-import { ObjectId } from 'bson'
 
 const router = new Router('super/user')
 
@@ -19,6 +13,27 @@ router.get('list', async (req, res) => {
       phone: u.phone && u.phone.slice(-4),
     })),
   })
+},
+{
+  userPower: USER_POWER.SUPER,
+  needLogin: true,
+})
+
+router.put('status', async (req, res) => {
+  const { id, status } = req.body
+  let { openTime } = req.body
+  if (status !== USER_STATUS.FREEZE) {
+    openTime = ''
+  } else {
+    openTime = new Date(new Date(openTime).getTime())
+  }
+  await updateUser({
+    status,
+    openTime,
+  }, {
+    id,
+  })
+  res.success()
 },
 {
   userPower: USER_POWER.SUPER,
