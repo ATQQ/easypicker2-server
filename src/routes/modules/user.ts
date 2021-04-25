@@ -99,13 +99,16 @@ router.post('register', async (req, res) => {
     },
   })
   // 不存在则加入
-  insertUser({
+  await insertUser({
     password: encryption(pwd),
     account,
     loginCount: 0,
     ...(bindPhone ? { phone } : {}),
-  }).then(() => {
-    res.success()
+  })
+  const [u] = await selectUserByAccount(account)
+  const token = tokenUtil.createToken(u)
+  res.success({
+    token,
   })
 })
 
