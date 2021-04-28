@@ -6,8 +6,9 @@ import {
   insertUser, selectUserByAccount, selectUserByPhone, updateUser,
 } from '@/db/userDb'
 import Router from '@/lib/Router'
+import { randomNumStr } from '@/utils/randUtil'
 import { rAccount, rMobilePhone, rPassword } from '@/utils/regExp'
-import { encryption, formatDate } from '@/utils/stringUtil'
+import { encryption, formatDate, getUniqueKey } from '@/utils/stringUtil'
 import tokenUtil from '@/utils/tokenUtil'
 import { getUserInfo } from '@/utils/userUtil'
 
@@ -247,7 +248,6 @@ router.post('login/code', async (req, res) => {
   const { code, phone } = req.body
 
   const logPhone = phone && phone.slice(-4)
-
   const v = await getRedisVal(`code-${phone}`)
   if (code !== v) {
     addBehavior(req, {
@@ -261,18 +261,28 @@ router.post('login/code', async (req, res) => {
     res.failWithError(UserError.code.fault)
     return
   }
-  const [user] = await selectUserByPhone(phone)
+  let [user] = await selectUserByPhone(phone)
 
   if (!user) {
     addBehavior(req, {
       module: 'user',
-      msg: `验证码登录 手机号:${logPhone} 不存在`,
+      msg: `验证码登录 手机号:${logPhone} 不存在 创建新用户`,
       data: {
         phone: logPhone,
       },
     })
-    res.failWithError(UserError.mobile.fault)
-    return
+    // 旧逻辑
+    // res.failWithError(UserError.mobile.fault)
+    // 不存在则直接创建
+    await insertUser({
+      // 随机生成一个谁也不知的密码,用户后续只能通过找回密码重置
+      password: encryption(randomNumStr(6) + getUniqueKey().slice(6)),
+      // 默认账号就为手机号
+      account: phone,
+      loginCount: 0,
+      phone,
+    });
+    ([user] = await selectUserByPhone(phone))
   }
   const token = tokenUtil.createToken(user)
   await updateUser({
