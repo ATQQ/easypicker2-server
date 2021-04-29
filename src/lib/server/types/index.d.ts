@@ -19,3 +19,4 @@ interface Route {
 type Method = 'get' | 'post' | 'put' | 'delete' | 'option'
 
 type Controller = (path: string, callback: Callback, options?: any) => void
+type BeforeRuntimeErrorInterceptor = (req: FWRequest, res: FWResponse, err:Error)=>void

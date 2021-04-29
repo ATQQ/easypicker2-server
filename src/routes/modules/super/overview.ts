@@ -84,7 +84,6 @@ router.get('log', async (req, res) => {
     if (type === 'behavior') {
       const d = data as LogBehaviorData
 
-      // TODO: 优化
       return {
         date,
         type,

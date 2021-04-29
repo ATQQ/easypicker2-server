@@ -1,7 +1,7 @@
 import http from 'http'
 // types
-import { addErrorLog } from '@/db/logDb'
 import {
+  BeforeRuntimeErrorInterceptor,
   FWRequest, FWResponse, Middleware, MiddlewarePosition,
 } from './types'
 
@@ -33,24 +33,32 @@ export default class FW extends Router {
       try {
         const p: any = middleware(req, res)
         if (p instanceof Promise) {
-          p.catch((error) => {
-            // TODO: 对外暴露一个beforeErrorInterceptor
-            res.fail(500, error.toString())
-            addErrorLog(req, error.toString(), error.stack)
+          p.catch(async (error) => {
+            if (this.beforeRuntimeErrorInterceptor) {
+              await this.beforeRuntimeErrorInterceptor(req, res, error)
+            }
+            if (!res.writableEnded) {
+              // TODO: 单独加个runtimeErrorInterceptor
+              res.fail(500, error.toString())
+            }
           })
           await p
         }
       } catch (error) {
+        if (this.beforeRuntimeErrorInterceptor) {
+          await this.beforeRuntimeErrorInterceptor(req, res, error)
+        }
         if (!res.writableEnded) {
-          // TODO: 对外暴露一个beforeErrorInterceptor
+          // TODO: 单独加个runtimeErrorInterceptor
           res.fail(500, error.toString())
-          addErrorLog(req, error.toString(), error.stack)
         }
       }
     }
   }
 
   public beforeRouteMatchInterceptor: Middleware
+
+  public beforeRuntimeErrorInterceptor:BeforeRuntimeErrorInterceptor
 
   public async _execBeforeRouteMatchInterceptor(req: FWRequest, res: FWResponse) {
     // 拦截器
@@ -59,11 +67,13 @@ export default class FW extends Router {
     }
   }
 
+  // TODO: beforeRouteCallback 分离
   constructor(afterRequestCallback?: Middleware, beforeRouteCallback?: Middleware) {
     super()
     // 初始化
     this._middleWares = []
     this.beforeRouteMatchInterceptor = null
+    this.beforeRuntimeErrorInterceptor = null
     // 通过各种中间件包装req与res
     // 通过中间件对请求进行处理
     if (afterRequestCallback) {

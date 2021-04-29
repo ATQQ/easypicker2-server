@@ -17,13 +17,16 @@ import FW from './lib/server'
 import routes from './routes'
 
 // interceptor
-import { serverInterceptor, routeInterceptor, beforeRouteMatchInterceptor } from './middleware'
+import {
+  serverInterceptor, routeInterceptor, beforeRouteMatchInterceptor, beforeRuntimeErrorInterceptor,
+} from './middleware'
 
 const app = new FW(serverInterceptor, routeInterceptor)
 
 // 路由匹配前拦截，获取到的是包装后的req与res
 app.beforeRouteMatchInterceptor = beforeRouteMatchInterceptor
 
+app.beforeRuntimeErrorInterceptor = beforeRuntimeErrorInterceptor
 // 注册路由
 app.addRoutes(routes)
 
