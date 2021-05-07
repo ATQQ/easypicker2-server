@@ -149,7 +149,7 @@ function timeToObjId(d:Date) {
 
 export function findLogCount(q:Log) {
   return mongoDbQuery<number>((db, resolve) => {
-    db.collection<Log>('log').count(q).then(resolve)
+    db.collection<Log>('log').countDocuments(q).then(resolve)
   })
 }
 export function findLogWithTimeRange(start:Date, end?:Date) {
