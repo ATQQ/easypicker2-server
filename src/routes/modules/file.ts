@@ -455,4 +455,43 @@ router.post('compress/down', async (req, res) => {
 }, {
   needLogin: true,
 })
+
+/**
+ * 查询是否提交
+ */
+router.post('submit/people', async (req, res) => {
+  const { taskKey, info } = req.body
+  const files = await selectFiles({
+    taskKey,
+    info: JSON.stringify(info),
+  });
+  (async () => {
+    const [task] = await selectTasks({
+      k: taskKey,
+    })
+    if (task) {
+      addBehavior(req, {
+        module: 'file',
+        msg: `查询是否提交过文件: 任务:${task.name} 信息:${info.map((v) => v.value).join('-')}`,
+        data: {
+          taskKey,
+          taskName: task.name,
+          info,
+        },
+      })
+    }
+    addBehavior(req, {
+      module: 'file',
+      msg: '',
+      data: {
+        taskKey,
+      },
+    })
+  })()
+
+  res.success({
+    isSubmit: files.length > 0,
+    txt: '',
+  })
+})
 export default router
