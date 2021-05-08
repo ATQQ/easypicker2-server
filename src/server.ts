@@ -21,12 +21,12 @@ import {
   serverInterceptor, routeInterceptor, beforeRouteMatchInterceptor, beforeRuntimeErrorInterceptor,
 } from './middleware'
 
-const app = new FW(serverInterceptor, routeInterceptor)
+const app = new FW(serverInterceptor, {
+  beforeMathRoute: beforeRouteMatchInterceptor,
+  beforeRunRoute: routeInterceptor,
+  beforeReturnRuntimeError: beforeRuntimeErrorInterceptor,
+})
 
-// 路由匹配前拦截，获取到的是包装后的req与res
-app.beforeRouteMatchInterceptor = beforeRouteMatchInterceptor
-
-app.beforeRuntimeErrorInterceptor = beforeRuntimeErrorInterceptor
 // 注册路由
 app.addRoutes(routes)
 
