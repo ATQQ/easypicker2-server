@@ -64,11 +64,22 @@ router.get('count', async (req, res) => {
   needLogin: true,
 })
 
+// 做一层缓存
+let cacheLogs:any = null
 /**
  * 获取所有日志(只返回关键字)
  */
 router.get('log', async (req, res) => {
-  const logs = await findLogReserve({})
+  let logs = []
+  if (cacheLogs) {
+    logs = cacheLogs
+    findLogReserve({}).then((data) => {
+      cacheLogs = data
+    })
+  } else {
+    logs = await findLogReserve({})
+    cacheLogs = logs
+  }
   const result = logs.map((log) => {
     const { type, data, id } = log
     const date = new ObjectId(id).getTimestamp()

@@ -8,7 +8,8 @@ import { selectPeople, updatePeople } from '@/db/peopleDb'
 import { selectTasks } from '@/db/taskDb'
 import Router from '@/lib/Router'
 import {
-  batchDeleteFiles, batchFileStatus, checkFopTaskStatus, createDownloadUrl, deleteObjByKey, getUploadToken, judgeFileIsExist, makeZipWithKeys,
+  batchDeleteFiles, batchFileStatus, checkFopTaskStatus, createDownloadUrl,
+  deleteObjByKey, getUploadToken, judgeFileIsExist, makeZipWithKeys,
 } from '@/utils/qiniuUtil'
 import { getUniqueKey } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
