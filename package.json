@@ -4,7 +4,7 @@
   "description": "",
   "main": "src/server.ts",
   "scripts": {
-    "dev": "export NODE_ENV=development && tsnd -P ./tsconfig.json --respawn ./src/server.ts",
+    "dev": "cross-env NODE_ENV=development tsnd -P ./tsconfig.json --respawn ./src/server.ts",
     "start": "ts-node -P ./tsconfig.json  ./src/server.ts",
     "lint": "eslint --fix ./src",
     "test": "jest --verbose ./_tests_",
@@ -15,6 +15,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "cross-env": "^7.0.3",
     "dotenv": "^8.2.0",
     "formidable": "^1.2.2",
     "module-alias": "^2.2.2",
