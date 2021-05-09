@@ -6,7 +6,13 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 // 编译后的绝对路径映射插件
-import 'module-alias/register'
+// import 'module-alias/register'
+import moduleAlias from 'module-alias'
+
+moduleAlias.addAliases({
+  '@': __dirname,
+})
+
 // 配置文件
 import { serverConfig } from '@/config'
 
