@@ -2,7 +2,7 @@ import nodeUrl from 'url'
 import qs from 'query-string'
 import { ServerOptions } from 'http'
 import {
-  FWRequest, FWResponse, Route, Middleware,
+  FWRequest, FWResponse, Route,
 } from '../types'
 
 export interface SuperRequest {

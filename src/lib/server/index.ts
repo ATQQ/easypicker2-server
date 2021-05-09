@@ -111,10 +111,7 @@ export default class FW extends Router {
     // 执行路由中的逻辑
     this._use(runRoute)
 
-    this._server = http.createServer(async (req: FWRequest, res: FWResponse) => {
-      // default config
-      this._execMiddleware(req, res)
-    })
+    this._server = http.createServer(this.callback())
   }
 
   /**
@@ -126,5 +123,12 @@ export default class FW extends Router {
 
   public listen(port = PORT, hostname = HOSTNAME, callback?: () => void): void {
     this._server.listen(port, hostname, callback)
+  }
+
+  public callback() {
+    return async (req: FWRequest, res: FWResponse) => {
+      // default config
+      this._execMiddleware(req, res)
+    }
   }
 }

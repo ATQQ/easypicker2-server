@@ -9,7 +9,8 @@
     "lint": "eslint --fix ./src",
     "test": "jest --verbose ./_tests_",
     "deploy": "bash ./build/deploy.sh",
-    "compress": "bash ./build/compress.sh"
+    "compress": "bash ./build/compress.sh",
+    "build": "bash build/build.sh"
   },
   "keywords": [],
   "author": "",
