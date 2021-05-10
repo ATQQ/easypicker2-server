@@ -26,7 +26,7 @@ inputs:
   isAutoCiDeploy: false
   functionConf:
     eip: false
-    timeout: 3
+    timeout: 10
     memorySize: 128
     environment:
       variables:
