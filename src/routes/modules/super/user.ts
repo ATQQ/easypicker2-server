@@ -10,7 +10,7 @@ router.get('list', async (req, res) => {
   res.success({
     list: users.map((u) => ({
       ...u,
-      phone: u.phone && u.phone.slice(-4),
+      phone: u?.phone?.slice(-4),
     })),
   })
 },

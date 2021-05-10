@@ -98,8 +98,8 @@ router.get('log', async (req, res) => {
       return {
         date,
         type,
-        msg: (d && d.info && d.info.msg) || '未知',
-        ip: (d && d.req && d.req.ip) || '未知',
+        msg: (d?.info?.msg) || '未知',
+        ip: (d?.req?.ip) || '未知',
       }
     }
 
@@ -119,8 +119,8 @@ router.get('log', async (req, res) => {
     return {
       date,
       type,
-      ip: (d && d.req && d.req.ip) || '未知',
-      msg: (d && d.msg) || '未知',
+      ip: (d?.req?.ip) || '未知',
+      msg: (d?.msg) || '未知',
     }
   })
 
