@@ -247,7 +247,7 @@ router.post('login', async (req, res) => {
 router.post('login/code', async (req, res) => {
   const { code, phone } = req.body
 
-  const logPhone = phone && phone.slice(-4)
+  const logPhone = phone?.slice(-4)
   const v = await getRedisVal(`code-${phone}`)
   if (code !== v) {
     addBehavior(req, {
@@ -311,7 +311,7 @@ router.post('login/code', async (req, res) => {
 router.put('password', async (req, res) => {
   const { code, phone, pwd } = req.body
 
-  const logPhone = phone && phone.slice(-4)
+  const logPhone = phone?.slice(-4)
   const v = await getRedisVal(`code-${phone}`)
   if (code !== v) {
     addBehavior(req, {

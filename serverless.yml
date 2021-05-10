@@ -1,0 +1,36 @@
+org: '1256505457'
+app: easypicker2-prod
+stage: prod
+component: koa
+name: koa-ndMVznNfU
+inputs:
+  src:
+    src: ./
+    exclude:
+      - .env
+      - .env.local
+      - docs
+      - build
+      - _tests_
+      - .github
+      - src
+  region: ap-guangzhou
+  runtime: Nodejs10.15
+  apigatewayConf:
+    protocols:
+      - http
+      - https
+    environment: release
+    serviceTimeout: 60
+    autoCreateDns: false
+  isAutoCiDeploy: false
+  functionConf:
+    eip: false
+    timeout: 10
+    memorySize: 128
+    environment:
+      variables:
+        NODE_ENV: production
+  layers:
+    - name: '${output:${stage}:${app}:easypicker2-prod-layer.name}'
+      version: '${output:${stage}:${app}:easypicker2-prod-layer.version}'

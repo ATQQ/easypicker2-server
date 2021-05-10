@@ -5,16 +5,20 @@
   "main": "src/server.ts",
   "scripts": {
     "dev": "cross-env NODE_ENV=development tsnd -P ./tsconfig.json --respawn ./src/server.ts",
-    "start": "ts-node -P ./tsconfig.json  ./src/server.ts",
+    "start": "cross-env NODE_ENV=production ts-node -P ./tsconfig.json  ./src/server.ts",
     "lint": "eslint --fix ./src",
     "test": "jest --verbose ./_tests_",
     "deploy": "bash ./build/deploy.sh",
-    "compress": "bash ./build/compress.sh"
+    "compress": "bash ./build/compress.sh",
+    "build": "bash build/build.sh",
+    "serve": "cross-env NODE_ENV=production node ./dist/server.js",
+    "sls:deploy": "sls deploy"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "core-js": "^3.12.1",
     "cross-env": "^7.0.3",
     "dotenv": "^8.2.0",
     "formidable": "^1.2.2",

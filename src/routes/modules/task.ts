@@ -114,7 +114,7 @@ router.delete('/:key', async (req, res) => {
   }
 
   // TODO: 待定任务删除了,异步删除任务下的所有已经提交的文件
-  const logTaskName = task && task.name
+  const logTaskName = task?.name
   addBehavior(req, {
     module: 'task',
     msg: `删除指定任务 用户:${logAccount} 任务名:${logTaskName}`,

@@ -1,14 +1,19 @@
+// polyfill
+import 'core-js/es/array'
+
 console.time('server-start')
+// 从.env加载环境变量
+import loadEnv from './utils/loadEnv'
 
-// 读取配置的环境变量
-import dotenv from 'dotenv'
+loadEnv()
 
-dotenv.config()
+// 路径映射
+import loadModuleAlias from './utils/moduleAlias'
 
-// 编译后的绝对路径映射插件
-import 'module-alias/register'
+loadModuleAlias()
+
 // 配置文件
-import { serverConfig } from '@/config'
+import { serverConfig } from './config'
 
 // diy module 自建模块
 import FW from './lib/server'
@@ -38,3 +43,5 @@ app.listen(serverConfig.port, serverConfig.hostname, () => {
   console.timeEnd('server-start')
   console.log('server start success', `http://${serverConfig.hostname}:${serverConfig.port}`)
 })
+
+module.exports = app

@@ -34,7 +34,7 @@ export async function addRequestLog(req: FWRequest) {
   const ip = getClientIp(req)
   const user = await getUserInfo(req)
   let userId = 0
-  if (user && user.id) {
+  if (user?.id) {
     userId = user.id
   }
   const data: LogRequestData = {
@@ -65,7 +65,7 @@ export async function addBehavior(req: FWRequest, info: LogBehaviorData.Info) {
   const ip = getClientIp(req)
   const user = await getUserInfo(req)
   let userId = 0
-  if (user && user.id) {
+  if (user?.id) {
     userId = user.id
   }
   const data: LogBehaviorData = {
@@ -100,7 +100,7 @@ export async function addErrorLog(req: FWRequest, msg: string, stack:any = {}) {
   const ip = getClientIp(req)
   const user = await getUserInfo(req)
   let userId = 0
-  if (user && user.id) {
+  if (user?.id) {
     userId = user.id
   }
   const data: LogErrorData = {
