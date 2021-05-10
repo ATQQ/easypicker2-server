@@ -11,7 +11,8 @@
     "deploy": "bash ./build/deploy.sh",
     "compress": "bash ./build/compress.sh",
     "build": "bash build/build.sh",
-    "serve":"node ./dist/server.js"
+    "serve":"cross-env NODE_ENV=production node ./dist/server.js",
+    "sls:deploy":"sls deploy"
   },
   "keywords": [],
   "author": "",
