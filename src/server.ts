@@ -1,3 +1,6 @@
+// polyfill
+import 'core-js/es/array'
+
 console.time('server-start')
 // 从.env加载环境变量
 import loadEnv from './utils/loadEnv'

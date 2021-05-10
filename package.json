@@ -11,13 +11,14 @@
     "deploy": "bash ./build/deploy.sh",
     "compress": "bash ./build/compress.sh",
     "build": "bash build/build.sh",
-    "serve":"cross-env NODE_ENV=production node ./dist/server.js",
-    "sls:deploy":"sls deploy"
+    "serve": "cross-env NODE_ENV=production node ./dist/server.js",
+    "sls:deploy": "sls deploy"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "core-js": "^3.12.1",
     "cross-env": "^7.0.3",
     "dotenv": "^8.2.0",
     "formidable": "^1.2.2",
