@@ -1,20 +1,16 @@
 console.time('server-start')
+// 从.env加载环境变量
+import loadEnv from './utils/loadEnv'
 
-// 读取配置的环境变量
-import dotenv from 'dotenv'
+loadEnv()
 
-dotenv.config()
+// 路径映射
+import loadModuleAlias from './utils/moduleAlias'
 
-// 编译后的绝对路径映射插件
-// import 'module-alias/register'
-import moduleAlias from 'module-alias'
-
-moduleAlias.addAliases({
-  '@': __dirname,
-})
+loadModuleAlias()
 
 // 配置文件
-import { serverConfig } from '@/config'
+import { serverConfig } from './config'
 
 // diy module 自建模块
 import FW from './lib/server'
