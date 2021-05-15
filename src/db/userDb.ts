@@ -1,7 +1,7 @@
 import { query } from '@/lib/dbConnect/mysql'
 import { insertTableByModel, selectTableByModel, updateTableByModel } from '@/utils/sqlUtil'
 import { OkPacket } from 'mysql'
-import { User } from './model/user'
+import { User, USER_STATUS } from './model/user'
 
 export function selectUserByAccount(account: string): Promise<User[]> {
   const { sql, params } = selectTableByModel('user', {
@@ -22,8 +22,10 @@ export function selectUserByPhone(phone: string): Promise<User[]> {
 }
 
 export function insertUser(options: User): Promise<OkPacket> {
-  const modal = { ...options }
-  const { sql, params } = insertTableByModel('user', modal)
+  const { sql, params } = insertTableByModel('user', {
+    status: USER_STATUS.NORMAL,
+    ...options,
+  })
   return query<OkPacket>(sql, ...params)
 }
 
