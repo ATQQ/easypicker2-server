@@ -2,7 +2,7 @@
 // 日志
 export type LogType = 'request' | 'behavior' | 'error' | 'pv'
 
-export type LogData = LogRequestData | LogBehaviorData | PvData |any
+export type LogData = LogRequestData | LogBehaviorData | PvData | LogErrorData | any
 export interface Log {
     id?: string,
     type?: LogType,

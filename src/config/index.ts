@@ -3,11 +3,6 @@ export const serverConfig = {
   hostname: 'localhost',
 }
 
-// // 判断环境
-// if (process.env.NODE_ENV && process.env.NODE_ENV !== 'development') {
-//     config = proConfig
-// }
-
 // 开发环境的测试数据库
 export const mysqlConfig = {
   host: process.env.MYSQL_DB_HOST,

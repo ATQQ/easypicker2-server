@@ -284,6 +284,43 @@ router.post('login/code', async (req, res) => {
     });
     ([user] = await selectUserByPhone(phone))
   }
+
+  const { account } = user
+  // 权限校验
+  if (user.status === USER_STATUS.BAN) {
+    addBehavior(req, {
+      module: 'user',
+      msg: `用户登录失败 账号:${account} 已被封禁`,
+      data: {
+        account,
+      },
+    })
+    res.failWithError(UserError.account.ban)
+    return
+  }
+  if (user.status === USER_STATUS.FREEZE) {
+    const openDate = new Date(user.open_time)
+    if (openDate.getTime() > Date.now()) {
+      addBehavior(req, {
+        module: 'user',
+        msg: `用户登录失败 账号:${account} 已被冻结 解冻时间${formatDate(openDate)}`,
+        data: {
+          account,
+          openDate,
+        },
+      })
+      res.fail(UserError.account.freeze.code, UserError.account.freeze.msg, {
+        openTime: user.open_time,
+      })
+      return
+    }
+    updateUser({
+      status: USER_STATUS.NORMAL,
+      open_time: null,
+    }, {
+      id: user.id,
+    })
+  }
   const token = tokenUtil.createToken(user)
   await updateUser({
     loginCount: user.login_count + 1,
@@ -363,6 +400,43 @@ router.put('password', async (req, res) => {
       phone: logPhone,
     },
   })
+
+  const { account } = user
+  // 权限校验
+  if (user.status === USER_STATUS.BAN) {
+    addBehavior(req, {
+      module: 'user',
+      msg: `用户登录失败 账号:${account} 已被封禁`,
+      data: {
+        account,
+      },
+    })
+    res.failWithError(UserError.account.ban)
+    return
+  }
+  if (user.status === USER_STATUS.FREEZE) {
+    const openDate = new Date(user.open_time)
+    if (openDate.getTime() > Date.now()) {
+      addBehavior(req, {
+        module: 'user',
+        msg: `用户登录失败 账号:${account} 已被冻结 解冻时间${formatDate(openDate)}`,
+        data: {
+          account,
+          openDate,
+        },
+      })
+      res.fail(UserError.account.freeze.code, UserError.account.freeze.msg, {
+        openTime: user.open_time,
+      })
+      return
+    }
+    updateUser({
+      status: USER_STATUS.NORMAL,
+      open_time: null,
+    }, {
+      id: user.id,
+    })
+  }
   const token = tokenUtil.createToken(user)
   res.success({
     token,
