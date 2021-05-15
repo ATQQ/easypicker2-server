@@ -1,4 +1,4 @@
-import { findCollection, insertCollection, mongoDbQuery } from '@/lib/dbConnect/mongodb'
+import { insertCollection, mongoDbQuery } from '@/lib/dbConnect/mongodb'
 import { FWRequest } from '@/lib/server/types'
 import { getUniqueKey } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'

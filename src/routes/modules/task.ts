@@ -113,7 +113,7 @@ router.delete('/:key', async (req, res) => {
     })
   }
 
-  // TODO: 待定任务删除了,异步删除任务下的所有已经提交的文件
+  // 不删除该任务下已经提交的文件
   const logTaskName = task?.name
   addBehavior(req, {
     module: 'task',

@@ -38,16 +38,12 @@ export function deleteFiles(prefix: string): void {
   const config = new qiniu.conf.Config()
   const bucketManager = new qiniu.rs.BucketManager(mac, config)
   bucketManager.listPrefix(bucket, {
-    // TODO:暂时这样写，后面改进
     limit: 1000,
     prefix,
   }, (err, respBody) => {
     const files: any[] = respBody.items
     // 使用批量删除接口
     batchDeleteFiles(files.map((f) => f.key))
-    // files.forEach(file => {
-    //     deleteObjByKey(file.key)
-    // })
   })
 }
 
@@ -123,7 +119,7 @@ export function makeZipByPrefixWithKeys(prefix: string, zipName: string, keys: s
     const bucketManager = new qiniu.rs.BucketManager(mac, config)
 
     bucketManager.listPrefix(bucket, {
-      // TODO:暂时这样写，后面改进
+      // TODO:改进
       limit: 1000,
       prefix,
     }, (err, respBody) => {
