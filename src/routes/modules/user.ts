@@ -35,7 +35,10 @@ router.post('register', async (req, res) => {
   }
   // 检查账号是否存在
   let [user] = await selectUserByAccount(account)
-
+  // 账号是手机号格式，那么该手机号不能已经是被注册的
+  if (rMobilePhone.test(account) && !user) {
+    ([user] = await selectUserByPhone(account))
+  }
   // 存在返回错误
   if (user) {
     addBehavior(req, {
@@ -77,7 +80,10 @@ router.post('register', async (req, res) => {
     }
     // 检查手机号是否存在
     ([user] = await selectUserByPhone(phone))
-
+    // 检查该手机号是否出现在账号中
+    if (!user) {
+      ([user] = await selectUserByAccount(phone))
+    }
     // 存在返回错误
     if (user) {
       addBehavior(req, {
@@ -118,24 +124,9 @@ router.post('register', async (req, res) => {
  */
 router.post('login', async (req, res) => {
   const { account = '', pwd = '' } = req.body
-  // const isAccount = rAccount.test(account)
-  // 兼容旧平台数据不校验账号格式
-  const isAccount = true
   const isPhone = rMobilePhone.test(account)
 
-  // 帐号不正确
-  if (!isAccount) {
-    addBehavior(req, {
-      module: 'user',
-      msg: `用户登录 账号:${account} 格式不正确`,
-      data: {
-        account,
-      },
-    })
-    res.failWithError(UserError.account.fault)
-    return
-  }
-  // 密码不正确
+  // 密码格式不正确
   if (!rPassword.test(pwd)) {
     addBehavior(req, {
       module: 'user',
@@ -148,9 +139,9 @@ router.post('login', async (req, res) => {
     return
   }
   let user: User
-  if (isAccount) {
-    ([user] = await selectUserByAccount(account))
-  }
+  // 注册时规避逻辑导致的问题
+  // 先当做账号
+  ([user] = await selectUserByAccount(account))
   // 手机号不正确
   if (!user && !isPhone) {
     addBehavior(req, {
@@ -271,8 +262,7 @@ router.post('login/code', async (req, res) => {
         phone: logPhone,
       },
     })
-    // 旧逻辑
-    // res.failWithError(UserError.mobile.fault)
+
     // 不存在则直接创建
     await insertUser({
       // 随机生成一个谁也不知的密码,用户后续只能通过找回密码重置

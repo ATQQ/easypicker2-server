@@ -1,5 +1,5 @@
 import {
-  Db, FilterQuery, InsertOneWriteOpResult, MongoClient, UpdateWriteOpResult, WithId,
+  Db, FilterQuery, InsertOneWriteOpResult, MongoClient, UpdateQuery, UpdateWriteOpResult, WithId,
 } from 'mongodb'
 import { mongodbConfig } from '@/config'
 
@@ -10,8 +10,8 @@ const {
 const url = `mongodb://${user}:${password}@${host}:${port}/${database}`
 
 interface Res {
-    db: MongoClient
-    Db: Db
+  db: MongoClient
+  Db: Db
 }
 
 export function getDBConnection(): Promise<Res> {
@@ -48,7 +48,7 @@ export function query<T>(callback: Callback<T>): Promise<T> {
 }
 
 export const mongoDbQuery = query
-export function updateCollection<T>(collection: string, query: FilterQuery<T>, data: T, many = false): Promise<UpdateWriteOpResult> {
+export function updateCollection<T>(collection: string, query: FilterQuery<T>, data: UpdateQuery<T>, many = false) {
   return mongoDbQuery<UpdateWriteOpResult>((db, resolve) => {
     if (many) {
       db.collection<T>(collection).updateMany(query, data).then(resolve)
@@ -58,7 +58,7 @@ export function updateCollection<T>(collection: string, query: FilterQuery<T>, d
   })
 }
 
-export function insertCollection<T>(collection: string, data: T[] | T, many = false): Promise<InsertOneWriteOpResult<WithId<T>>> {
+export function insertCollection<T>(collection: string, data: T[] | T, many = false) {
   return mongoDbQuery<InsertOneWriteOpResult<WithId<T>>>((db, resolve) => {
     if (many && Array.isArray(data)) {
       db.collection<T>(collection).insertMany(data as any).then(resolve as any)
