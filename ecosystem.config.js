@@ -3,7 +3,7 @@ module.exports = {
         name: 'easypicker2-test',
         script: 'src/server.ts',
         interpreter: './node_modules/.bin/ts-node',
-        watch: '.',
+        watch: ['src'],
         log_type: 'json',
         env: {
             NODE_ENV: 'development',

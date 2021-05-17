@@ -13,7 +13,7 @@ import { addBehavior, addErrorLog, getClientIp } from '@/db/logDb'
 import { selectTasks } from '@/db/taskDb'
 
 const router = new Router('people')
-const fileDir = path.resolve(__dirname, '../../upload')
+const fileDir = `${process.cwd()}/upload`
 
 // TODO: excel格式支持
 const supportType = ['text/plain']
@@ -21,9 +21,10 @@ const supportType = ['text/plain']
 /**
  * 上传人员名单
  */
-router.post('/menu', async (req, res) => {
-  const { filename, type, key } = req.body
+router.post('/:key', async (req, res) => {
+  const { filename, type } = req.body
   const { id: userId, account: logAccount } = await getUserInfo(req)
+  const { key } = req.params
   const filepath = path.join(fileDir, filename)
 
   if (!supportType.includes(type)) {
@@ -33,11 +34,13 @@ router.post('/menu', async (req, res) => {
   switch (type) {
     case 'text/plain':
       const fileContent = fs.readFileSync(filepath, { encoding: 'utf-8' })
-      // fs.rm(filepath, (err) => {
-      //   if (err) {
-      //     addErrorLog(req, err.message, err.stack)
-      //   }
-      // })
+      if (fs.rm) {
+        fs.rm(filepath, (err) => {
+          if (err) {
+            addErrorLog(req, err.message, err.stack)
+          }
+        })
+      }
       const defaultData: People = { taskKey: key, userId }
       // 文件中的名单
       const peopleData: string[] = fileContent.split('\n')
