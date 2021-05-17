@@ -59,7 +59,7 @@ router.post('info', async (req, res) => {
   }
   const { user_id } = task
   Object.assign<File, File>(data, { user_id, date: new Date() })
-  data.name = filenamify(data.name)
+  data.name = filenamify(data.name, { replacement: '_' })
   await insertFile(data)
   addBehavior(req, {
     module: 'file',
@@ -356,7 +356,7 @@ router.post('batch/down', async (req, res) => {
       length: keys.length,
     },
   })
-  makeZipWithKeys(keys, filenamify(zipName) ?? `${getUniqueKey()}`).then((v) => {
+  makeZipWithKeys(keys, filenamify(zipName, { replacement: '_' }) ?? `${getUniqueKey()}`).then((v) => {
     res.success({
       k: v,
     })
