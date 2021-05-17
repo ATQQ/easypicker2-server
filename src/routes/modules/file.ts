@@ -13,6 +13,7 @@ import {
 } from '@/utils/qiniuUtil'
 import { getUniqueKey } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
+import filenamify from 'filenamify'
 
 const router = new Router('file')
 
@@ -58,6 +59,7 @@ router.post('info', async (req, res) => {
   }
   const { user_id } = task
   Object.assign<File, File>(data, { user_id, date: new Date() })
+  data.name = filenamify(data.name)
   await insertFile(data)
   addBehavior(req, {
     module: 'file',
@@ -302,7 +304,7 @@ router.delete('withdraw', async (req, res) => {
  * 批量下载
  */
 router.post('batch/down', async (req, res) => {
-  const { ids } = req.body
+  const { ids, zipName } = req.body
   const { id: userId, account: logAccount } = await getUserInfo(req)
   const files = await selectFiles({
     id: ids,
@@ -354,7 +356,7 @@ router.post('batch/down', async (req, res) => {
       length: keys.length,
     },
   })
-  makeZipWithKeys(keys, `${getUniqueKey()}`).then((v) => {
+  makeZipWithKeys(keys, filenamify(zipName) ?? `${getUniqueKey()}`).then((v) => {
     res.success({
       k: v,
     })
