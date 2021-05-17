@@ -21,10 +21,9 @@ const supportType = ['text/plain']
 /**
  * 上传人员名单
  */
-router.post('/:key', async (req, res) => {
-  const { filename, type } = req.body
+router.post('/menu', async (req, res) => {
+  const { filename, type, key } = req.body
   const { id: userId, account: logAccount } = await getUserInfo(req)
-  const { key } = req.params
   const filepath = path.join(fileDir, filename)
 
   if (!supportType.includes(type)) {
