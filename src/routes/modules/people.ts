@@ -9,7 +9,7 @@ import {
   deletePeople, insertPeople, selectPeople, updatePeople,
 } from '@/db/peopleDb'
 import { selectFiles } from '@/db/fileDb'
-import { addBehavior, getClientIp } from '@/db/logDb'
+import { addBehavior, addErrorLog, getClientIp } from '@/db/logDb'
 import { selectTasks } from '@/db/taskDb'
 
 const router = new Router('people')
@@ -34,7 +34,11 @@ router.post('/:key', async (req, res) => {
   switch (type) {
     case 'text/plain':
       const fileContent = fs.readFileSync(filepath, { encoding: 'utf-8' })
-      fs.rmSync(filepath)
+      fs.rm(filepath, (err) => {
+        if (err) {
+          addErrorLog(req, err.message, err.stack)
+        }
+      })
       const defaultData: People = { taskKey: key, userId }
       // 文件中的名单
       const peopleData: string[] = fileContent.split('\n')
