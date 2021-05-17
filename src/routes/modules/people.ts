@@ -33,11 +33,11 @@ router.post('/menu', async (req, res) => {
   switch (type) {
     case 'text/plain':
       const fileContent = fs.readFileSync(filepath, { encoding: 'utf-8' })
-      fs.rm(filepath, (err) => {
-        if (err) {
-          addErrorLog(req, err.message, err.stack)
-        }
-      })
+      // fs.rm(filepath, (err) => {
+      //   if (err) {
+      //     addErrorLog(req, err.message, err.stack)
+      //   }
+      // })
       const defaultData: People = { taskKey: key, userId }
       // 文件中的名单
       const peopleData: string[] = fileContent.split('\n')
