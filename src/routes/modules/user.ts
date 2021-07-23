@@ -1,3 +1,5 @@
+import { Router } from 'flash-wolves'
+
 import { UserError } from '@/constants/errorMsg'
 import { addBehavior } from '@/db/logDb'
 import { User, USER_POWER, USER_STATUS } from '@/db/model/user'
@@ -5,7 +7,6 @@ import { expiredRedisKey, getRedisVal } from '@/db/redisDb'
 import {
   insertUser, selectUserByAccount, selectUserByPhone, updateUser,
 } from '@/db/userDb'
-import Router from '@/lib/Router'
 import { randomNumStr } from '@/utils/randUtil'
 import { rAccount, rMobilePhone, rPassword } from '@/utils/regExp'
 import { encryption, formatDate, getUniqueKey } from '@/utils/stringUtil'

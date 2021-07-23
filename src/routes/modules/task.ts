@@ -4,7 +4,8 @@ import { Task } from '@/db/model/task'
 import {
   deleteTask, insertTask, selectTasks, updateTask,
 } from '@/db/taskDb'
-import Router from '@/lib/Router'
+import { Router } from 'flash-wolves'
+
 import { getUserInfo } from '@/utils/userUtil'
 
 const router = new Router('task')

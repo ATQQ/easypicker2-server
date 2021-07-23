@@ -1,5 +1,5 @@
 import { insertCollection, mongoDbQuery } from '@/lib/dbConnect/mongodb'
-import { FWRequest } from '@/lib/server/types'
+import { FWRequest } from 'flash-wolves'
 import { getUniqueKey } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
 import { ObjectId } from 'mongodb'

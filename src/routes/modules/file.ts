@@ -6,7 +6,8 @@ import { addBehavior, getClientIp } from '@/db/logDb'
 import { File } from '@/db/model/file'
 import { selectPeople, updatePeople } from '@/db/peopleDb'
 import { selectTasks } from '@/db/taskDb'
-import Router from '@/lib/Router'
+import { Router } from 'flash-wolves'
+
 import {
   batchDeleteFiles, batchFileStatus, checkFopTaskStatus, createDownloadUrl,
   deleteObjByKey, getUploadToken, judgeFileIsExist, makeZipWithKeys,

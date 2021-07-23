@@ -1,6 +1,7 @@
 /* eslint-disable no-case-declarations */
 import { publicError } from '@/constants/errorMsg'
-import Router from '@/lib/Router'
+import { Router } from 'flash-wolves'
+
 import { getUserInfo } from '@/utils/userUtil'
 import path from 'path'
 import fs from 'fs'

@@ -1,7 +1,7 @@
 import { publicError } from '@/constants/errorMsg'
 import { addBehavior, getClientIp } from '@/db/logDb'
 import { USER_POWER } from '@/db/model/user'
-import { Middleware } from '@/lib/server/types'
+import { Middleware } from 'flash-wolves'
 import { getUserInfo } from '@/utils/userUtil'
 
 const interceptor: Middleware = async (req, res) => {

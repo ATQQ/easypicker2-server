@@ -1,7 +1,8 @@
 import { addBehavior, getClientIp } from '@/db/logDb'
 import { selectTasks } from '@/db/taskDb'
 import { selectTaskInfo, updateTaskInfo } from '@/db/taskInfoDb'
-import Router from '@/lib/Router'
+import { Router } from 'flash-wolves'
+
 import { deleteFiles } from '@/utils/qiniuUtil'
 import { getUniqueKey } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
