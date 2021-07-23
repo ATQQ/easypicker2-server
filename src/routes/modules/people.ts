@@ -43,7 +43,7 @@ router.post('/:key', async (req, res) => {
       }
       const defaultData: People = { taskKey: key, userId }
       // 文件中的名单
-      const peopleData: string[] = fileContent.split('\n')
+      const peopleData: string[] = fileContent.split('\n').map((v) => v.trim().replace(/[\r\n]/g, '')).filter((v) => v)
       // 已经存在的名单
       const alreadyPeople = (await selectPeople(defaultData)).map((v) => v.name)
 
