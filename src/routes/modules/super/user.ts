@@ -1,6 +1,7 @@
 import { USER_POWER, USER_STATUS } from '@/db/model/user'
 import { selectAllUser, updateUser } from '@/db/userDb'
-import Router from '@/lib/Router'
+import { Router } from 'flash-wolves'
+
 
 const router = new Router('super/user')
 

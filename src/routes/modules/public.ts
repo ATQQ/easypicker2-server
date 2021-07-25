@@ -1,4 +1,5 @@
-import Router from '@/lib/Router'
+import { Router } from 'flash-wolves'
+
 import { rMobilePhone } from '@/utils/regExp'
 import { UserError } from '@/constants/errorMsg'
 import { randomNumStr } from '@/utils/randUtil'

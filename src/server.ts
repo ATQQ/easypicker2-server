@@ -1,5 +1,7 @@
 // polyfill
 import 'core-js/es/array'
+// diy module 自建模块
+import { Fw } from 'flash-wolves'
 
 console.time('server-start')
 // 从.env加载环境变量
@@ -15,9 +17,6 @@ loadModuleAlias()
 // 配置文件
 import { serverConfig } from './config'
 
-// diy module 自建模块
-import FW from './lib/server'
-
 // routes
 import routes from './routes'
 
@@ -26,7 +25,7 @@ import {
   serverInterceptor, routeInterceptor, beforeRouteMatchInterceptor, beforeRuntimeErrorInterceptor,
 } from './middleware'
 
-const app = new FW(serverInterceptor, {
+const app = new Fw(serverInterceptor, {
   beforeMathRoute: beforeRouteMatchInterceptor,
   beforeRunRoute: routeInterceptor,
   beforeReturnRuntimeError: beforeRuntimeErrorInterceptor,

@@ -1,4 +1,4 @@
-import { FWRequest } from '@/lib/server/types'
+import { FWRequest } from 'flash-wolves'
 import tokenUtil from './tokenUtil'
 
 export async function getUserInfo(req: FWRequest) {

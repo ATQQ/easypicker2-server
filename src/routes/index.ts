@@ -1,5 +1,5 @@
 // types
-import { Route } from '@/lib/server/types'
+import { Route } from 'flash-wolves'
 
 // router
 import user from './modules/user'

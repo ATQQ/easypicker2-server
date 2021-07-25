@@ -1,4 +1,4 @@
-import { Middleware } from '@/lib/server/types'
+import { Middleware } from 'flash-wolves'
 import formidable from 'formidable'
 import path from 'path'
 

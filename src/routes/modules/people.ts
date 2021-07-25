@@ -1,6 +1,7 @@
 /* eslint-disable no-case-declarations */
 import { publicError } from '@/constants/errorMsg'
-import Router from '@/lib/Router'
+import { Router } from 'flash-wolves'
+
 import { getUserInfo } from '@/utils/userUtil'
 import path from 'path'
 import fs from 'fs'
@@ -43,7 +44,7 @@ router.post('/:key', async (req, res) => {
       }
       const defaultData: People = { taskKey: key, userId }
       // 文件中的名单
-      const peopleData: string[] = fileContent.split('\n')
+      const peopleData: string[] = fileContent.split('\n').map((v) => v.trim().replace(/[\r\n]/g, '')).filter((v) => v)
       // 已经存在的名单
       const alreadyPeople = (await selectPeople(defaultData)).map((v) => v.name)
 

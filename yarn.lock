@@ -2294,6 +2294,11 @@ find-up@^4.0.0, find-up@^4.1.0:
     locate-path "^5.0.0"
     path-exists "^4.0.0"
 
+flash-wolves@^0.0.4:
+  version "0.0.4"
+  resolved "https://registry.nlark.com/flash-wolves/download/flash-wolves-0.0.4.tgz#d79a5863c0e7410d1d48f19f79d01bda91832de5"
+  integrity sha1-15pYY8DnQQ0dSPGfedAb2pGDLeU=
+
 flat-cache@^3.0.4:
   version "3.0.4"
   resolved "https://registry.npm.taobao.org/flat-cache/download/flat-cache-3.0.4.tgz?cache=0&sync_timestamp=1604831825098&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fflat-cache%2Fdownload%2Fflat-cache-3.0.4.tgz#61b0338302b2fe9f957dcc32fc2a87f1c3048b11"
