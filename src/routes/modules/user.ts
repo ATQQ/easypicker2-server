@@ -227,7 +227,8 @@ router.post('login', async (req, res) => {
       account,
     },
   })
-  const token = tokenUtil.createToken(user)
+  // 7天有效时间
+  const token = tokenUtil.createToken(user, 60 * 60 * 24 * 7)
   res.success({
     token,
   })
