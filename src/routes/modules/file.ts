@@ -82,7 +82,6 @@ router.get('list', async (req, res) => {
     userId,
   })
   // 逆序
-  files.reverse()
   addBehavior(req, {
     module: 'file',
     msg: `获取文件列表 用户:${logAccount} 成功`,

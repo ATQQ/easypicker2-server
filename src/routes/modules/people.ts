@@ -35,8 +35,8 @@ router.post('/:key', async (req, res) => {
   switch (type) {
     case 'text/plain':
       const fileContent = fs.readFileSync(filepath, { encoding: 'utf-8' })
-      if (fs.rm) {
-        fs.rm(filepath, (err) => {
+      if (fs.unlink) {
+        fs.unlink(filepath, (err) => {
           if (err) {
             addErrorLog(req, err.message, err.stack)
           }
