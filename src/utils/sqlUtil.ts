@@ -1,12 +1,14 @@
 import { lowCamel2Underscore } from './stringUtil'
 
 interface SqlData {
-    sql: string
-    params: string[]
+  sql: string
+  params: string[]
 }
 interface Options {
-    data?: any,
-    columns?: string[]
+  data?: any,
+  columns?: string[],
+  limit?: number
+  order?: string
 }
 
 function removeUndefKey(obj) {
@@ -26,9 +28,10 @@ function isOkModel(model) {
   return isObject(model) && Object.keys(removeUndefKey(model)).length !== 0
 }
 
-export function selectTableByModel(table: string, options: Options = {}, limit = 0): SqlData {
-  const { columns = [] } = options
-  let { data = {} } = options
+export function selectTableByModel(table: string, options: Options = {}): SqlData {
+  const { columns = [], order = '' } = options
+  let { data = {}, limit } = options
+  limit = limit || 0
   if (!isObject(data)) return { sql: '', params: [] }
   data = removeUndefKey(data)
 
@@ -37,7 +40,7 @@ export function selectTableByModel(table: string, options: Options = {}, limit =
   const where = (keys.length > 0) ? `where ${keys.map((key) => createWhereSql(key, data[key])).join(' and ')}` : ''
   const values = keys.map((key) => data[key]).flat()
   const limitStr = (typeof limit === 'number' && limit > 0) ? `limit ${Math.ceil(limit)}` : ''
-  const sql = `select ${column} from ${table} ${where} ${limitStr}`.trim()
+  const sql = `select ${column} from ${table} ${where} ${order} ${limitStr}`.trim()
   return {
     sql,
     params: values,

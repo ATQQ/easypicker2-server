@@ -14,6 +14,8 @@ export function selectFiles(options: File, columns:string[] = []) {
   const { sql, params } = selectTableByModel('files', {
     data: options,
     columns,
+    // 逆序
+    order: 'order by id desc',
   })
   return query<File[]>(sql, ...params)
 }
@@ -21,7 +23,10 @@ export function selectFiles(options: File, columns:string[] = []) {
 export function selectFilesLimitCount(options: File, count: number) {
   const { sql, params } = selectTableByModel('files', {
     data: options,
-  }, count)
+    limit: count,
+    // 逆序
+    order: 'order by id desc',
+  })
   return query<File[]>(sql, ...params)
 }
 
