@@ -5,4 +5,8 @@
 
 ## MongoDB
 
-参考`/src/db/model/log.ts`中的类型定义
+参考下述文件中的类型定义
+* `/src/db/model`
+  * log.ts
+  * wish.ts
+  * action.ts

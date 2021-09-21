@@ -444,4 +444,9 @@ router.get('power/super', async (req, res) => {
 }, {
   needLogin: true,
 })
+
+router.get('login', async (req, res) => {
+  const user = await getUserInfo(req)
+  res.success(!!user)
+})
 export default router
