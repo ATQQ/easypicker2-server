@@ -6,10 +6,10 @@ name: prod-CI
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
   push:
-    branches: [ master ]
+    branches: [ release ]
   pull_request:
     types: [ assigned ]
-    branches: [ master ]
+    branches: [ release ]
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -43,7 +43,7 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.ACCESS_TOKEN }}
           ARGS: "-rltgoDzvO --delete"
-          SOURCE: "ep2-server.tar.gz"
+          SOURCE: "ep-server.tar.gz"
           REMOTE_HOST: ${{ secrets.REMOTE_ORIGIN }}
           REMOTE_USER: ${{ secrets.REMOTE_USER }}
           TARGET: ${{ secrets.TARGET }}

@@ -7,7 +7,8 @@ const {
   host, port, user, password, database,
 } = mongodbConfig
 
-const url = `mongodb://${user}:${password}@${host}:${port}/${database}`
+const needPassword = false
+const url = needPassword ? `mongodb://${user}:${password}@${host}:${port}/${database}` : `mongodb://${host}:${port}/${database}`
 
 interface Res {
   db: MongoClient

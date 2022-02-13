@@ -3,11 +3,11 @@ import { redisConfig } from '@/config'
 
 const { port, host, password } = redisConfig
 
-const isDEV = process.env.NODE_ENV === 'development'
+const needPassword = false
 
 export function getClient(): Promise<RedisClient> {
   return new Promise<RedisClient>((res, rej) => {
-    const client = redis.createClient(port, host, !isDEV ? {
+    const client = redis.createClient(port, host, needPassword ? {
       password,
     } : {})
     res(client)
