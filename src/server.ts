@@ -2,17 +2,11 @@
 import 'core-js/es/array'
 // diy module 自建模块
 import { Fw } from 'flash-wolves'
-
-console.time('server-start')
 // 从.env加载环境变量
 import loadEnv from './utils/loadEnv'
 
-loadEnv()
-
 // 路径映射
 import loadModuleAlias from './utils/moduleAlias'
-
-loadModuleAlias()
 
 // 配置文件
 import { serverConfig } from './config'
@@ -24,6 +18,12 @@ import routes from './routes'
 import {
   serverInterceptor, routeInterceptor, beforeRouteMatchInterceptor, beforeRuntimeErrorInterceptor,
 } from './middleware'
+
+console.time('server-start')
+
+loadEnv()
+
+loadModuleAlias()
 
 const app = new Fw(serverInterceptor, {
   beforeMathRoute: beforeRouteMatchInterceptor,

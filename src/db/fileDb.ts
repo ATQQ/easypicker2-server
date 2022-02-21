@@ -1,8 +1,8 @@
+import { OkPacket } from 'mysql'
 import { query } from '@/lib/dbConnect/mysql'
 import {
   insertTableByModel, selectTableByModel, updateTableByModel,
 } from '@/utils/sqlUtil'
-import { OkPacket } from 'mysql'
 import { File } from './model/file'
 
 export function insertFile(file: File) {

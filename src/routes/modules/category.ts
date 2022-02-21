@@ -1,8 +1,8 @@
+import { Router } from 'flash-wolves'
 import { CategoryError } from '@/constants/errorMsg'
 import { deleteCategory, insertCategory, selectCategory } from '@/db/categoryDb'
 import { addBehavior } from '@/db/logDb'
 import { updateTask } from '@/db/taskDb'
-import { Router } from 'flash-wolves'
 
 import { getUserInfo } from '@/utils/userUtil'
 

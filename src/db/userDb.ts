@@ -1,6 +1,6 @@
+import { OkPacket } from 'mysql'
 import { query } from '@/lib/dbConnect/mysql'
 import { insertTableByModel, selectTableByModel, updateTableByModel } from '@/utils/sqlUtil'
-import { OkPacket } from 'mysql'
 import { User, USER_STATUS } from './model/user'
 
 export function selectUserByAccount(account: string): Promise<User[]> {

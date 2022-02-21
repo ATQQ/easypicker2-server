@@ -27,14 +27,14 @@ class TokenUtil {
     return null
   }
 
-    static instance: TokenUtil = null
+  static instance: TokenUtil = null
 
-    static getInstance() {
-      if (!this.instance) {
-        this.instance = new TokenUtil()
-      }
-      return this.instance
+  static getInstance() {
+    if (!this.instance) {
+      this.instance = new TokenUtil()
     }
+    return this.instance
+  }
 }
 
 export default TokenUtil.getInstance()

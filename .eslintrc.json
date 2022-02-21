@@ -1,7 +1,21 @@
 {
-    "parser": "@typescript-eslint/parser",
+    "root": true,
+    "overrides": [
+      {
+        "files": ["*.js"]
+      },
+      {
+        "files": ["*.ts","*.d.ts"],
+        "parser": "@typescript-eslint/parser",
+        "parserOptions": {
+            "ecmaVersion": 12,
+            "sourceType": "module"
+        }
+      }
+    ],
     "env": {
-        "node": true
+        "node": true,
+        "es2021": true
     },
     "extends": [
         "airbnb-base",
@@ -17,6 +31,17 @@
             "off"
         ],
         "@typescript-eslint/explicit-module-boundary-types": "off",
+        "import/no-unresolved":"off",
+        "import/extensions":"off",
+        "no-unused-vars":"off",
+        "no-shadow":"off",
+        "no-restricted-syntax":"off",
+        "no-await-in-loop":"off",
+        "no-underscore-dangle":"off",
+        "no-param-reassign":"off",
+        "no-use-before-define":"off",
+        "no-proto":"off",
+        "class-methods-use-this":"off",
         "todo-ddl/diy": [
             "warn"
         ],
@@ -28,23 +53,6 @@
             "warn",
             "never"
         ],
-        "import/extensions": "off",
-        "import/no-unresolved": "off",
-        "import/prefer-default-export": "off",
-        "no-param-reassign": "warn",
-        "import/no-extraneous-dependencies": "off",
-        "max-len": "warn",
-        "no-restricted-syntax": "off",
-        "no-bitwise": "off",
-        "no-await-in-loop": "off",
-        "class-methods-use-this": "off",
-        "no-lonely-if": "off",
-        "no-console": "off",
-        "no-use-before-define": "off",
-        "camelcase": "off",
-        "no-underscore-dangle": "off",
-        "no-shadow": "off",
-        "no-useless-escape": "off",
-        "import/first":"off"
+        "no-console":"off"
     }
 }

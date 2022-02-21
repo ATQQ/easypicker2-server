@@ -1,7 +1,7 @@
+import { OkPacket } from 'mysql'
 import { query } from '@/lib/dbConnect/mysql'
 import { deleteTableByModel, insertTableByModel, selectTableByModel } from '@/utils/sqlUtil'
 import { getUniqueKey } from '@/utils/stringUtil'
-import { OkPacket } from 'mysql'
 import { Category } from './model/category'
 
 export function selectCategory(options: Category) {

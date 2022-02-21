@@ -1,7 +1,3 @@
-import { Wish, WishStatus } from '@/db/model/wish'
-import { addWishData } from '@/db/wishDb'
-import { getUniqueKey } from '@/utils/stringUtil'
-import { getUserInfo } from '@/utils/userUtil'
 import {
   FwController,
   FWRequest,
@@ -9,6 +5,10 @@ import {
   RouterController,
   RouteMapping,
 } from 'flash-wolves'
+import { Wish, WishStatus } from '@/db/model/wish'
+import { addWishData } from '@/db/wishDb'
+import { getUniqueKey } from '@/utils/stringUtil'
+import { getUserInfo } from '@/utils/userUtil'
 
 @RouterController('wish')
 export default class WishRouter extends FwController {
