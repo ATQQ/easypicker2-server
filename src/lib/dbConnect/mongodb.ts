@@ -4,11 +4,10 @@ import {
 import { mongodbConfig } from '@/config'
 
 const {
-  host, port, user, password, database,
+  host, port, user, password, database, auth,
 } = mongodbConfig
 
-const needPassword = false
-const url = needPassword ? `mongodb://${user}:${password}@${host}:${port}/${database}` : `mongodb://${host}:${port}/${database}`
+const url = auth ? `mongodb://${user}:${password}@${host}:${port}/${database}` : `mongodb://${host}:${port}/${database}`
 
 interface Res {
   db: MongoClient

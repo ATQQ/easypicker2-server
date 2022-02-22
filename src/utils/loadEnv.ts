@@ -9,8 +9,7 @@ function load(parseEnvObj) {
     })
   }
 }
-
-export default function loadEnv() {
+function loadEnv() {
   const baseDir = `${process.cwd()}/`
   // .env
   dotenv.config()
@@ -21,3 +20,4 @@ export default function loadEnv() {
   // .env.[mode]
   load(dotenv.config({ path: `${baseDir}.env.${process.env.NODE_ENV}` }))
 }
+export default loadEnv()
