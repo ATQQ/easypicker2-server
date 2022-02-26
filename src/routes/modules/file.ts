@@ -1,3 +1,5 @@
+import { Router } from 'flash-wolves'
+import filenamify from 'filenamify'
 import { publicError } from '@/constants/errorMsg'
 import {
   deleteFileRecord, deleteFiles, insertFile, selectFiles,
@@ -6,7 +8,6 @@ import { addBehavior, getClientIp } from '@/db/logDb'
 import { File } from '@/db/model/file'
 import { selectPeople, updatePeople } from '@/db/peopleDb'
 import { selectTasks } from '@/db/taskDb'
-import { Router } from 'flash-wolves'
 
 import {
   batchDeleteFiles, batchFileStatus, checkFopTaskStatus, createDownloadUrl,
@@ -14,7 +15,6 @@ import {
 } from '@/utils/qiniuUtil'
 import { getUniqueKey } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
-import filenamify from 'filenamify'
 
 const router = new Router('file')
 

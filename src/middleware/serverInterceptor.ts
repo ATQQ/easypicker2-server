@@ -1,10 +1,15 @@
 import { Middleware } from 'flash-wolves'
 import formidable from 'formidable'
+import { existsSync, mkdirSync } from 'fs'
 import path from 'path'
+import { uploadFileDir } from '@/constants'
 
 // 允许跨域访问的源
 const allowOrigins = ['http://localhost:8080', 'https://ep2.sugarat.top', 'https://ep2.dev.sugarat.top']
-const fileDir = `${process.cwd()}/upload`
+
+if (!existsSync(uploadFileDir)) {
+  mkdirSync(uploadFileDir)
+}
 
 const interceptor: Middleware = async (req, res) => {
   // 开启CORS
@@ -30,7 +35,7 @@ const interceptor: Middleware = async (req, res) => {
 
   // 处理文件上传
   if (req.url === '/public/upload') {
-    const form = formidable({ multiples: true, uploadDir: fileDir, keepExtensions: true })
+    const form = formidable({ multiples: true, uploadDir: uploadFileDir, keepExtensions: true })
     const p = new Promise((resolve, reject) => {
       form.parse(req, (err, fields, files) => {
         if (err) {

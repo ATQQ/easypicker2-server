@@ -1,10 +1,10 @@
 /* eslint-disable no-case-declarations */
-import { publicError } from '@/constants/errorMsg'
 import { Router } from 'flash-wolves'
 
-import { getUserInfo } from '@/utils/userUtil'
 import path from 'path'
 import fs from 'fs'
+import { getUserInfo } from '@/utils/userUtil'
+import { publicError } from '@/constants/errorMsg'
 import { People } from '@/db/model/people'
 import {
   deletePeople, insertPeople, selectPeople, updatePeople,

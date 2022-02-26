@@ -1,9 +1,9 @@
+import { OkPacket } from 'mysql'
 import { query } from '@/lib/dbConnect/mysql'
 import {
   deleteTableByModel, insertTableByModel, selectTableByModel, updateTableByModel,
 } from '@/utils/sqlUtil'
 import { getUniqueKey } from '@/utils/stringUtil'
-import { OkPacket } from 'mysql'
 import { Task } from './model/task'
 import { insertTaskInfo } from './taskInfoDb'
 

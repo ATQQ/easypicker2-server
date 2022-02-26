@@ -1,7 +1,7 @@
+import { OkPacket } from 'mysql'
 import { query } from '@/lib/dbConnect/mysql'
 import { insertTableByModel, selectTableByModel, updateTableByModel } from '@/utils/sqlUtil'
 import { getUniqueKey } from '@/utils/stringUtil'
-import { OkPacket } from 'mysql'
 import { BOOLEAN } from './model/public'
 import { TaskInfo } from './model/taskInfo'
 

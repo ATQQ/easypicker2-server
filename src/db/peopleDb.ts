@@ -1,9 +1,9 @@
+import { OkPacket } from 'mysql'
 import { query } from '@/lib/dbConnect/mysql'
 import {
   deleteTableByModel, insertTableByModelMany, selectTableByModel, updateTableByModel,
 } from '@/utils/sqlUtil'
 import { getUniqueKey } from '@/utils/stringUtil'
-import { OkPacket } from 'mysql'
 import { People } from './model/people'
 
 export function selectPeople(options: People, columns: string[] = ['name']) {

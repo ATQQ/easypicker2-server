@@ -1,5 +1,5 @@
-import { addRequestLog } from '@/db/logDb'
 import { Middleware } from 'flash-wolves'
+import { addRequestLog } from '@/db/logDb'
 
 const interceptor: Middleware = async (req, res) => {
   addRequestLog(req)

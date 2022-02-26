@@ -3,11 +3,11 @@ import { qiniuConfig } from '@/config'
 import qiniu from 'qiniu'
 import { getKeyInfo } from './stringUtil'
 // [node-sdk文档地址](https://developer.qiniu.com/kodo/1289/nodejs#server-upload)
-const privateBucketDomain = 'https://easypicker.file.sugarat.top'
+const privateBucketDomain = qiniuConfig.bucketDomain
 // 12小时过期
 const getDeadline = () => Math.floor(Date.now() / 1000) + 3600 * 12
 
-const bucket = 'easypicker'
+const bucket = qiniuConfig.bucketName
 const mac = new qiniu.auth.digest.Mac(qiniuConfig.accessKey, qiniuConfig.secretKey)
 const { urlsafeBase64Encode } = qiniu.util
 

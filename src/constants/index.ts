@@ -8,3 +8,5 @@ export function codeMsg(code: number, msg: string): CodeMsg {
     msg,
   }
 }
+
+export const uploadFileDir = `${process.cwd()}/upload`

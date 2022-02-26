@@ -1,8 +1,8 @@
-import { insertCollection, mongoDbQuery } from '@/lib/dbConnect/mongodb'
 import { FWRequest } from 'flash-wolves'
+import { ObjectId } from 'mongodb'
+import { insertCollection, mongoDbQuery } from '@/lib/dbConnect/mongodb'
 import { getUniqueKey } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
-import { ObjectId } from 'mongodb'
 import {
   Log, LogType, LogData, LogRequestData, LogBehaviorData, LogErrorData, PvData,
 } from './model/log'

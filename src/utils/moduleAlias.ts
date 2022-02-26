@@ -3,8 +3,10 @@
 // import 'module-alias/register'
 import moduleAlias from 'module-alias'
 
-export default function loadModuleAlias() {
+function loadModuleAlias() {
   moduleAlias.addAliases({
     '@': `${__dirname}/../`,
   })
 }
+
+export default loadModuleAlias()
