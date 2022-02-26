@@ -29,4 +29,4 @@ await $`echo ==🌩 安装依赖 ==`
 await $`ssh -p22 ${user}@${origin} "cd ${baseServerDir}/${fullOrigin}/${destDir} && pnpm install -P"`
 
 await $`echo ==🏆︎ 重启服务 ==`
-await $`ssh -p22 ${user}@${origin} "pm2 stop ep-dev-server && cd ${baseServerDir}/${fullOrigin}/${destDir} && pm2 start npm --name ep-dev-server -- run start"`
+await $`ssh -p22 ${user}@${origin} "pm2 delete ep-dev-server && cd ${baseServerDir}/${fullOrigin}/${destDir} && pm2 start npm --name ep-dev-server -- run start"`
