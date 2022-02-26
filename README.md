@@ -23,7 +23,7 @@
 通常的方式是,通过QQ/微信/邮箱等收取,弊端显而易见,太过于麻烦且不方便整理统计。还占用电脑/手机内存。为了解决这个问题,此项目应运而生。
 
 ## 开发计划
-* [接口文档](https://w5iv.w.eolinker.com/#/share/index?shareCode=7SF9Na) 
+* [接口文档](https://easy2.w.eolink.com/share/index?shareCode=7SF9Na·) 
 
 ## 本地运行
 <details>
@@ -34,20 +34,24 @@ git clone https://github.com/ATQQ/easypicker2-server.git
 ```
 2. 安装依赖
 ```sh
-yarn
+pnpm install
 ```
+
 3. 本地启动
 
 ```sh
-yarn dev
+pnpm dev
 ```
+4. 一些必要的配置
+TODO：待完善
 
-4. 其它指令
+5. 其它指令
 
 | 名称  | 作用                  |
 | :---: | :-------------------- |
 |  dev  | 本地启动服务-自动重启 |
-| start | 本地启动服务          |
+| build | 编译ts代码            |
+| start | 运行编译后的js代码    |
 | lint  | 代码格式化            |
 | test  | 跑测试用例            |
 
@@ -55,7 +59,7 @@ yarn dev
 
 ## 线上地址
 1. 正式环境：https://ep2.sugarat.top
-2. 测试环境：https://ep2.test.sugarat.top
+2. 测试环境：https://ep.dev.sugarat.top
 
 注：两环境数据不互通,新功能会先在测试环境进行实验
 
@@ -76,8 +80,8 @@ yarn dev
 ## 相关文档
 * 使用手册
 * 更新日志
-* 数据库相关
-* 接口文档
+* [数据库相关](./docs/README.md)
+* [接口文档]()
 ## 其他链接
 问卷反馈:https://www.wenjuan.com/s/UZBZJvA040/
 
