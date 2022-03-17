@@ -57,9 +57,5 @@ const interceptor: Middleware = async (req, res) => {
       res.end(JSON.stringify({ code: 500, msg: error }))
     }
   }
-
-  // 设置响应的content-encoding
-  // TODO: 需借助第三方库实现请求响应结果的压缩压缩
-  // res.setHeader('content-encoding', 'gzip')
 }
 export default interceptor

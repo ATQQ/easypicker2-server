@@ -13,7 +13,7 @@ const destDir = 'server'
 const compressFile = ''
 
 await $`echo ==🔧 压缩==`
-await $`tar -zvcf ${compressPkgName} dist package.json pnpm-lock.yaml .env .env.local`
+await $`tar -zvcf ${compressPkgName} dist package.json pnpm-lock.yaml .env .env.production.local`
 
 await $`echo ==🚀 上传到服务器 ==`
 await $`scp ${compressPkgName} ${user}@${origin}:./`
@@ -26,7 +26,7 @@ if(destDir){
 await $`ssh -p22 ${user}@${origin} "tar -xf ${compressPkgName} -C ${baseServerDir}/${fullOrigin}/${destDir}"`
 
 await $`echo ==🌩 安装依赖 ==`
-await $`ssh -p22 ${user}@${origin} "cd ${baseServerDir}/${fullOrigin}/${destDir} && pnpm install -P"`
+await $`ssh -p22 ${user}@${origin} "cd ${baseServerDir}/${fullOrigin}/${destDir} && pnpm install"`
 
 await $`echo ==🏆︎ 重启服务 ==`
 await $`ssh -p22 ${user}@${origin} "pm2 delete ep-dev-server && cd ${baseServerDir}/${fullOrigin}/${destDir} && pm2 start npm --name ep-dev-server -- run start"`
