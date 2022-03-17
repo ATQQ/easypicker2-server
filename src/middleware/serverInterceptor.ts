@@ -16,14 +16,14 @@ const interceptor: Middleware = async (req, res) => {
   const { method } = req
   if (allowOrigins.includes(req.headers.origin)) {
     // 允许跨域
-    res.setHeader('Access-Control-Allow-Origin', req.headers.origin)
+    // res.setHeader('Access-Control-Allow-Origin', req.headers.origin)
   }
   // 跨域允许的header类型
-  res.setHeader('Access-Control-Allow-Headers', '*')
+  // res.setHeader('Access-Control-Allow-Headers', '*')
   // 允许跨域携带cookie
-  res.setHeader('Access-Control-Allow-Credentials', 'true')
+  // res.setHeader('Access-Control-Allow-Credentials', 'true')
   // 允许的方法
-  res.setHeader('Access-Control-Allow-Methods', 'PUT, GET, POST, DELETE, OPTIONS')
+  // res.setHeader('Access-Control-Allow-Methods', 'PUT, GET, POST, DELETE, OPTIONS')
   // 设置响应头
   res.setHeader('Content-Type', 'application/json;charset=utf-8')
   // 对预检请求放行
