@@ -8,7 +8,7 @@ const interceptor: Middleware = async (req, res) => {
   const { options } = req.route
   const logIp = getClientIp(req)
   if (!options) return
-  console.log(`路由拦截:${req.method} - ${req.url}`)
+  // console.log(`路由拦截:${req.method} - ${req.url}`)
   const { needLogin, userPower } = options
   if (needLogin && (!req.headers.token || !(await getUserInfo(req)))) {
     addBehavior(req, {

@@ -6,5 +6,5 @@ export default defineConfig({
   sourcemap: false,
   clean: true,
   outDir: 'dist',
-  entryPoints: ['src/server.ts'],
+  entryPoints: ['src/index.ts'],
 })

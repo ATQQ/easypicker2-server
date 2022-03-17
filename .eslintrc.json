@@ -30,6 +30,7 @@
         "@typescript-eslint/no-explicit-any": [
             "off"
         ],
+        "import/no-import-module-exports":"off",
         "@typescript-eslint/explicit-module-boundary-types": "off",
         "import/no-unresolved":"off",
         "import/extensions":"off",

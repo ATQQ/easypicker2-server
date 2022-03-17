@@ -1,9 +1,9 @@
 // polyfill
 import 'core-js/es/array'
 // 路径映射
-import './utils/moduleAlias'
+// import './utils/moduleAlias'
 // diy module 自建模块
-import { Fw } from 'flash-wolves'
+import { App } from 'flash-wolves'
 // 从.env加载环境变量
 import './utils/loadEnv'
 
@@ -12,6 +12,7 @@ import { serverConfig } from './config'
 
 // routes
 import routes from './routes'
+import controllers from './controllers'
 
 // interceptor
 import {
@@ -20,7 +21,7 @@ import {
 
 console.time('server-start')
 
-const app = new Fw(serverInterceptor, {
+const app = new App(serverInterceptor, {
   beforeMathRoute: beforeRouteMatchInterceptor,
   beforeRunRoute: routeInterceptor,
   beforeReturnRuntimeError: beforeRuntimeErrorInterceptor,
@@ -28,6 +29,7 @@ const app = new Fw(serverInterceptor, {
 
 // 注册路由
 app.addRoutes(routes)
+app.addController(controllers)
 
 app.listen(serverConfig.port, serverConfig.hostname, () => {
   console.log('-----', new Date().toLocaleString(), '-----')
