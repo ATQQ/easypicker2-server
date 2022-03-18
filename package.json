@@ -9,6 +9,7 @@
     "build:watch": "tsup --watch",
     "start:ts": "esno ./src/index.ts",
     "start": "cross-env NODE_ENV=production node ./dist/index.js",
+    "start:local": "node ./dist/index.js",
     "start:test": "cross-env NODE_ENV=test node ./dist/index.js",
     "lint": "eslint --fix ./src --ext .ts,.d.ts,.js",
     "test": "jest --verbose ./_tests_",
@@ -55,9 +56,5 @@
     "tsup": "^5.11.13",
     "typescript": "^4.0.2",
     "zx": "^5.1.0"
-  },
-  "_moduleAliases": {
-    "@": "src",
-    "@middleware": "src/lib/middleware"
   }
 }
