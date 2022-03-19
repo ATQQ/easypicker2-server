@@ -11,10 +11,12 @@
     "start": "cross-env NODE_ENV=production node ./dist/index.js",
     "start:local": "node ./dist/index.js",
     "start:test": "cross-env NODE_ENV=test node ./dist/index.js",
+    "start:dev": "cross-env NODE_ENV=development node ./dist/index.js",
     "lint": "eslint --fix ./src --ext .ts,.d.ts,.js",
     "test": "jest --verbose ./_tests_",
-    "deploy:test": "zx scripts/deploy/env-test.mjs",
     "deploy:prod": "zx scripts/deploy/env-prod.mjs",
+    "deploy:test": "zx scripts/deploy/env-test.mjs",
+    "deploy:dev": "zx scripts/deploy/env-dev.mjs",
     "build": "tsup --minify"
   },
   "keywords": [],

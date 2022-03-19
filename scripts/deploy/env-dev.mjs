@@ -1,8 +1,8 @@
 #!/usr/bin/env zx
 
 // user config
-const originName = 'ep'
-const serverName = 'ep-prod'
+const originName = 'ep.dev'
+const serverName = 'ep-dev'
 
 // not care
 const compressPkgName = `${originName}.tar.gz`
@@ -14,7 +14,7 @@ const destDir = 'server'
 const compressFile = ''
 
 await $`echo ==🔧 压缩==`
-await $`tar -zvcf ${compressPkgName} dist package.json pnpm-lock.yaml .env .env.production.local`
+await $`tar -zvcf ${compressPkgName} dist package.json pnpm-lock.yaml .env .env.development.local`
 
 await $`echo ==🚀 上传到服务器 ==`
 await $`scp ${compressPkgName} ${user}@${origin}:./`
@@ -30,4 +30,4 @@ await $`echo ==🌩 安装依赖 ==`
 await $`ssh -p22 ${user}@${origin} "cd ${baseServerDir}/${fullOrigin}/${destDir} && pnpm install"`
 
 await $`echo ==🏆︎ 重启服务 ==`
-await $`ssh -p22 ${user}@${origin} "pm2 delete ${serverName} && cd ${baseServerDir}/${fullOrigin}/${destDir} && pm2 start npm --name ${serverName} -- run start"`
+await $`ssh -p22 ${user}@${origin} "pm2 delete ${serverName} && cd ${baseServerDir}/${fullOrigin}/${destDir} && pm2 start npm --name ${serverName} -- run start:dev"`
