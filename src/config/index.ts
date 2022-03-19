@@ -1,5 +1,5 @@
 export const serverConfig = {
-  port: +process.env.PORT,
+  port: +process.env.SERVER_PORT,
   hostname: process.env.SERVER_HOST,
 }
 
