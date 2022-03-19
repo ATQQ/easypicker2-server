@@ -1,7 +1,8 @@
 #!/usr/bin/env zx
 
 // user config
-const originName = 'ep.dev'
+const originName = 'ep.test'
+const serverName = 'ep-test'
 
 // not care
 const compressPkgName = `${originName}.tar.gz`
@@ -29,4 +30,4 @@ await $`echo ==🌩 安装依赖 ==`
 await $`ssh -p22 ${user}@${origin} "cd ${baseServerDir}/${fullOrigin}/${destDir} && pnpm install"`
 
 await $`echo ==🏆︎ 重启服务 ==`
-await $`ssh -p22 ${user}@${origin} "pm2 delete ep-dev-server && cd ${baseServerDir}/${fullOrigin}/${destDir} && pm2 start npm --name ep-dev-server -- run start:test"`
+await $`ssh -p22 ${user}@${origin} "pm2 delete ${serverName} && cd ${baseServerDir}/${fullOrigin}/${destDir} && pm2 start npm --name ${serverName} -- run start:test"`
