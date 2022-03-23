@@ -152,10 +152,18 @@ router.get('one', async (req, res) => {
     return
   }
   let k = `easypicker2/${file.task_key}/${file.hash}/${file.name}`
+  let isExist = false
+  // 兼容旧路径的逻辑
   if (file.category_key) {
+    isExist = await judgeFileIsExist(file.category_key)
+  }
+
+  if (!isExist) {
+    isExist = await judgeFileIsExist(k)
+  } else {
     k = file.category_key
   }
-  const isExist = await judgeFileIsExist(k)
+
   if (!isExist) {
     addBehavior(req, {
       module: 'file',
