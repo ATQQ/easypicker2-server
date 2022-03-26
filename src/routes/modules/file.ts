@@ -152,10 +152,18 @@ router.get('one', async (req, res) => {
     return
   }
   let k = `easypicker2/${file.task_key}/${file.hash}/${file.name}`
+  let isExist = false
+  // 兼容旧路径的逻辑
   if (file.category_key) {
+    isExist = await judgeFileIsExist(file.category_key)
+  }
+
+  if (!isExist) {
+    isExist = await judgeFileIsExist(k)
+  } else {
     k = file.category_key
   }
-  const isExist = await judgeFileIsExist(k)
+
   if (!isExist) {
     addBehavior(req, {
       module: 'file',
@@ -321,19 +329,28 @@ router.post('batch/down', async (req, res) => {
     res.failWithError(publicError.file.notExist)
     return
   }
-  let keys = files.map((v) => {
+  let keys = []
+  for (const file of files) {
     const {
       name, task_key, hash, category_key,
-    } = v
+    } = file
+    const key = `easypicker2/${task_key}/${hash}/${name}`
+    if (!category_key) {
+      keys.push(key)
+    }
     // 兼容老板平台数据
     if (category_key) {
-      return category_key
+      const isOldExist = await judgeFileIsExist(category_key)
+      if (isOldExist) {
+        keys.push(category_key)
+      } else {
+        keys.push(key)
+      }
     }
-    return `easypicker2/${task_key}/${hash}/${name}`
-  })
-  const filesStatus = await batchFileStatus(keys)
+  }
 
-  keys = keys.filter((v, idx) => {
+  const filesStatus = await batchFileStatus(keys)
+  keys = keys.filter((_, idx) => {
     const { code } = filesStatus[idx]
     return code === 200
   })
@@ -356,10 +373,9 @@ router.post('batch/down', async (req, res) => {
       length: keys.length,
     },
   })
-  makeZipWithKeys(keys, filenamify(zipName, { replacement: '_' }) ?? `${getUniqueKey()}`).then((v) => {
-    res.success({
-      k: v,
-    })
+  const value = await makeZipWithKeys(keys, filenamify(zipName, { replacement: '_' }) ?? `${getUniqueKey()}`)
+  res.success({
+    k: value,
   })
 }, {
   needLogin: true,
@@ -368,11 +384,10 @@ router.post('batch/down', async (req, res) => {
 /**
  * 查询文件归档进度
  */
-router.post('compress/status', (req, res) => {
+router.post('compress/status', async (req, res) => {
   const { id } = req.body
-  checkFopTaskStatus(id).then((data) => {
-    res.success(data)
-  })
+  const data = await checkFopTaskStatus(id)
+  res.success(data)
 }, {
   needLogin: true,
 })
