@@ -329,16 +329,19 @@ router.post('batch/down', async (req, res) => {
     res.failWithError(publicError.file.notExist)
     return
   }
-  let keys = files.map((v) => {
+  let keys = []
+  for (const file of files) {
     const {
       name, task_key, hash, category_key,
-    } = v
+    } = file
     // 兼容老板平台数据
-    if (category_key) {
-      return category_key
+    if (category_key && await judgeFileIsExist(category_key)) {
+      keys.push(category_key)
+    } else {
+      keys.push(`easypicker2/${task_key}/${hash}/${name}`)
     }
-    return `easypicker2/${task_key}/${hash}/${name}`
-  })
+  }
+
   const filesStatus = await batchFileStatus(keys)
 
   keys = keys.filter((v, idx) => {

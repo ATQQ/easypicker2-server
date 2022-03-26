@@ -54,6 +54,7 @@
             "warn",
             "never"
         ],
-        "no-console":"off"
+        "no-console":"off",
+        "camelcase":"warn"
     }
 }
