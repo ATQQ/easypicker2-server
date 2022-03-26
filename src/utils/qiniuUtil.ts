@@ -291,21 +291,11 @@ export function batchFileStatus(keys: string[]): Promise<FileStat[]> {
     const bucketManager = new qiniu.rs.BucketManager(mac, config)
     bucketManager.batch(statOperations, (err, respBody, respInfo) => {
       if (err) {
-        console.log(err)
-        // throw err;
+        reject(err)
       } else {
         // 200 is success, 298 is part success
         if (parseInt(`${respInfo.statusCode / 100}`) == 2) {
           resolve(respBody)
-          // respBody.forEach(function (item) {
-          //     if (item.code == 200) {
-          //         console.log(item.data.fsize + '\t' + item.data.hash + '\t' +
-          //             item.data.mimeType + '\t' + item.data.putTime + '\t' +
-          //             item.data.type)
-          //     } else {
-          //         console.log(item.code + '\t' + item.data.error)
-          //     }
-          // })
         } else {
           console.log(respInfo.statusCode)
           console.log(respBody)

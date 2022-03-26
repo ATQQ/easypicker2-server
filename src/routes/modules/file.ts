@@ -334,17 +334,23 @@ router.post('batch/down', async (req, res) => {
     const {
       name, task_key, hash, category_key,
     } = file
+    const key = `easypicker2/${task_key}/${hash}/${name}`
+    if (!category_key) {
+      keys.push(key)
+    }
     // 兼容老板平台数据
-    if (category_key && await judgeFileIsExist(category_key)) {
-      keys.push(category_key)
-    } else {
-      keys.push(`easypicker2/${task_key}/${hash}/${name}`)
+    if (category_key) {
+      const isOldExist = await judgeFileIsExist(category_key)
+      if (isOldExist) {
+        keys.push(category_key)
+      } else {
+        keys.push(key)
+      }
     }
   }
 
   const filesStatus = await batchFileStatus(keys)
-
-  keys = keys.filter((v, idx) => {
+  keys = keys.filter((_, idx) => {
     const { code } = filesStatus[idx]
     return code === 200
   })
@@ -367,10 +373,9 @@ router.post('batch/down', async (req, res) => {
       length: keys.length,
     },
   })
-  makeZipWithKeys(keys, filenamify(zipName, { replacement: '_' }) ?? `${getUniqueKey()}`).then((v) => {
-    res.success({
-      k: v,
-    })
+  const value = await makeZipWithKeys(keys, filenamify(zipName, { replacement: '_' }) ?? `${getUniqueKey()}`)
+  res.success({
+    k: value,
   })
 }, {
   needLogin: true,
@@ -379,11 +384,10 @@ router.post('batch/down', async (req, res) => {
 /**
  * 查询文件归档进度
  */
-router.post('compress/status', (req, res) => {
+router.post('compress/status', async (req, res) => {
   const { id } = req.body
-  checkFopTaskStatus(id).then((data) => {
-    res.success(data)
-  })
+  const data = await checkFopTaskStatus(id)
+  res.success(data)
 }, {
   needLogin: true,
 })
