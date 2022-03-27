@@ -59,7 +59,7 @@ router.post('info', async (req, res) => {
     return
   }
   const { user_id } = task
-  Object.assign<File, File>(data, { user_id, date: new Date() })
+  Object.assign<File, File>(data, { user_id, date: new Date(), categoryKey: '' })
   data.name = filenamify(data.name, { replacement: '_' })
   await insertFile(data)
   addBehavior(req, {
