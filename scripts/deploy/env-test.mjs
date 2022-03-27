@@ -13,6 +13,8 @@ const baseServerDir = '/www/wwwroot'
 const destDir = 'server'
 const compressFile = ''
 
+await $`pnpm build`
+
 await $`echo ==🔧 压缩==`
 await $`tar -zvcf ${compressPkgName} dist package.json pnpm-lock.yaml .env .env.test.local`
 
@@ -21,7 +23,7 @@ await $`scp ${compressPkgName} ${user}@${origin}:./`
 await $`rm -rf ${compressPkgName}`
 
 await $`echo ==✅ 部署代码 ==`
-if(destDir){
+if (destDir) {
     await $`ssh -p22 ${user}@${origin} "mkdir -p ${baseServerDir}/${fullOrigin}/${destDir}"`
 }
 await $`ssh -p22 ${user}@${origin} "tar -xf ${compressPkgName} -C ${baseServerDir}/${fullOrigin}/${destDir}"`
