@@ -440,7 +440,10 @@ router.put('password', async (req, res) => {
  */
 router.get('power/super', async (req, res) => {
   const user = await getUserInfo(req)
-  res.success(user.power === USER_POWER.SUPER)
+  res.success({
+    power: user.power === USER_POWER.SUPER,
+    name: user.account,
+  })
 }, {
   needLogin: true,
 })
