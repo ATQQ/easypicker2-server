@@ -17,7 +17,7 @@ specifiers:
   eslint-plugin-todo-ddl: ^1.1.1
   esno: ^0.14.1
   filenamify: ^4.3.0
-  flash-wolves: ^0.2.0
+  flash-wolves: ^0.2.1
   formidable: ^1.2.2
   jest: ^26.6.3
   mongodb: ^3.6.4
@@ -40,7 +40,7 @@ dependencies:
   cross-env: 7.0.3
   dotenv: 8.6.0
   filenamify: 4.3.0
-  flash-wolves: 0.2.0
+  flash-wolves: 0.2.1
   formidable: 1.2.6
   mongodb: 3.7.3
   mysql: 2.18.1
@@ -1946,6 +1946,11 @@ packages:
       is-obj: 2.0.0
     dev: true
 
+  /dotenv/16.0.0:
+    resolution: {integrity: sha512-qD9WU0MPM4SWLPJy/r2Be+2WgQj8plChsyrCNQzW/0WjvcJQiKQJ9mH3ZgB3fxbUUxgc/11ZJ0Fi5KiimWGz2Q==}
+    engines: {node: '>=12'}
+    dev: false
+
   /dotenv/8.6.0:
     resolution: {integrity: sha512-IrPdXQsk2BbzvCBGBOTmmSH5SodmqZNt4ERAZDmW4CT+tL8VtvinqywuANaFu4bOMWki16nqf0e4oC0QIaDr/g==}
     engines: {node: '>=10'}
@@ -2717,8 +2722,10 @@ packages:
       path-exists: 4.0.0
     dev: true
 
-  /flash-wolves/0.2.0:
-    resolution: {integrity: sha512-rl4Jq/b3f22TalLA3QNV+1+ioE4hNkLlMRU8+mg/iBYOjJiiBntI/BwX9E345njyWwe1fNEJ0qHUpSMOZnnsKA==}
+  /flash-wolves/0.2.1:
+    resolution: {integrity: sha512-2j4ZCTRDy3gcjMbxKjbyhGQSC4Bs9RRm0qCKYTWrpzbk6/QFv3YzsTI3LkPF7Ys4UnXeXYqbF9o+mVwVrMNlVQ==}
+    dependencies:
+      dotenv: 16.0.0
     dev: false
 
   /flat-cache/3.0.4:
