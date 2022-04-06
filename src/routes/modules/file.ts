@@ -374,6 +374,14 @@ router.post('batch/down', async (req, res) => {
     },
   })
   const value = await makeZipWithKeys(keys, filenamify(zipName, { replacement: '_' }) ?? `${getUniqueKey()}`)
+  addBehavior(req, {
+    module: 'file',
+    msg: `批量下载任务 用户:${logAccount} 文件数量:${keys.length} 压缩任务名${value}`,
+    data: {
+      account: logAccount,
+      length: keys.length,
+    },
+  })
   res.success({
     k: value,
   })
