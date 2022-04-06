@@ -4,7 +4,7 @@ import { publicError } from '@/constants/errorMsg'
 import {
   deleteFileRecord, deleteFiles, insertFile, selectFiles,
 } from '@/db/fileDb'
-import { addBehavior, getClientIp } from '@/db/logDb'
+import { addBehavior, addErrorLog, getClientIp } from '@/db/logDb'
 import { File } from '@/db/model/file'
 import { selectPeople, updatePeople } from '@/db/peopleDb'
 import { selectTasks } from '@/db/taskDb'
@@ -374,6 +374,14 @@ router.post('batch/down', async (req, res) => {
     },
   })
   const value = await makeZipWithKeys(keys, filenamify(zipName, { replacement: '_' }) ?? `${getUniqueKey()}`)
+  addBehavior(req, {
+    module: 'file',
+    msg: `批量下载任务 用户:${logAccount} 文件数量:${keys.length} 压缩任务名${value}`,
+    data: {
+      account: logAccount,
+      length: keys.length,
+    },
+  })
   res.success({
     k: value,
   })
@@ -387,6 +395,11 @@ router.post('batch/down', async (req, res) => {
 router.post('compress/status', async (req, res) => {
   const { id } = req.body
   const data = await checkFopTaskStatus(id)
+  if (data.code === 3) {
+    res.fail(500, data.desc + data.error)
+    addErrorLog(req, data.desc + data.error)
+    return
+  }
   res.success(data)
 }, {
   needLogin: true,

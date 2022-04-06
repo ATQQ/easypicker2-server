@@ -1,11 +1,4 @@
-// polyfill
-import 'core-js/es/array'
-// 路径映射
-// import './utils/moduleAlias'
-// diy module 自建模块
 import { App } from 'flash-wolves'
-// 从.env加载环境变量
-import './utils/loadEnv'
 
 // 配置文件
 import { serverConfig } from './config'

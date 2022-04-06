@@ -16,7 +16,7 @@ const compressFile = ''
 await $`pnpm build`
 
 await $`echo ==🔧 压缩==`
-await $`tar -zvcf ${compressPkgName} dist package.json pnpm-lock.yaml .env .env.development.local`
+await $`tar -zvcf ${compressPkgName} dist package.json pnpm-lock.yaml .env .env.dev.local`
 
 await $`echo ==🚀 上传到服务器 ==`
 await $`scp ${compressPkgName} ${user}@${origin}:./`

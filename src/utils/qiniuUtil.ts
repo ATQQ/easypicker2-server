@@ -91,9 +91,9 @@ export function judgeFileIsExist(key: string): Promise<boolean> {
     const config = new qiniu.conf.Config()
     const bucketManager = new qiniu.rs.BucketManager(mac, config)
     bucketManager.stat(bucket, key, (err, respBody, respInfo) => {
-      if(respInfo?.statusCode){
+      if (respInfo?.statusCode) {
         res(respInfo.statusCode !== 612)
-      }else{
+      } else {
         res(false)
       }
     })
@@ -206,6 +206,12 @@ export function makeZipWithKeys(keys: string[], zipName: string): Promise<string
         base = `${name}_${i}${ext}`
         i += 1
       }
+      // TODO:优化
+      // 临时处理特殊情况
+      const specialChars  = ['•']
+      specialChars.forEach(s=>{
+        base = base.replace(new RegExp(s,'g'),'-')
+      })
       names.push(base)
       const safeUrl = `/url/${urlsafeBase64Encode(createDownloadUrl(key))}/alias/${urlsafeBase64Encode(base)}`
       return safeUrl
@@ -253,7 +259,7 @@ export function makeZipWithKeys(keys: string[], zipName: string): Promise<string
   })
 }
 
-export function checkFopTaskStatus(persistentId: string): Promise<{ code: number, key?: string }> {
+export function checkFopTaskStatus(persistentId: string): Promise<{ code: number, key?: string,desc?:string,error?:string }> {
   const config = new qiniu.conf.Config()
   const operManager = new qiniu.fop.OperationManager(null, config)
   return new Promise((res) => {
@@ -265,8 +271,8 @@ export function checkFopTaskStatus(persistentId: string): Promise<{ code: number
       if (respInfo.statusCode == 200) {
         // 结构 ![图片](http://img.cdn.sugarat.top/mdImg/MTYxMjg0MTQyODQ1Mg==612841428452)
         const item = respBody.items[0]
-        const { code, key } = item
-        res({ code, key })
+        const { code, key, desc, error } = item
+        res({ code, key, desc, error })
       } else {
         console.log(respInfo.statusCode)
         console.log(respBody)
@@ -275,11 +281,11 @@ export function checkFopTaskStatus(persistentId: string): Promise<{ code: number
   })
 }
 interface FileStat {
-    code: number
-    data: {
-        md5?: string,
-        error?: string
-    }
+  code: number
+  data: {
+    md5?: string,
+    error?: string
+  }
 }
 /**
  * 批量查询文件状态
