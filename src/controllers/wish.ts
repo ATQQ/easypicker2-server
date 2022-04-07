@@ -10,7 +10,7 @@ import { getUniqueKey } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
 
 @RouterController('wish')
-export default class WishRouter {
+export default class WishController {
   @Post('add', {
     needLogin: true,
   })
