@@ -180,6 +180,11 @@ export function findLogWithPageOffset(startIdx:number, pageSize:number, query:Fi
       .then(resolve)
   })
 }
+export function findLog(query:FilterQuery<Log>) {
+  return mongoDbQuery<Log[]>((db, resolve) => {
+    db.collection<Log>('log').find(query).toArray().then(resolve)
+  })
+}
 
 export function findLogReserve(q:Log) {
   return mongoDbQuery<Log[]>((db, resolve) => {

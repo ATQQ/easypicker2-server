@@ -1,9 +1,10 @@
 import {
-  Get, Post, ReqBody, RouterController,
+  Get, Post, ReqBody, ReqParams, RouterController,
 } from 'flash-wolves'
 import { ObjectId } from 'mongodb'
 import { selectFiles } from '@/db/fileDb'
 import {
+  findLog,
   findLogCount, findLogReserve, findLogWithPageOffset, findLogWithTimeRange, findPvLogWithRange,
 } from '@/db/logDb'
 import {
@@ -29,6 +30,7 @@ export default class OverviewController {
       if (type === 'request') {
         const d = data as LogRequestData
         return {
+          id,
           date,
           type,
           ip: d.ip,
@@ -39,6 +41,7 @@ export default class OverviewController {
         const d = data as LogBehaviorData
 
         return {
+          id,
           date,
           type,
           msg: (d?.info?.msg) || '未知',
@@ -50,6 +53,7 @@ export default class OverviewController {
         const d = data as PvData
 
         return {
+          id,
           date,
           type,
           ip: d.ip,
@@ -60,12 +64,24 @@ export default class OverviewController {
 
       // 默认是错误
       return {
+        id,
         date,
         type,
         ip: (d?.req?.ip) || '未知',
         msg: (d?.msg) || '未知',
       }
     })
+  }
+
+  /**
+   * 查询某条日志的详细信息
+   * TODO:针对不同类型过滤
+   */
+  @Get('log/:id', power)
+  async getLogDetail(@ReqParams('id') id: string) {
+    const [log] = await findLog({ id })
+    delete log.data.userId
+    return log.data
   }
 
   @Get('count', power)
