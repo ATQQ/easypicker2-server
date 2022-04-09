@@ -1,12 +1,14 @@
-import { Get, RouterController } from 'flash-wolves'
+import {
+  Get, Post, ReqBody, RouterController,
+} from 'flash-wolves'
 import { ObjectId } from 'mongodb'
 import { selectFiles } from '@/db/fileDb'
 import {
-  findLogCount, findLogReserve, findLogWithTimeRange, findPvLogWithRange,
+  findLogCount, findLogReserve, findLogWithPageOffset, findLogWithTimeRange, findPvLogWithRange,
 } from '@/db/logDb'
 import {
   Log,
-  LogBehaviorData, LogErrorData, LogRequestData, PvData,
+  LogBehaviorData, LogErrorData, LogRequestData, LogType, PvData,
 } from '@/db/model/log'
 import { USER_POWER } from '@/db/model/user'
 import { selectAllUser } from '@/db/userDb'
@@ -19,6 +21,52 @@ const power = {
 @RouterController('super/overview')
 export default class OverviewController {
   private cacheLogs: Log[] = []
+
+  private filterLog(logs: Log[]) {
+    return logs.map((log) => {
+      const { type, data, id } = log
+      const date = new ObjectId(id).getTimestamp()
+      if (type === 'request') {
+        const d = data as LogRequestData
+        return {
+          date,
+          type,
+          ip: d.ip,
+          msg: `${d.method} ${d.url}`,
+        }
+      }
+      if (type === 'behavior') {
+        const d = data as LogBehaviorData
+
+        return {
+          date,
+          type,
+          msg: (d?.info?.msg) || '未知',
+          ip: (d?.req?.ip) || '未知',
+        }
+      }
+
+      if (type === 'pv') {
+        const d = data as PvData
+
+        return {
+          date,
+          type,
+          ip: d.ip,
+          msg: `${d.path}`,
+        }
+      }
+      const d = data as LogErrorData
+
+      // 默认是错误
+      return {
+        date,
+        type,
+        ip: (d?.req?.ip) || '未知',
+        msg: (d?.msg) || '未知',
+      }
+    })
+  }
 
   @Get('count', power)
   async getDataOverview() {
@@ -68,6 +116,9 @@ export default class OverviewController {
     }
   }
 
+  /**
+   * 一次性全查
+   */
   @Get('log', power)
   async getAllLog() {
     let logs = []
@@ -80,52 +131,23 @@ export default class OverviewController {
       logs = await findLogReserve({})
       this.cacheLogs = logs
     }
-    const result = logs.map((log) => {
-      const { type, data, id } = log
-      const date = new ObjectId(id).getTimestamp()
-      if (type === 'request') {
-        const d = data as LogRequestData
-        return {
-          date,
-          type,
-          ip: d.ip,
-          msg: `${d.method} ${d.url}`,
-        }
-      }
-      if (type === 'behavior') {
-        const d = data as LogBehaviorData
-
-        return {
-          date,
-          type,
-          msg: (d?.info?.msg) || '未知',
-          ip: (d?.req?.ip) || '未知',
-        }
-      }
-
-      if (type === 'pv') {
-        const d = data as PvData
-
-        return {
-          date,
-          type,
-          ip: d.ip,
-          msg: `${d.path}`,
-        }
-      }
-      const d = data as LogErrorData
-
-      // 默认是错误
-      return {
-        date,
-        type,
-        ip: (d?.req?.ip) || '未知',
-        msg: (d?.msg) || '未知',
-      }
-    })
+    const result = this.filterLog(logs)
 
     return {
       logs: result,
+    }
+  }
+
+  /**
+   * 分页查询
+   */
+  @Post('log', power)
+  async getPartLog(@ReqBody('type') type:LogType, @ReqBody('pageSize') size = 6, @ReqBody('pageIndex') index = 1, @ReqBody('search') search = '') {
+    const logCount = await findLogCount({ type })
+    const logs = await findLogWithPageOffset((index - 1) * size, size, { type })
+    return {
+      logs: this.filterLog(logs),
+      sum: logCount,
     }
   }
 }

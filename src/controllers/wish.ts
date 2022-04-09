@@ -1,31 +1,36 @@
 import {
-  FWRequest,
-  FWResponse,
   RouterController,
   Post,
+  ReqBody,
+  FWRequest,
 } from 'flash-wolves'
 import { Wish, WishStatus } from '@/db/model/wish'
 import { addWishData } from '@/db/wishDb'
 import { getUniqueKey } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
 
+const power = {
+  needLogin: true,
+}
+
 @RouterController('wish')
 export default class WishController {
-  @Post('add', {
-    needLogin: true,
-  })
-  async add(
-    req: FWRequest,
-    res: FWResponse,
+  /**
+   * 提交需求
+   */
+  @Post('add', power)
+  async addWish(
+    @ReqBody() body:Wish,
+      req:FWRequest,
   ) {
     const user = await getUserInfo(req)
+
     const wish: Wish = {
-      ...req.body,
+      ...body,
       id: getUniqueKey(),
       userId: user.id,
       status: WishStatus.REVIEW,
     }
     await addWishData(wish)
-    res.success()
   }
 }

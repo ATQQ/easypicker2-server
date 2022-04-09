@@ -1,5 +1,5 @@
 import { FWRequest } from 'flash-wolves'
-import { ObjectId } from 'mongodb'
+import { FilterQuery, ObjectId } from 'mongodb'
 import { insertCollection, mongoDbQuery } from '@/lib/dbConnect/mongodb'
 import { getUniqueKey } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
@@ -169,6 +169,15 @@ export function findLogWithTimeRange(start:Date, end?:Date) {
         $gt: new ObjectId(timeToObjId(start)),
       },
     }).toArray().then(resolve)
+  })
+}
+
+export function findLogWithPageOffset(startIdx:number, pageSize:number, query:FilterQuery<Log>) {
+  return mongoDbQuery<Log[]>((db, resolve) => {
+    db.collection<Log>('log').find(query).sort({ _id: -1 }).skip(startIdx)
+      .limit(pageSize)
+      .toArray()
+      .then(resolve)
   })
 }
 
