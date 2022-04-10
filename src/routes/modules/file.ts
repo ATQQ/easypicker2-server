@@ -285,7 +285,9 @@ router.delete('withdraw', async (req, res) => {
       return
     }
     await updatePeople({
-      status: 0,
+      status: (await selectFiles({ people: peopleName, taskKey }, ['people'])).length ? 1 : 0,
+      // 更新最后操作时间
+      submitDate: new Date(),
     }, {
       id: p.id,
     })

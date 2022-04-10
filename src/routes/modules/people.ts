@@ -90,7 +90,7 @@ router.post('/:key', async (req, res) => {
 router.get('/:key', async (req, res) => {
   const { id: userId, account: logAccount } = await getUserInfo(req)
   const { key } = req.params
-  const people = (await selectPeople({
+  const people:any = (await selectPeople({
     userId,
     taskKey: key,
   }, [])).map((v) => ({
@@ -100,6 +100,13 @@ router.get('/:key', async (req, res) => {
     lastDate: v.submit_date,
     count: v.submit_count,
   }))
+  for (const p of people) {
+    const fileCount = p.status
+      ? (await selectFiles({ userId, taskKey: key, people: p.name })).length
+      : 0
+    p.fileCount = fileCount
+    p.count = Math.max(p.count, fileCount)
+  }
   addBehavior(req, {
     module: 'people',
     msg: `获取人员名单 用户:${logAccount}`,
@@ -234,9 +241,15 @@ router.put('/:key', async (req, res) => {
     res.failWithError(publicError.request.errorParams)
     return
   }
+  const alreadyCount = (await selectPeople({
+    taskKey: key,
+    name,
+  }, ['name', 'submit_count']))[0].submit_count || 0
+
   await updatePeople({
     status: 1,
     submitDate: new Date(),
+    submitCount: alreadyCount + 1,
   }, {
     name,
     taskKey: key,
