@@ -263,6 +263,22 @@ router.delete('withdraw', async (req, res) => {
     return
   }
 
+  // 删除提交记录
+  // 删除文件
+  const key = `easypicker2/${taskKey}/${hash}/${filename}`
+  deleteObjByKey(key)
+  await deleteFileRecord(file)
+  addBehavior(req, {
+    module: 'file',
+    msg: `撤回文件成功 ip:${logIp} ${peopleName} 文件:${filename}`,
+    data: {
+      ip: logIp,
+      filename,
+      peopleName,
+      data: req.body,
+    },
+  })
+
   // 更新人员提交状态
   if (peopleName) {
     const [p] = await selectPeople({
@@ -292,21 +308,6 @@ router.delete('withdraw', async (req, res) => {
       id: p.id,
     })
   }
-  // 删除提交记录
-  // 删除文件
-  const key = `easypicker2/${taskKey}/${hash}/${filename}`
-  deleteObjByKey(key)
-  await deleteFileRecord(file)
-  addBehavior(req, {
-    module: 'file',
-    msg: `撤回文件成功 ip:${logIp} ${peopleName} 文件:${filename}`,
-    data: {
-      ip: logIp,
-      filename,
-      peopleName,
-      data: req.body,
-    },
-  })
   res.success()
 })
 
