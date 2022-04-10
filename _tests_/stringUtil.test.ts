@@ -1,3 +1,4 @@
+import { test, expect } from 'vitest'
 import { encryption, getUniqueKey, getKeyInfo } from '../src/utils/stringUtil'
 
 test('encode 66666 = rotaomo64xYS7sHR9v+86Q==', () => {

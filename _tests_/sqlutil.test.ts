@@ -1,5 +1,8 @@
+import { test, expect } from 'vitest'
 import {
-  selectTableByModel, deleteTableByModel, insertTableByModel, updateTableByModel, insertTableByModelMany, createWhereSql,
+  selectTableByModel, deleteTableByModel,
+  insertTableByModel, updateTableByModel,
+  insertTableByModelMany, createWhereSql,
 } from '../src/utils/sqlUtil'
 
 test('selectTableByModel("user")', () => {
@@ -68,8 +71,9 @@ test('selectTableByModelLimit', () => {
   const { sql, params } = selectTableByModel('user', {
     data: { pwd: '123456', taskName: 'task1' },
     columns: ['id', 'name'],
-  }, 100)
-  expect(sql).toBe('select id,name from user where pwd = ? and task_name = ? limit 100')
+    limit: 100,
+  })
+  expect(sql).toBe('select id,name from user where pwd = ? and task_name = ?  limit 100')
   expect(params).toEqual(['123456', 'task1'])
 })
 

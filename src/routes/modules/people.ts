@@ -10,7 +10,9 @@ import {
   deletePeople, insertPeople, selectPeople, updatePeople,
 } from '@/db/peopleDb'
 import { selectFiles } from '@/db/fileDb'
-import { addBehavior, addErrorLog, getClientIp } from '@/db/logDb'
+import {
+  addBehavior, addErrorLog, findLogCount, getClientIp,
+} from '@/db/logDb'
 import { selectTasks } from '@/db/taskDb'
 
 const router = new Router('people')
@@ -90,7 +92,7 @@ router.post('/:key', async (req, res) => {
 router.get('/:key', async (req, res) => {
   const { id: userId, account: logAccount } = await getUserInfo(req)
   const { key } = req.params
-  const people = (await selectPeople({
+  const people:any = (await selectPeople({
     userId,
     taskKey: key,
   }, [])).map((v) => ({
@@ -100,6 +102,41 @@ router.get('/:key', async (req, res) => {
     lastDate: v.submit_date,
     count: v.submit_count,
   }))
+  for (const p of people) {
+    // 现存文件数量
+    const fileCount = p.status
+      ? (await selectFiles({ userId, taskKey: key, people: p.name })).length
+      : 0
+    p.fileCount = fileCount
+
+    // 从日志中取数据
+    // 提交文件数量 = 提交次数 - 撤回次数
+    const submitCount = p.status ? await findLogCount({
+      type: 'behavior',
+      'data.info.data.data.taskKey': key,
+      'data.info.data.data.people': p.name,
+      'data.info.data.data.user_id': userId,
+      'data.req.path': '/file/info',
+      'data.info.msg': {
+        $regex: '成功$',
+      },
+    }) - await findLogCount({
+      type: 'behavior',
+      'data.info.data.data.taskKey': key,
+      'data.info.data.data.peopleName': p.name,
+      'data.user.userId': userId,
+      'data.req.path': '/file/withdraw',
+      'data.info.msg': {
+        $regex: '^撤回文件成功',
+      },
+    }) : 0
+
+    // 提交文件数量，兼容旧数据取较高的值
+    p.submitCount = Math.max(submitCount, fileCount)
+
+    // 提交次数
+    p.count = Math.max(p.count, p.submitCount)
+  }
   addBehavior(req, {
     module: 'people',
     msg: `获取人员名单 用户:${logAccount}`,
@@ -234,9 +271,15 @@ router.put('/:key', async (req, res) => {
     res.failWithError(publicError.request.errorParams)
     return
   }
+  const alreadyCount = (await selectPeople({
+    taskKey: key,
+    name,
+  }, ['name', 'submit_count']))[0].submit_count || 0
+
   await updatePeople({
     status: 1,
     submitDate: new Date(),
+    submitCount: alreadyCount + 1,
   }, {
     name,
     taskKey: key,

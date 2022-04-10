@@ -1,5 +1,5 @@
 import { FWRequest } from 'flash-wolves'
-import { ObjectId } from 'mongodb'
+import { FilterQuery, ObjectId } from 'mongodb'
 import { insertCollection, mongoDbQuery } from '@/lib/dbConnect/mongodb'
 import { getUniqueKey } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
@@ -147,7 +147,7 @@ function timeToObjId(d:Date) {
   return `${s.toString(16)}0000000000000000` // 转换成16进制的字符串，再加补齐16个0
 }
 
-export function findLogCount(q:Log) {
+export function findLogCount(q:FilterQuery<Log>) {
   return mongoDbQuery<number>((db, resolve) => {
     db.collection<Log>('log').countDocuments(q).then(resolve)
   })
@@ -169,6 +169,20 @@ export function findLogWithTimeRange(start:Date, end?:Date) {
         $gt: new ObjectId(timeToObjId(start)),
       },
     }).toArray().then(resolve)
+  })
+}
+
+export function findLogWithPageOffset(startIdx:number, pageSize:number, query:FilterQuery<Log>) {
+  return mongoDbQuery<Log[]>((db, resolve) => {
+    db.collection<Log>('log').find(query).sort({ _id: -1 }).skip(startIdx)
+      .limit(pageSize)
+      .toArray()
+      .then(resolve)
+  })
+}
+export function findLog(query:FilterQuery<Log>) {
+  return mongoDbQuery<Log[]>((db, resolve) => {
+    db.collection<Log>('log').find(query).toArray().then(resolve)
   })
 }
 
