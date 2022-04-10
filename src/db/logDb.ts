@@ -147,7 +147,7 @@ function timeToObjId(d:Date) {
   return `${s.toString(16)}0000000000000000` // 转换成16进制的字符串，再加补齐16个0
 }
 
-export function findLogCount(q:Log) {
+export function findLogCount(q:FilterQuery<Log>) {
   return mongoDbQuery<number>((db, resolve) => {
     db.collection<Log>('log').countDocuments(q).then(resolve)
   })
