@@ -1,6 +1,7 @@
 {
-  "name": "node-server",
-  "version": "1.0.1",
+  "name": "ep-server",
+  "version": "1.0.2",
+  "private": true,
   "description": "",
   "main": "src/index.ts",
   "scripts": {

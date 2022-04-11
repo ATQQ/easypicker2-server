@@ -206,11 +206,10 @@ export function makeZipWithKeys(keys: string[], zipName: string): Promise<string
         base = `${name}_${i}${ext}`
         i += 1
       }
-      // TODO:优化
-      // 临时处理特殊情况
-      const specialChars  = ['•']
-      specialChars.forEach(s=>{
-        base = base.replace(new RegExp(s,'g'),'-')
+      // 处理特殊情况
+      const specialCharsReplaceMap = [['•', '·']]
+      specialCharsReplaceMap.forEach(([pre,post])=>{
+        base = base.replace(new RegExp(pre,'g'),post)
       })
       names.push(base)
       const safeUrl = `/url/${urlsafeBase64Encode(createDownloadUrl(key))}/alias/${urlsafeBase64Encode(base)}`

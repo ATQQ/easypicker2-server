@@ -36,6 +36,7 @@ export declare namespace LogBehaviorData {
     }
 
     interface Request {
+        method: string
         path: string
         userAgent: string
         refer: string
