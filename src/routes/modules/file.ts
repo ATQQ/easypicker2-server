@@ -506,7 +506,17 @@ router.post('submit/people', async (req, res) => {
     if (task) {
       addBehavior(req, {
         module: 'file',
-        msg: `查询是否提交过文件: 任务:${task.name} 信息:${info.map((v) => v.value).join('-')}`,
+        msg: `查询是否提交过文件: ${files.length > 0 ? '是' : '否'} 任务:${task.name} 信息:${info.map((v) => v.value).join('-')}`,
+        data: {
+          taskKey,
+          taskName: task.name,
+          info,
+        },
+      })
+    } else {
+      addBehavior(req, {
+        module: 'file',
+        msg: `查询是否提交过文件: 任务 ${taskKey} 不存在`,
         data: {
           taskKey,
           taskName: task.name,
@@ -514,13 +524,6 @@ router.post('submit/people', async (req, res) => {
         },
       })
     }
-    addBehavior(req, {
-      module: 'file',
-      msg: '',
-      data: {
-        taskKey,
-      },
-    })
   })()
 
   res.success({

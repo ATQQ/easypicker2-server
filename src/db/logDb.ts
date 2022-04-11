@@ -59,7 +59,7 @@ export async function addBehavior(req: FWRequest, info: LogBehaviorData.Info) {
     url,
   } = req
 
-  const { headers } = req
+  const { headers, method } = req
   const userAgent = headers['user-agent']
   const refer = headers.referer
   const ip = getClientIp(req)
@@ -70,6 +70,7 @@ export async function addBehavior(req: FWRequest, info: LogBehaviorData.Info) {
   }
   const data: LogBehaviorData = {
     req: {
+      method,
       path: url,
       userAgent,
       refer,
