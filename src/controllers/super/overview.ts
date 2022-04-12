@@ -1,7 +1,7 @@
 import {
   Get, Post, ReqBody, ReqParams, RouterController,
 } from 'flash-wolves'
-import { ObjectId } from 'mongodb'
+import { FilterQuery, ObjectId } from 'mongodb'
 import { selectFiles } from '@/db/fileDb'
 import {
   findLog,
@@ -159,8 +159,90 @@ export default class OverviewController {
    */
   @Post('log', power)
   async getPartLog(@ReqBody('type') type:LogType, @ReqBody('pageSize') size = 6, @ReqBody('pageIndex') index = 1, @ReqBody('search') search = '') {
-    const logCount = await findLogCount({ type })
-    const logs = await findLogWithPageOffset((index - 1) * size, size, { type })
+    let query:FilterQuery<Log> = {
+      type,
+    }
+    if (search) {
+      switch (type) {
+        case 'behavior':
+          query = {
+            ...query,
+            $or: [
+              {
+                'data.info.msg': {
+                  $regex: `.*${search}.*`,
+                },
+              },
+              {
+                'data.req.ip': {
+                  $regex: `.*${search}.*`,
+                },
+              },
+            ],
+          }
+          break
+        case 'request':
+          query = {
+            ...query,
+            $or: [
+              {
+                'data.method': {
+                  $regex: `.*${search}.*`,
+                },
+              },
+              {
+                'data.url': {
+                  $regex: `.*${search}.*`,
+                },
+              },
+              {
+                'data.ip': {
+                  $regex: `.*${search}.*`,
+                },
+              },
+            ],
+          }
+          break
+        case 'pv':
+          query = {
+            ...query,
+            $or: [
+              {
+                'data.path': {
+                  $regex: `.*${search}.*`,
+                },
+              },
+              {
+                'data.ip': {
+                  $regex: `.*${search}.*`,
+                },
+              },
+            ],
+          }
+          break
+        case 'error':
+          query = {
+            ...query,
+            $or: [
+              {
+                'data.req.ip': {
+                  $regex: `.*${search}.*`,
+                },
+              },
+              {
+                'data.msg': {
+                  $regex: `.*${search}.*`,
+                },
+              },
+            ],
+          }
+          break
+        default:
+          break
+      }
+    }
+    const logCount = await findLogCount(query)
+    const logs = await findLogWithPageOffset((index - 1) * size, size, query)
     return {
       logs: this.filterLog(logs),
       sum: logCount,
