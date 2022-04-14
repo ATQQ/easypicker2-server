@@ -284,6 +284,10 @@ interface FileStat {
   data: {
     md5?: string,
     error?: string
+    hash?: string,
+    mimeType?:string,
+    putTime?: number,
+    type?: number
   }
 }
 /**

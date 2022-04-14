@@ -10,7 +10,7 @@ import { selectPeople } from '@/db/peopleDb'
 import { addBehavior } from '@/db/logDb'
 
 @RouterController('people')
-export default class WishController {
+export default class PeopleController {
   /**
    * 检查是否有提交权限
    */
