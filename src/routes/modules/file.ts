@@ -214,11 +214,20 @@ router.delete('one', async (req, res) => {
     return
   }
   let k = `easypicker2/${file.task_key}/${file.hash}/${file.name}`
+  // TODO 兼容旧路径的逻辑
   if (file.category_key) {
     k = file.category_key
   }
-  // 删除云上文件
-  deleteObjByKey(k)
+  const isRepeat = (await selectFiles({
+    taskKey: file.task_key,
+    hash: file.hash,
+    name: file.name,
+  })).length > 1
+
+  if (!isRepeat) {
+  // 删除OSS上文件
+    deleteObjByKey(k)
+  }
   await deleteFileRecord(file)
   addBehavior(req, {
     module: 'file',
@@ -426,6 +435,7 @@ router.delete('batch/del', async (req, res) => {
     const {
       name, task_key, hash, category_key,
     } = v
+    // TODO:旧逻辑兼容
     if (category_key) {
       return category_key
     }
@@ -433,6 +443,7 @@ router.delete('batch/del', async (req, res) => {
   })
 
   // 删除云上记录
+  // TODO:文件一模一样的记录避免误删
   batchDeleteFiles(keys)
   await deleteFiles(files)
   res.success()
