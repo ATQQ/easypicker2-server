@@ -108,7 +108,14 @@ declare namespace NodeJS {
        * SSO存储空间绑定的域名
        */
       QINIU_BUCKET_DOMAIN:string
-
+      /**
+       * 七牛云图片封面压缩样式
+       */
+      QINIU_BUCKET_IMAGE_COVER_STYLE:string
+      /**
+       * 七牛云图片预览压缩样式
+       */
+       QINIU_BUCKET_IMAGE_PREVIEW_STYLE:string
       // 腾讯云相关
       /**
        * SecretId

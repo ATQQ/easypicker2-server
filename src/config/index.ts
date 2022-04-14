@@ -35,6 +35,8 @@ export const qiniuConfig = {
   secretKey: process.env.QINIU_SECRET_KEY,
   bucketName: process.env.QINIU_BUCKET_NAME,
   bucketDomain: process.env.QINIU_BUCKET_DOMAIN,
+  imageCoverStyle: process.env.QINIU_BUCKET_IMAGE_COVER_STYLE === 'false' ? '' : process.env.QINIU_BUCKET_IMAGE_COVER_STYLE,
+  imagePreviewStyle: process.env.QINIU_BUCKET_IMAGE_PREVIEW_STYLE === 'false' ? '' : process.env.QINIU_BUCKET_IMAGE_PREVIEW_STYLE,
 }
 
 // 腾讯云
