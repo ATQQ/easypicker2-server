@@ -7,6 +7,7 @@ import {
 } from '@/db/taskDb'
 
 import { getUserInfo } from '@/utils/userUtil'
+import { taskError } from '@/constants/errorMsg'
 
 const router = new Router('task')
 
@@ -84,11 +85,25 @@ router.get('/:key', async (req, res) => {
     k: key,
   })
   const ip = getClientIp(req)
+  if (!task) {
+    addBehavior(req, {
+      module: 'task',
+      msg: `获取任务详细信息, 任务不存在 ip:${ip}`,
+      data: {
+        ip,
+        key,
+      },
+    })
+    res.failWithError(taskError.noExist)
+    return
+  }
+
   addBehavior(req, {
     module: 'task',
-    msg: `获取任务详细信息 ip:${ip}`,
+    msg: `获取任务详细信息, ${task.name} ip:${ip}`,
     data: {
       ip,
+      name: task.name,
     },
   })
   res.success({

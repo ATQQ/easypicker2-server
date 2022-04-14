@@ -14,6 +14,7 @@ import {
   addBehavior, addErrorLog, findLogCount, getClientIp,
 } from '@/db/logDb'
 import { selectTasks } from '@/db/taskDb'
+import { batchFileStatus } from '@/utils/qiniuUtil'
 
 const router = new Router('people')
 const fileDir = `${process.cwd()}/upload`
@@ -103,9 +104,14 @@ router.get('/:key', async (req, res) => {
     count: v.submit_count,
   }))
   for (const p of people) {
-    // 现存文件数量
+    // 用户提交的还存在的记录(没有被管理员删除)
+    const existPeopleSubmitFiles = await selectFiles({ userId, taskKey: key, people: p.name })
+
+    // 真现存文件数量
+    const ossStatus = (p.status && existPeopleSubmitFiles.length) ? (await batchFileStatus(existPeopleSubmitFiles.map((v) => `easypicker2/${v.task_key}/${v.hash}/${v.name}`))) : []
+
     const fileCount = p.status
-      ? (await selectFiles({ userId, taskKey: key, people: p.name })).length
+      ? ossStatus.filter((v) => v.code === 200).length
       : 0
     p.fileCount = fileCount
 

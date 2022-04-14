@@ -208,8 +208,8 @@ export function makeZipWithKeys(keys: string[], zipName: string): Promise<string
       }
       // 处理特殊情况
       const specialCharsReplaceMap = [['•', '·']]
-      specialCharsReplaceMap.forEach(([pre,post])=>{
-        base = base.replace(new RegExp(pre,'g'),post)
+      specialCharsReplaceMap.forEach(([pre, post]) => {
+        base = base.replace(new RegExp(pre, 'g'), post)
       })
       names.push(base)
       const safeUrl = `/url/${urlsafeBase64Encode(createDownloadUrl(key))}/alias/${urlsafeBase64Encode(base)}`
@@ -258,7 +258,7 @@ export function makeZipWithKeys(keys: string[], zipName: string): Promise<string
   })
 }
 
-export function checkFopTaskStatus(persistentId: string): Promise<{ code: number, key?: string,desc?:string,error?:string }> {
+export function checkFopTaskStatus(persistentId: string): Promise<{ code: number, key?: string, desc?: string, error?: string }> {
   const config = new qiniu.conf.Config()
   const operManager = new qiniu.fop.OperationManager(null, config)
   return new Promise((res) => {
@@ -285,7 +285,7 @@ interface FileStat {
     md5?: string,
     error?: string
     hash?: string,
-    mimeType?:string,
+    mimeType?: string,
     putTime?: number,
     type?: number
   }
@@ -295,6 +295,9 @@ interface FileStat {
  */
 export function batchFileStatus(keys: string[]): Promise<FileStat[]> {
   return new Promise((resolve, reject) => {
+    if (keys.length === 0) {
+      return []
+    }
     const statOperations = keys.map((k) => qiniu.rs.statOp(bucket, k))
     const config = new qiniu.conf.Config()
     const bucketManager = new qiniu.rs.BucketManager(mac, config)
