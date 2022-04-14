@@ -225,16 +225,28 @@ router.delete('one', async (req, res) => {
   })).length > 1
 
   if (!isRepeat) {
-  // 删除OSS上文件
+    // 删除OSS上文件
     deleteObjByKey(k)
+    addBehavior(req, {
+      module: 'file',
+      msg: `删除文件成功 用户:${logAccount} 文件:${file.name}`,
+      data: {
+        account: logAccount,
+        name: file.name,
+        taskKey: file.task_key,
+        hash: file.hash,
+      },
+    })
   }
   await deleteFileRecord(file)
   addBehavior(req, {
     module: 'file',
-    msg: `删除文件成功 用户:${logAccount} 文件:${file.name}`,
+    msg: `删除文件提交记录成功 用户:${logAccount} 文件:${file.name}`,
     data: {
       account: logAccount,
       name: file.name,
+      taskKey: file.task_key,
+      hash: file.hash,
     },
   })
   res.success()

@@ -35,3 +35,7 @@ export const publicError = {
     notLogin: codeMsg(3004, 'user not login'),
   },
 }
+
+export const taskError = {
+  noExist: codeMsg(4001, 'task not exist'),
+}
