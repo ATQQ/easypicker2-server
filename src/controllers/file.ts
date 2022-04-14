@@ -4,8 +4,6 @@ import {
   ReqBody,
   FWRequest,
 } from 'flash-wolves'
-import { selectTasks } from '@/db/taskDb'
-import { selectPeople } from '@/db/peopleDb'
 import { addBehavior } from '@/db/logDb'
 import { getUserInfo } from '@/utils/userUtil'
 import { selectFiles } from '@/db/fileDb'
@@ -27,6 +25,14 @@ export default class FileController {
       req:FWRequest,
   ) {
     const user = await getUserInfo(req)
+    addBehavior(req, {
+      module: 'file',
+      msg: `获取图片预览链接 用户:${user.account}`,
+      data: {
+        account: user.account,
+        idList,
+      },
+    })
     const files = await selectFiles({
       id: idList as any,
       userId: user.id,
