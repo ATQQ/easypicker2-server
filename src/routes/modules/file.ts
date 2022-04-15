@@ -193,7 +193,7 @@ router.get('one', async (req, res) => {
 })
 
 /**
- * 删除某个文件
+ * 删除单个文件
  */
 router.delete('one', async (req, res) => {
   const { id } = req.body
@@ -208,40 +208,32 @@ router.delete('one', async (req, res) => {
       msg: `删除文件失败 用户:${logAccount} 文件记录不存在`,
       data: {
         account: logAccount,
+        fileId: id,
       },
     })
     res.failWithError(publicError.file.notExist)
     return
   }
   let k = `easypicker2/${file.task_key}/${file.hash}/${file.name}`
-  // TODO 兼容旧路径的逻辑
+  // 兼容旧路径的逻辑
   if (file.category_key) {
     k = file.category_key
   }
-  const isRepeat = (await selectFiles({
+  const sameRecord = await selectFiles({
     taskKey: file.task_key,
     hash: file.hash,
     name: file.name,
-  })).length > 1
+  })
+  const isRepeat = sameRecord.length > 1
 
   if (!isRepeat) {
     // 删除OSS上文件
     deleteObjByKey(k)
-    addBehavior(req, {
-      module: 'file',
-      msg: `删除文件成功 用户:${logAccount} 文件:${file.name}`,
-      data: {
-        account: logAccount,
-        name: file.name,
-        taskKey: file.task_key,
-        hash: file.hash,
-      },
-    })
   }
   await deleteFileRecord(file)
   addBehavior(req, {
     module: 'file',
-    msg: `删除文件提交记录成功 用户:${logAccount} 文件:${file.name}`,
+    msg: `删除文件提交记录成功 用户:${logAccount} 文件:${file.name} ${isRepeat ? `还存在${sameRecord.length - 1}个重复文件` : '删除OSS资源'}`,
     data: {
       account: logAccount,
       name: file.name,
@@ -443,37 +435,46 @@ router.delete('batch/del', async (req, res) => {
     res.success()
     return
   }
-  const keys = files.map((v) => {
+  const keys = new Set<string>()
+
+  // TODO：上传时尽力保持每个文件的独立性
+  // TODO：O(n²)的复杂度，观察一下实际操作频率优化，会导致接口时间变长
+  for (const file of files) {
     const {
       name, task_key, hash, category_key,
-    } = v
-    // TODO:旧逻辑兼容
+    } = file
+    // 兼容旧逻辑
     if (category_key) {
-      return category_key
+      keys.add(category_key)
+    } else {
+      // 文件一模一样的记录避免误删
+      const dbCount = (await selectFiles({
+        task_key,
+        hash,
+        name,
+      }, ['id'])).length
+      const delCount = files.filter(
+        (v) => v.task_key === task_key && v.hash === hash && v.name === name,
+      ).length
+      if (dbCount <= delCount) {
+        keys.add(`easypicker2/${task_key}/${hash}/${name}`)
+      }
     }
-    return `easypicker2/${task_key}/${hash}/${name}`
-  })
+  }
 
-  // 删除云上记录
-  // TODO:文件一模一样的记录避免误删
-  batchDeleteFiles(keys)
+  // 删除OSS上文件
+  batchDeleteFiles([...keys])
   await deleteFiles(files)
   res.success()
   addBehavior(req, {
     module: 'file',
-    msg: `批量删除文件成功 用户:${logAccount} 文件数量:${files.length}`,
+    msg: `批量删除文件成功 用户:${logAccount} 文件记录数量:${files.length} OSS资源数量:${keys.size}`,
     data: {
       account: logAccount,
       length: files.length,
+      ossCount: keys.size,
     },
   })
-  // 删除记录
-  // deleteFileRecord({
-  //     id: ids,
-  //     userId
-  // }).then(() => {
-  //     res.success()
-  // })
 }, {
   needLogin: true,
 })
