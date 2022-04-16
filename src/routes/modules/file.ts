@@ -15,6 +15,7 @@ import {
 } from '@/utils/qiniuUtil'
 import { getUniqueKey } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
+import { selectTaskInfo } from '@/db/taskInfoDb'
 
 const router = new Router('file')
 
@@ -177,16 +178,20 @@ router.get('one', async (req, res) => {
     return
   }
 
+  const status = await batchFileStatus([k])
+  const mimeType = status[0]?.data?.mimeType
   addBehavior(req, {
     module: 'file',
-    msg: `下载文件成功 用户:${logAccount} 文件:${file.name}`,
+    msg: `下载文件成功 用户:${logAccount} 文件:${file.name} 类型:${mimeType}`,
     data: {
       account: logAccount,
       name: file.name,
+      mimeType,
     },
   })
   res.success({
     link: createDownloadUrl(k),
+    mimeType,
   })
 }, {
   needLogin: true,
@@ -254,14 +259,26 @@ router.delete('withdraw', async (req, res) => {
   const {
     taskKey, taskName, filename, hash, peopleName, info,
   } = req.body
-  const [file] = await selectFiles({
+
+  const limitPeople = (await selectTaskInfo({ taskKey }))?.[0]?.limit_people
+
+  // 内容完全一致的提交记录，不包含限制的名字
+  const files = await selectFiles({
     taskKey,
     taskName,
     name: filename,
     hash,
     info,
   })
-  if (!file || (file.people && file.people !== peopleName)) {
+
+  const passFiles = files.filter((file) => {
+    if (limitPeople) {
+      return peopleName && file.people === peopleName
+    }
+    return true
+  })
+
+  if (!passFiles.length) {
     addBehavior(req, {
       module: 'file',
       msg: `撤回文件失败 ip:${logIp} ${peopleName} 文件:${filename} 信息不匹配`,
@@ -275,17 +292,23 @@ router.delete('withdraw', async (req, res) => {
     res.failWithError(publicError.file.notExist)
     return
   }
-
+  const isDelOss = passFiles.length === files.length
   // 删除提交记录
   // 删除文件
-  const key = `easypicker2/${taskKey}/${hash}/${filename}`
-  deleteObjByKey(key)
-  await deleteFileRecord(file)
+  if (isDelOss) {
+    const key = `easypicker2/${taskKey}/${hash}/${filename}`
+    deleteObjByKey(key)
+  }
+  await deleteFiles(passFiles)
   addBehavior(req, {
     module: 'file',
-    msg: `撤回文件成功 ip:${logIp} ${peopleName} 文件:${filename}`,
+    msg: `撤回文件成功 文件:${filename} 删除记录:${passFiles.length} 删除OSS资源:${isDelOss ? '是' : '否'}`,
     data: {
       ip: logIp,
+      limitPeople,
+      isDelOss,
+      filesCount: files.length,
+      passFilesCount: passFiles.length,
       filename,
       peopleName,
       data: req.body,
@@ -302,7 +325,7 @@ router.delete('withdraw', async (req, res) => {
     if (!p) {
       addBehavior(req, {
         module: 'file',
-        msg: `撤回文件失败 ip:${logIp} 文件:${filename} 姓名:${peopleName} 信息不匹配`,
+        msg: `姓名:${peopleName} 不存在`,
         data: {
           ip: logIp,
           filename,
