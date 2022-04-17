@@ -60,7 +60,9 @@ router.post('info', async (req, res) => {
     return
   }
   const { user_id } = task
-  Object.assign<File, File>(data, { user_id, date: new Date(), categoryKey: '' })
+  Object.assign<File, File>(data, {
+    user_id, date: new Date(), categoryKey: '', people: data.people || '',
+  })
   data.name = filenamify(data.name, { replacement: '_' })
   await insertFile(data)
   addBehavior(req, {
@@ -271,12 +273,7 @@ router.delete('withdraw', async (req, res) => {
     info,
   })
 
-  const passFiles = files.filter((file) => {
-    if (limitPeople) {
-      return peopleName && file.people === peopleName
-    }
-    return true
-  })
+  const passFiles = files.filter((file) => file.people === peopleName)
 
   if (!passFiles.length) {
     addBehavior(req, {
@@ -541,11 +538,13 @@ router.post('compress/down', async (req, res) => {
  * 查询是否提交
  */
 router.post('submit/people', async (req, res) => {
-  const { taskKey, info } = req.body
+  const { taskKey, info, name = '' } = req.body
+
   const files = await selectFiles({
     taskKey,
     info: JSON.stringify(info),
-  });
+    people: name,
+  }, ['id']);
   (async () => {
     const [task] = await selectTasks({
       k: taskKey,
@@ -553,11 +552,12 @@ router.post('submit/people', async (req, res) => {
     if (task) {
       addBehavior(req, {
         module: 'file',
-        msg: `查询是否提交过文件: ${files.length > 0 ? '是' : '否'} 任务:${task.name} 信息:${info.map((v) => v.value).join('-')}`,
+        msg: `查询是否提交过文件: ${files.length > 0 ? '是' : '否'} 任务:${task.name} 数量:${files.length}`,
         data: {
           taskKey,
           taskName: task.name,
           info,
+          count: files.length,
         },
       })
     } else {
