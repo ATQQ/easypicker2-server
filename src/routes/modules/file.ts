@@ -15,6 +15,7 @@ import {
 } from '@/utils/qiniuUtil'
 import { getUniqueKey } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
+import { selectTaskInfo } from '@/db/taskInfoDb'
 
 const router = new Router('file')
 
@@ -59,7 +60,9 @@ router.post('info', async (req, res) => {
     return
   }
   const { user_id } = task
-  Object.assign<File, File>(data, { user_id, date: new Date(), categoryKey: '' })
+  Object.assign<File, File>(data, {
+    user_id, date: new Date(), categoryKey: '', people: data.people || '',
+  })
   data.name = filenamify(data.name, { replacement: '_' })
   await insertFile(data)
   addBehavior(req, {
@@ -177,23 +180,27 @@ router.get('one', async (req, res) => {
     return
   }
 
+  const status = await batchFileStatus([k])
+  const mimeType = status[0]?.data?.mimeType
   addBehavior(req, {
     module: 'file',
-    msg: `下载文件成功 用户:${logAccount} 文件:${file.name}`,
+    msg: `下载文件成功 用户:${logAccount} 文件:${file.name} 类型:${mimeType}`,
     data: {
       account: logAccount,
       name: file.name,
+      mimeType,
     },
   })
   res.success({
     link: createDownloadUrl(k),
+    mimeType,
   })
 }, {
   needLogin: true,
 })
 
 /**
- * 删除某个文件
+ * 删除单个文件
  */
 router.delete('one', async (req, res) => {
   const { id } = req.body
@@ -208,40 +215,32 @@ router.delete('one', async (req, res) => {
       msg: `删除文件失败 用户:${logAccount} 文件记录不存在`,
       data: {
         account: logAccount,
+        fileId: id,
       },
     })
     res.failWithError(publicError.file.notExist)
     return
   }
   let k = `easypicker2/${file.task_key}/${file.hash}/${file.name}`
-  // TODO 兼容旧路径的逻辑
+  // 兼容旧路径的逻辑
   if (file.category_key) {
     k = file.category_key
   }
-  const isRepeat = (await selectFiles({
+  const sameRecord = await selectFiles({
     taskKey: file.task_key,
     hash: file.hash,
     name: file.name,
-  })).length > 1
+  })
+  const isRepeat = sameRecord.length > 1
 
   if (!isRepeat) {
     // 删除OSS上文件
     deleteObjByKey(k)
-    addBehavior(req, {
-      module: 'file',
-      msg: `删除文件成功 用户:${logAccount} 文件:${file.name}`,
-      data: {
-        account: logAccount,
-        name: file.name,
-        taskKey: file.task_key,
-        hash: file.hash,
-      },
-    })
   }
   await deleteFileRecord(file)
   addBehavior(req, {
     module: 'file',
-    msg: `删除文件提交记录成功 用户:${logAccount} 文件:${file.name}`,
+    msg: `删除文件提交记录成功 用户:${logAccount} 文件:${file.name} ${isRepeat ? `还存在${sameRecord.length - 1}个重复文件` : '删除OSS资源'}`,
     data: {
       account: logAccount,
       name: file.name,
@@ -262,14 +261,21 @@ router.delete('withdraw', async (req, res) => {
   const {
     taskKey, taskName, filename, hash, peopleName, info,
   } = req.body
-  const [file] = await selectFiles({
+
+  const limitPeople = (await selectTaskInfo({ taskKey }))?.[0]?.limit_people
+
+  // 内容完全一致的提交记录，不包含限制的名字
+  const files = await selectFiles({
     taskKey,
     taskName,
     name: filename,
     hash,
     info,
   })
-  if (!file || (file.people && file.people !== peopleName)) {
+
+  const passFiles = files.filter((file) => file.people === peopleName)
+
+  if (!passFiles.length) {
     addBehavior(req, {
       module: 'file',
       msg: `撤回文件失败 ip:${logIp} ${peopleName} 文件:${filename} 信息不匹配`,
@@ -283,17 +289,23 @@ router.delete('withdraw', async (req, res) => {
     res.failWithError(publicError.file.notExist)
     return
   }
-
+  const isDelOss = passFiles.length === files.length
   // 删除提交记录
   // 删除文件
-  const key = `easypicker2/${taskKey}/${hash}/${filename}`
-  deleteObjByKey(key)
-  await deleteFileRecord(file)
+  if (isDelOss) {
+    const key = `easypicker2/${taskKey}/${hash}/${filename}`
+    deleteObjByKey(key)
+  }
+  await deleteFiles(passFiles)
   addBehavior(req, {
     module: 'file',
-    msg: `撤回文件成功 ip:${logIp} ${peopleName} 文件:${filename}`,
+    msg: `撤回文件成功 文件:${filename} 删除记录:${passFiles.length} 删除OSS资源:${isDelOss ? '是' : '否'}`,
     data: {
       ip: logIp,
+      limitPeople,
+      isDelOss,
+      filesCount: files.length,
+      passFilesCount: passFiles.length,
       filename,
       peopleName,
       data: req.body,
@@ -310,7 +322,7 @@ router.delete('withdraw', async (req, res) => {
     if (!p) {
       addBehavior(req, {
         module: 'file',
-        msg: `撤回文件失败 ip:${logIp} 文件:${filename} 姓名:${peopleName} 信息不匹配`,
+        msg: `姓名:${peopleName} 不存在`,
         data: {
           ip: logIp,
           filename,
@@ -443,37 +455,46 @@ router.delete('batch/del', async (req, res) => {
     res.success()
     return
   }
-  const keys = files.map((v) => {
+  const keys = new Set<string>()
+
+  // TODO：上传时尽力保持每个文件的独立性
+  // TODO：O(n²)的复杂度，观察一下实际操作频率优化，会导致接口时间变长
+  for (const file of files) {
     const {
       name, task_key, hash, category_key,
-    } = v
-    // TODO:旧逻辑兼容
+    } = file
+    // 兼容旧逻辑
     if (category_key) {
-      return category_key
+      keys.add(category_key)
+    } else {
+      // 文件一模一样的记录避免误删
+      const dbCount = (await selectFiles({
+        task_key,
+        hash,
+        name,
+      }, ['id'])).length
+      const delCount = files.filter(
+        (v) => v.task_key === task_key && v.hash === hash && v.name === name,
+      ).length
+      if (dbCount <= delCount) {
+        keys.add(`easypicker2/${task_key}/${hash}/${name}`)
+      }
     }
-    return `easypicker2/${task_key}/${hash}/${name}`
-  })
+  }
 
-  // 删除云上记录
-  // TODO:文件一模一样的记录避免误删
-  batchDeleteFiles(keys)
+  // 删除OSS上文件
+  batchDeleteFiles([...keys])
   await deleteFiles(files)
   res.success()
   addBehavior(req, {
     module: 'file',
-    msg: `批量删除文件成功 用户:${logAccount} 文件数量:${files.length}`,
+    msg: `批量删除文件成功 用户:${logAccount} 文件记录数量:${files.length} OSS资源数量:${keys.size}`,
     data: {
       account: logAccount,
       length: files.length,
+      ossCount: keys.size,
     },
   })
-  // 删除记录
-  // deleteFileRecord({
-  //     id: ids,
-  //     userId
-  // }).then(() => {
-  //     res.success()
-  // })
 }, {
   needLogin: true,
 })
@@ -517,11 +538,13 @@ router.post('compress/down', async (req, res) => {
  * 查询是否提交
  */
 router.post('submit/people', async (req, res) => {
-  const { taskKey, info } = req.body
+  const { taskKey, info, name = '' } = req.body
+
   const files = await selectFiles({
     taskKey,
     info: JSON.stringify(info),
-  });
+    people: name,
+  }, ['id']);
   (async () => {
     const [task] = await selectTasks({
       k: taskKey,
@@ -529,11 +552,12 @@ router.post('submit/people', async (req, res) => {
     if (task) {
       addBehavior(req, {
         module: 'file',
-        msg: `查询是否提交过文件: ${files.length > 0 ? '是' : '否'} 任务:${task.name} 信息:${info.map((v) => v.value).join('-')}`,
+        msg: `查询是否提交过文件: ${files.length > 0 ? '是' : '否'} 任务:${task.name} 数量:${files.length}`,
         data: {
           taskKey,
           taskName: task.name,
           info,
+          count: files.length,
         },
       })
     } else {

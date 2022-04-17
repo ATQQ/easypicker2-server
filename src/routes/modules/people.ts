@@ -115,6 +115,7 @@ router.get('/:key', async (req, res) => {
       : 0
     p.fileCount = fileCount
 
+    // TODO:优化慢查询
     // 从日志中取数据
     // 提交文件数量 = 提交次数 - 撤回次数
     const submitCount = p.status ? await findLogCount({
