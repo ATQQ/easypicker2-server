@@ -6,7 +6,7 @@ import {
 import { getUniqueKey } from '@/utils/stringUtil'
 import { People } from './model/people'
 
-export function selectPeople(options: People, columns: string[] = ['name']) {
+export function selectPeople(options: V2Array<People>, columns: string[] = ['name']) {
   const { sql, params } = selectTableByModel('people', {
     data: options,
     columns,
