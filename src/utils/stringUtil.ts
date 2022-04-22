@@ -39,3 +39,13 @@ export function formatDate(d:Date, fmt = 'yyyy-MM-dd hh:mm:ss') {
   for (const k in o) { if (new RegExp(`(${k})`).test(fmt)) fmt = fmt.replace(RegExp.$1, (RegExp.$1.length === 1) ? (o[k]) : ((`00${o[k]}`).substr((`${o[k]}`).length))) }
   return fmt
 }
+
+export function formatSize(size:number, pointLength?:number, units?:string[]) {
+  let unit
+  units = units || ['B', 'K', 'M', 'G', 'TB']
+  // eslint-disable-next-line no-cond-assign
+  while ((unit = units.shift()) && size > 1024) {
+    size /= 1024
+  }
+  return (unit === 'B' ? size : size.toFixed(pointLength === undefined ? 2 : pointLength)) + unit
+}
