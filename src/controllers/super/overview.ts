@@ -1,4 +1,5 @@
 import {
+  Delete,
   Get, Post, ReqBody, ReqParams, RouterController,
 } from 'flash-wolves'
 import { FilterQuery, ObjectId } from 'mongodb'
@@ -13,7 +14,7 @@ import {
 } from '@/db/model/log'
 import { USER_POWER } from '@/db/model/user'
 import { selectAllUser } from '@/db/userDb'
-import { getFileKeys } from '@/utils/qiniuUtil'
+import { batchDeleteFiles, getFileKeys } from '@/utils/qiniuUtil'
 import { formatSize } from '@/utils/stringUtil'
 
 const power = {
@@ -152,6 +153,15 @@ export default class OverviewController {
         },
       },
     }
+  }
+
+  @Delete('compress', power)
+  async clearExpiredCompress() {
+    const compressData = await getFileKeys('easypicker2/temp_package')
+    const expired = compressData.filter(
+      (item) => this.isExpiredCompressSource(item.putTime / 10000),
+    ).map((v) => v.key)
+    batchDeleteFiles(expired)
   }
 
   /**
