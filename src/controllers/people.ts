@@ -64,6 +64,10 @@ export default class PeopleController {
       limitPeople: 1,
     }, ['task_key'])).filter((v) => v.task_key !== taskKey).map((v) => v.task_key)
 
+    if (!taskKeyList.length) {
+      return []
+    }
+
     const taskInfo = (await selectTasks({
       k: taskKeyList,
     }, ['k', 'name']))

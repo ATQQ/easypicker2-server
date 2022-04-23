@@ -21,7 +21,9 @@ export default class TaskInfoController {
     const infoList = (await selectTaskInfo({
       userId: user.id,
     }, ['task_key', 'info'])).filter((v) => v.task_key !== taskKey)
-
+    if (!infoList.length) {
+      return []
+    }
     const taskInfo = (await selectTasks({
       k: infoList.map((v) => v.task_key),
     }, ['k', 'name']))
