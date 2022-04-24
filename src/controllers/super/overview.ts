@@ -1,4 +1,5 @@
 import {
+  Delete,
   Get, Post, ReqBody, ReqParams, RouterController,
 } from 'flash-wolves'
 import { FilterQuery, ObjectId } from 'mongodb'
@@ -13,6 +14,8 @@ import {
 } from '@/db/model/log'
 import { USER_POWER } from '@/db/model/user'
 import { selectAllUser } from '@/db/userDb'
+import { batchDeleteFiles, getFileKeys } from '@/utils/qiniuUtil'
+import { formatSize } from '@/utils/stringUtil'
 
 const power = {
   userPower: USER_POWER.SUPER,
@@ -73,6 +76,10 @@ export default class OverviewController {
     })
   }
 
+  private isExpiredCompressSource(putTime:number) {
+    return (Date.now() - putTime) > 1000 * 60 * 60 * 12
+  }
+
   /**
    * 查询某条日志的详细信息
    * TODO:针对不同类型过滤
@@ -105,7 +112,7 @@ export default class OverviewController {
     // 当日
     const todayPv = await findPvLogWithRange(nowDate)
     const todayUv = new Set(todayPv.map((pv) => pv.data.ip)).size
-
+    const compressData = await getFileKeys('easypicker2/temp_package')
     return {
       user: {
         sum: users.length,
@@ -129,7 +136,32 @@ export default class OverviewController {
           uv,
         },
       },
+      compress: {
+        all: {
+          sum: compressData.length,
+          size: formatSize(compressData.reduce((sum, item) => sum + item.fsize, 0)),
+        },
+        expired: {
+          sum: compressData.filter(
+            (item) => this.isExpiredCompressSource(item.putTime / 10000),
+          ).length,
+          size: formatSize(
+            compressData.filter(
+              (item) => this.isExpiredCompressSource(item.putTime / 10000),
+            ).reduce((sum, item) => sum + item.fsize, 0),
+          ),
+        },
+      },
     }
+  }
+
+  @Delete('compress', power)
+  async clearExpiredCompress() {
+    const compressData = await getFileKeys('easypicker2/temp_package')
+    const expired = compressData.filter(
+      (item) => this.isExpiredCompressSource(item.putTime / 10000),
+    ).map((v) => v.key)
+    batchDeleteFiles(expired)
   }
 
   /**

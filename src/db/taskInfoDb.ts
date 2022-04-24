@@ -5,9 +5,10 @@ import { getUniqueKey } from '@/utils/stringUtil'
 import { BOOLEAN } from './model/public'
 import { TaskInfo } from './model/taskInfo'
 
-export function selectTaskInfo(options: TaskInfo) {
+export function selectTaskInfo(options: V2Array<TaskInfo>, columns: string[] = []) {
   const { sql, params } = selectTableByModel('task_info', {
     data: options,
+    columns,
   })
   return query<TaskInfo[]>(sql, ...params)
 }

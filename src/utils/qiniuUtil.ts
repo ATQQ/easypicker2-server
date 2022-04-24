@@ -113,6 +113,18 @@ export function getFileCount(prefix: string): Promise<number> {
   })
 }
 
+export function getFileKeys(prefix: string):Promise<Qiniu.ItemInfo[]> {
+  return new Promise((res) => {
+    const config = new qiniu.conf.Config()
+    const bucketManager = new qiniu.rs.BucketManager(mac, config)
+    bucketManager.listPrefix(bucket, {
+      prefix,
+    }, (err, respBody) => {
+      res(respBody.items)
+    })
+  })
+}
+
 export function makeZipByPrefixWithKeys(prefix: string, zipName: string, keys: string[] = []): Promise<string> {
   return new Promise((res) => {
     const config = new qiniu.conf.Config()

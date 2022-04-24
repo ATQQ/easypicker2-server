@@ -6,7 +6,7 @@ import {
 import { getUniqueKey } from '@/utils/stringUtil'
 import { People } from './model/people'
 
-export function selectPeople(options: People, columns: string[] = ['name']) {
+export function selectPeople(options: V2Array<People>, columns: string[] = ['name']) {
   const { sql, params } = selectTableByModel('people', {
     data: options,
     columns,
@@ -23,7 +23,7 @@ export function insertPeople(people: People[], defaultData: People = {}) {
   return query<OkPacket>(sql, ...params)
 }
 
-export function deletePeople(people: People) {
+export function deletePeople(people: V2Array<People>) {
   const { sql, params } = deleteTableByModel('people', people)
   return query<OkPacket>(sql, ...params)
 }

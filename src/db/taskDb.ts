@@ -18,9 +18,10 @@ export function insertTask(task: Task) {
   return query<OkPacket>(sql, ...params)
 }
 
-export function selectTasks(options: Task) {
+export function selectTasks(options: V2Array<Task>, columns: string[] = []) {
   const { sql, params } = selectTableByModel('task', {
     data: options,
+    columns,
   })
   return query<Task[]>(sql, ...params)
 }
