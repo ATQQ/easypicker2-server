@@ -108,15 +108,29 @@ export function judgeFileIsExist(key: string): Promise<boolean> {
 }
 
 export function getFileCount(prefix: string): Promise<number> {
+  let count = 0, marker = '';
+  const ops: any = {
+    limit: 1000,
+    prefix,
+  }
   return new Promise((res) => {
-    const config = new qiniu.conf.Config()
-    const bucketManager = new qiniu.rs.BucketManager(mac, config)
-    bucketManager.listPrefix(bucket, {
-      limit: 10,
-      prefix,
-    }, (err, respBody) => {
-      res(respBody.items.length || 0)
-    })
+    const analyze = () => {
+      const config = new qiniu.conf.Config()
+      const bucketManager = new qiniu.rs.BucketManager(mac, config)
+      if (ops) {
+        ops.marker = marker
+      }
+      bucketManager.listPrefix(bucket, ops, (err, respBody) => {
+        count += (respBody.items.length || 0)
+        if (respBody.marker) {
+          marker = respBody.marker
+          analyze()
+        } else {
+          res(count)
+        }
+      })
+    }
+    analyze()
   })
 }
 
