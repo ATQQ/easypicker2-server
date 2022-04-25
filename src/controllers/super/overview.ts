@@ -1,5 +1,6 @@
 import {
   Delete,
+  FWRequest,
   Get, Post, ReqBody, ReqParams, RouterController,
 } from 'flash-wolves'
 import { FilterQuery, ObjectId } from 'mongodb'
@@ -156,12 +157,12 @@ export default class OverviewController {
   }
 
   @Delete('compress', power)
-  async clearExpiredCompress() {
+  async clearExpiredCompress(req:FWRequest) {
     const compressData = await getFileKeys('easypicker2/temp_package')
     const expired = compressData.filter(
       (item) => this.isExpiredCompressSource(item.putTime / 10000),
     ).map((v) => v.key)
-    batchDeleteFiles(expired)
+    batchDeleteFiles(expired, req)
   }
 
   /**

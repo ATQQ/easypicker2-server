@@ -483,7 +483,7 @@ router.delete('batch/del', async (req, res) => {
   }
 
   // 删除OSS上文件
-  batchDeleteFiles([...keys])
+  batchDeleteFiles([...keys], req)
   await deleteFiles(files)
   res.success()
   addBehavior(req, {

@@ -1,5 +1,7 @@
 /* eslint-disable */
 import { qiniuConfig } from '@/config'
+import { addErrorLog } from '@/db/logDb'
+import { FWRequest } from 'flash-wolves'
 import qiniu from 'qiniu'
 import { getKeyInfo } from './stringUtil'
 // [node-sdk文档地址](https://developer.qiniu.com/kodo/1289/nodejs#server-upload)
@@ -47,33 +49,35 @@ export function deleteFiles(prefix: string): void {
   })
 }
 
-export function batchDeleteFiles(keys: string[]) {
+export function batchDeleteFiles(keys: string[], req?: FWRequest) {
   const config = new qiniu.conf.Config()
   const delOptions = keys.map((k) => qiniu.rs.deleteOp(bucket, k))
   const bucketManager = new qiniu.rs.BucketManager(mac, config)
   bucketManager.batch(delOptions, (err, respBody, respInfo) => {
     if (err) {
       console.log(err)
+      addErrorLog(req, `批量删除异常: ${err.message}`, err.stack)
       // throw err;
     } else {
       // 200 is success, 298 is part success
       if (parseInt(`${respInfo.statusCode / 100}`, 10) === 2) {
         respBody.forEach((item) => {
-          if ((+item.code) === 200) {
-            console.log(`${item.code}\tsuccess`)
-          } else {
-            console.log(`${item.code}\t${item.data.error}`)
+          if ((+item.code) !== 200) {
+            if (req) {
+              addErrorLog(req, `${item.code}\t${item.data.error}`, item)
+            }
           }
         })
       } else {
         console.log(respInfo.deleteusCode)
         console.log(respBody)
+        addErrorLog(req, `批量删除异常: ${respInfo.deleteusCode}`, respBody)
       }
     }
   })
 }
 
-export function deleteObjByKey(key: string): void {
+export function deleteObjByKey(key: string, req?: FWRequest): void {
   const config = new qiniu.conf.Config()
   const bucketManager = new qiniu.rs.BucketManager(mac, config)
   bucketManager.delete(bucket, key, (err) => {
@@ -82,6 +86,9 @@ export function deleteObjByKey(key: string): void {
       console.log(key)
       console.log(err)
       console.log('------删除失败 end-------')
+      if (req) {
+        addErrorLog(req, '删除失败:' + key + err?.message, err?.stack)
+      }
     }
   })
 }
@@ -113,7 +120,7 @@ export function getFileCount(prefix: string): Promise<number> {
   })
 }
 
-export function getFileKeys(prefix: string):Promise<Qiniu.ItemInfo[]> {
+export function getFileKeys(prefix: string): Promise<Qiniu.ItemInfo[]> {
   return new Promise((res) => {
     const config = new qiniu.conf.Config()
     const bucketManager = new qiniu.rs.BucketManager(mac, config)
