@@ -13,7 +13,7 @@ import {
   batchDeleteFiles, batchFileStatus, checkFopTaskStatus, createDownloadUrl,
   deleteObjByKey, getUploadToken, judgeFileIsExist, makeZipWithKeys,
 } from '@/utils/qiniuUtil'
-import { getUniqueKey } from '@/utils/stringUtil'
+import { getUniqueKey, isSameInfo } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
 import { selectTaskInfo } from '@/db/taskInfoDb'
 
@@ -265,13 +265,13 @@ router.delete('withdraw', async (req, res) => {
   const limitPeople = (await selectTaskInfo({ taskKey }))?.[0]?.limit_people
 
   // 内容完全一致的提交记录，不包含限制的名字
-  const files = await selectFiles({
+  let files = await selectFiles({
     taskKey,
     taskName,
     name: filename,
     hash,
-    info,
   })
+  files = files.filter((file) => isSameInfo(file.info, info))
 
   const passFiles = files.filter((file) => file.people === peopleName)
 
@@ -540,11 +540,11 @@ router.post('compress/down', async (req, res) => {
 router.post('submit/people', async (req, res) => {
   const { taskKey, info, name = '' } = req.body
 
-  const files = await selectFiles({
+  let files = await selectFiles({
     taskKey,
-    info: JSON.stringify(info),
     people: name,
-  }, ['id']);
+  }, ['id', 'info'])
+  files = files.filter((v) => isSameInfo(v.info, JSON.stringify(info)));
   (async () => {
     const [task] = await selectTasks({
       k: taskKey,
