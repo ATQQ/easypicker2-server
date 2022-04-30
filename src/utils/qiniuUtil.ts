@@ -107,8 +107,8 @@ export function judgeFileIsExist(key: string): Promise<boolean> {
   })
 }
 
-export function getFileCount(prefix: string): Promise<number> {
-  let count = 0, marker = '';
+export function getOSSFiles(prefix: string): Promise<Qiniu.ItemInfo[]> {
+  let data = [], marker = '';
   const ops: any = {
     limit: 1000,
     prefix,
@@ -121,12 +121,12 @@ export function getFileCount(prefix: string): Promise<number> {
         ops.marker = marker
       }
       bucketManager.listPrefix(bucket, ops, (err, respBody) => {
-        count += (respBody.items.length || 0)
+        data = data.concat(respBody.items)
         if (respBody.marker) {
           marker = respBody.marker
           analyze()
         } else {
-          res(count)
+          res(data)
         }
       })
     }

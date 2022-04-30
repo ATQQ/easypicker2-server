@@ -15,7 +15,7 @@ import {
 } from '@/db/model/log'
 import { USER_POWER } from '@/db/model/user'
 import { selectAllUser } from '@/db/userDb'
-import { batchDeleteFiles, getFileCount, getFileKeys } from '@/utils/qiniuUtil'
+import { batchDeleteFiles, getOSSFiles, getFileKeys } from '@/utils/qiniuUtil'
 import { formatSize } from '@/utils/stringUtil'
 
 const power = {
@@ -99,9 +99,9 @@ export default class OverviewController {
     const users = await selectAllUser(['join_time'])
     const userRecent = users.filter((u) => new Date(u.join_time) > nowDate).length
 
-    const files = await selectFiles({}, ['date'])
+    const files = await selectFiles({}, ['date', 'size'])
     const fileRecent = files.filter((f) => new Date(f.date) > nowDate).length
-    const ossFilesCount = await getFileCount('easypicker2/')
+    const ossFiles = await getOSSFiles('easypicker2/')
 
     const logCount = await findLogCount({})
     const logRecent = await findLogWithTimeRange(nowDate)
@@ -124,9 +124,11 @@ export default class OverviewController {
         server: {
           sum: files.length,
           recent: fileRecent,
+          size: formatSize(files.reduce((sum, f) => sum + f.size, 0)),
         },
         oss: {
-          sum: ossFilesCount,
+          sum: ossFiles.length,
+          size: formatSize(ossFiles.reduce((sum, f) => sum + f.fsize, 0)),
         },
       },
       log: {

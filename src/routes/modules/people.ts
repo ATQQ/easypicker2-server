@@ -93,6 +93,7 @@ router.post('/:key', async (req, res) => {
 router.get('/:key', async (req, res) => {
   const { id: userId, account: logAccount } = await getUserInfo(req)
   const { key } = req.params
+  const { detail } = req.query
   const people:any = (await selectPeople({
     userId,
     taskKey: key,
@@ -115,28 +116,31 @@ router.get('/:key', async (req, res) => {
       : 0
     p.fileCount = fileCount
 
-    // TODO:优化慢查询
+    // 慢查询
     // 从日志中取数据
     // 提交文件数量 = 提交次数 - 撤回次数
-    const submitCount = p.status ? await findLogCount({
-      type: 'behavior',
-      'data.info.data.data.taskKey': key,
-      'data.info.data.data.people': p.name,
-      'data.info.data.data.user_id': userId,
-      'data.req.path': '/file/info',
-      'data.info.msg': {
-        $regex: '成功$',
-      },
-    }) - await findLogCount({
-      type: 'behavior',
-      'data.info.data.data.taskKey': key,
-      'data.info.data.data.peopleName': p.name,
-      'data.user.userId': userId,
-      'data.req.path': '/file/withdraw',
-      'data.info.msg': {
-        $regex: '^撤回文件成功',
-      },
-    }) : 0
+    let submitCount = 0
+    if (detail === '1') {
+      submitCount = p.status ? await findLogCount({
+        type: 'behavior',
+        'data.info.data.data.taskKey': key,
+        'data.info.data.data.people': p.name,
+        'data.info.data.data.user_id': userId,
+        'data.req.path': '/file/info',
+        'data.info.msg': {
+          $regex: '成功$',
+        },
+      }) - await findLogCount({
+        type: 'behavior',
+        'data.info.data.data.taskKey': key,
+        'data.info.data.data.peopleName': p.name,
+        'data.user.userId': userId,
+        'data.req.path': '/file/withdraw',
+        'data.info.msg': {
+          $regex: '^撤回文件成功',
+        },
+      }) : 0
+    }
 
     // 提交文件数量，兼容旧数据取较高的值
     p.submitCount = Math.max(submitCount, fileCount)
