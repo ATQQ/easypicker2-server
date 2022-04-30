@@ -94,6 +94,7 @@ router.get('/:key', async (req, res) => {
   const { id: userId, account: logAccount } = await getUserInfo(req)
   const { key } = req.params
   const { detail } = req.query
+  const showDetail = detail === '1'
   const people:any = (await selectPeople({
     userId,
     taskKey: key,
@@ -107,9 +108,8 @@ router.get('/:key', async (req, res) => {
   for (const p of people) {
     // 用户提交的还存在的记录(没有被管理员删除)
     const existPeopleSubmitFiles = await selectFiles({ userId, taskKey: key, people: p.name })
-
     // 真现存文件数量
-    const ossStatus = (p.status && existPeopleSubmitFiles.length) ? (await batchFileStatus(existPeopleSubmitFiles.map((v) => `easypicker2/${v.task_key}/${v.hash}/${v.name}`))) : []
+    const ossStatus = (p.status && existPeopleSubmitFiles.length && showDetail) ? (await batchFileStatus(existPeopleSubmitFiles.map((v) => `easypicker2/${v.task_key}/${v.hash}/${v.name}`))) : []
 
     const fileCount = p.status
       ? ossStatus.filter((v) => v.code === 200).length
@@ -120,7 +120,9 @@ router.get('/:key', async (req, res) => {
     // 从日志中取数据
     // 提交文件数量 = 提交次数 - 撤回次数
     let submitCount = 0
-    if (detail === '1') {
+    console.time(p.name)
+
+    if (showDetail) {
       submitCount = p.status ? await findLogCount({
         type: 'behavior',
         'data.info.data.data.taskKey': key,
@@ -141,7 +143,7 @@ router.get('/:key', async (req, res) => {
         },
       }) : 0
     }
-
+    console.timeEnd(p.name)
     // 提交文件数量，兼容旧数据取较高的值
     p.submitCount = Math.max(submitCount, fileCount)
 
