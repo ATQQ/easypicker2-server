@@ -77,3 +77,10 @@ export function isSameInfo(userInfo:string, dbInfo:string) {
   }
   return true
 }
+
+/**
+ * 文件名合法化
+ */
+export function normalizeFileName(name: string) {
+  return name.replace(/[\\/:*?"<>|]/g, '-')
+}

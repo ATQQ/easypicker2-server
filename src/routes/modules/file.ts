@@ -1,5 +1,4 @@
 import { Router } from 'flash-wolves'
-import filenamify from 'filenamify'
 import { publicError } from '@/constants/errorMsg'
 import {
   deleteFileRecord, deleteFiles, insertFile, selectFiles,
@@ -13,7 +12,7 @@ import {
   batchDeleteFiles, batchFileStatus, checkFopTaskStatus, createDownloadUrl,
   deleteObjByKey, getUploadToken, judgeFileIsExist, makeZipWithKeys,
 } from '@/utils/qiniuUtil'
-import { getUniqueKey, isSameInfo } from '@/utils/stringUtil'
+import { getUniqueKey, isSameInfo, normalizeFileName } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
 import { selectTaskInfo } from '@/db/taskInfoDb'
 
@@ -63,7 +62,7 @@ router.post('info', async (req, res) => {
   Object.assign<File, File>(data, {
     user_id, date: new Date(), categoryKey: '', people: data.people || '',
   })
-  data.name = filenamify(data.name, { replacement: '_' })
+  data.name = normalizeFileName(data.name)
   await insertFile(data)
   addBehavior(req, {
     module: 'file',
@@ -409,7 +408,7 @@ router.post('batch/down', async (req, res) => {
       length: keys.length,
     },
   })
-  const value = await makeZipWithKeys(keys, filenamify(zipName, { replacement: '_' }) ?? `${getUniqueKey()}`)
+  const value = await makeZipWithKeys(keys, normalizeFileName(zipName) ?? `${getUniqueKey()}`)
   addBehavior(req, {
     module: 'file',
     msg: `批量下载任务 用户:${logAccount} 文件数量:${keys.length} 压缩任务名${value}`,

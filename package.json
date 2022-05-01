@@ -25,7 +25,6 @@
   "license": "ISC",
   "dependencies": {
     "cross-env": "^7.0.3",
-    "filenamify": "^4.3.0",
     "flash-wolves": "^0.2.2",
     "formidable": "v2",
     "mongodb": "^3.6.4",
