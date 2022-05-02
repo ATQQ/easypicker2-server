@@ -120,8 +120,6 @@ router.get('/:key', async (req, res) => {
     // 从日志中取数据
     // 提交文件数量 = 提交次数 - 撤回次数
     let submitCount = 0
-    console.time(p.name)
-
     if (showDetail) {
       submitCount = p.status ? await findLogCount({
         type: 'behavior',
@@ -143,7 +141,6 @@ router.get('/:key', async (req, res) => {
         },
       }) : 0
     }
-    console.timeEnd(p.name)
     // 提交文件数量，兼容旧数据取较高的值
     p.submitCount = Math.max(submitCount, fileCount)
 
