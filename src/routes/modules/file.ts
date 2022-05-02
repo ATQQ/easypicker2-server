@@ -40,8 +40,6 @@ router.get('token', (req, res) => {
  * 记录提交的文件信息
  */
 router.post('info', async (req, res) => {
-  const logIp = getClientIp(req)
-
   const data: File = req.body
   const [task] = await selectTasks({
     k: data.taskKey,
@@ -49,28 +47,22 @@ router.post('info', async (req, res) => {
   if (!task) {
     addBehavior(req, {
       module: 'file',
-      msg: `提交文件 ip:${logIp} 参数错误`,
-      data: {
-        ip: logIp,
-        data,
-      },
+      msg: '提交文件: 参数错误',
+      data,
     })
     res.failWithError(publicError.request.errorParams)
     return
   }
   const { user_id } = task
   Object.assign<File, File>(data, {
-    user_id, date: new Date(), categoryKey: '', people: data.people || '',
+    user_id, date: new Date(), categoryKey: '', people: data.people || '', originName: data.originName || '',
   })
   data.name = normalizeFileName(data.name)
   await insertFile(data)
   addBehavior(req, {
     module: 'file',
-    msg: `提交文件 ip:${logIp} 文件名:${data.name} 成功`,
-    data: {
-      ip: logIp,
-      data,
-    },
+    msg: `提交文件: 文件名:${data.name} 成功`,
+    data,
   })
   res.success()
 })

@@ -14,4 +14,6 @@ export interface File {
     date?: Date
     size?: number
     people?: string
+    originName?: string
+    origin_name?: string
 }

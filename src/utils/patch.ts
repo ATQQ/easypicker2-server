@@ -54,4 +54,11 @@ export default async function patchTable() {
     comment: '批注信息',
     defaultValue: '\'\'',
   })
+
+  addTableField('files', {
+    fieldName: 'origin_name',
+    fieldType: 'varchar(1024)',
+    comment: '原文件名',
+    defaultValue: '\'\'',
+  })
 }
