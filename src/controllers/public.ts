@@ -9,6 +9,7 @@ import { randomNumStr } from '@/utils/randUtil'
 import { setRedisValue } from '@/db/redisDb'
 import { sendMessage } from '@/utils/tencent'
 import { addBehavior, addPvLog } from '@/db/logDb'
+import { selectUserByAccount, selectUserByPhone } from '@/db/userDb'
 
 @RouterController('public')
 export default class PublicController {
@@ -46,5 +47,40 @@ export default class PublicController {
   reportPv(req:FWRequest) {
     const { path } = req.body
     addPvLog(req, path)
+  }
+
+  @Get('check/phone')
+  async checkPhoneIsExist(@ReqQuery('phone') phone:string, req:FWRequest) {
+    if (!rMobilePhone.test(phone)) {
+      addBehavior(req, {
+        module: 'public',
+        msg: `检查手机号是否存在 手机号:${phone} 格式不正确`,
+        data: {
+          phone,
+        },
+      })
+      return Response.failWithError(UserError.mobile.fault)
+    }
+    let [user] = await selectUserByPhone(phone)
+    if (!user) {
+      ([user] = await selectUserByAccount(phone))
+    }
+    if (user) {
+      addBehavior(req, {
+        module: 'public',
+        msg: `检查手机号是否存在 手机号:${phone} 已存在`,
+        data: {
+          phone,
+        },
+      })
+      return Response.failWithError(UserError.mobile.exist)
+    }
+    addBehavior(req, {
+      module: 'public',
+      msg: `检查手机号是否存在 手机号:${phone} 不存在`,
+      data: {
+        phone,
+      },
+    })
   }
 }
