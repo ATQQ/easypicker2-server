@@ -21,6 +21,15 @@ export function selectUserByPhone(phone: string): Promise<User[]> {
   return query<User[]>(sql, ...params)
 }
 
+export function selectUserById(id: number): Promise<User[]> {
+  const { sql, params } = selectTableByModel('user', {
+    data: {
+      id,
+    },
+  })
+  return query<User[]>(sql, ...params)
+}
+
 export function insertUser(options: User): Promise<OkPacket> {
   const { sql, params } = insertTableByModel('user', {
     status: USER_STATUS.NORMAL,

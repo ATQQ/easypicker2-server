@@ -20,6 +20,7 @@ const interceptor: Middleware = async (req, res) => {
       },
     })
     res.failWithError(publicError.request.notLogin)
+    return
   }
 
   if (userPower === USER_POWER.SUPER) {
