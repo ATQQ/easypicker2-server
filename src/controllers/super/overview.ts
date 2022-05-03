@@ -1,5 +1,6 @@
 import {
   Delete,
+  FWRequest,
   Get, Post, ReqBody, ReqParams, RouterController,
 } from 'flash-wolves'
 import { FilterQuery, ObjectId } from 'mongodb'
@@ -14,7 +15,7 @@ import {
 } from '@/db/model/log'
 import { USER_POWER } from '@/db/model/user'
 import { selectAllUser } from '@/db/userDb'
-import { batchDeleteFiles, getFileKeys } from '@/utils/qiniuUtil'
+import { batchDeleteFiles, getOSSFiles, getFileKeys } from '@/utils/qiniuUtil'
 import { formatSize } from '@/utils/stringUtil'
 
 const power = {
@@ -98,8 +99,9 @@ export default class OverviewController {
     const users = await selectAllUser(['join_time'])
     const userRecent = users.filter((u) => new Date(u.join_time) > nowDate).length
 
-    const files = await selectFiles({}, ['date'])
+    const files = await selectFiles({}, ['date', 'size'])
     const fileRecent = files.filter((f) => new Date(f.date) > nowDate).length
+    const ossFiles = await getOSSFiles('easypicker2/')
 
     const logCount = await findLogCount({})
     const logRecent = await findLogWithTimeRange(nowDate)
@@ -119,8 +121,15 @@ export default class OverviewController {
         recent: userRecent,
       },
       file: {
-        sum: files.length,
-        recent: fileRecent,
+        server: {
+          sum: files.length,
+          recent: fileRecent,
+          size: formatSize(files.reduce((sum, f) => sum + f.size, 0)),
+        },
+        oss: {
+          sum: ossFiles.length,
+          size: formatSize(ossFiles.reduce((sum, f) => sum + f.fsize, 0)),
+        },
       },
       log: {
         sum: logCount,
@@ -156,12 +165,12 @@ export default class OverviewController {
   }
 
   @Delete('compress', power)
-  async clearExpiredCompress() {
+  async clearExpiredCompress(req:FWRequest) {
     const compressData = await getFileKeys('easypicker2/temp_package')
     const expired = compressData.filter(
       (item) => this.isExpiredCompressSource(item.putTime / 10000),
     ).map((v) => v.key)
-    batchDeleteFiles(expired)
+    batchDeleteFiles(expired, req)
   }
 
   /**

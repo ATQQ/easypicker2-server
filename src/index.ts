@@ -11,6 +11,7 @@ import controllers from './controllers'
 import {
   serverInterceptor, routeInterceptor, beforeRouteMatchInterceptor, beforeRuntimeErrorInterceptor,
 } from './middleware'
+import patchTable from './utils/patch'
 
 console.time('server-start')
 
@@ -27,6 +28,5 @@ app.addController(controllers)
 app.listen(serverConfig.port, serverConfig.hostname, () => {
   console.log('-----', new Date().toLocaleString(), '-----')
   console.timeEnd('server-start')
+  patchTable()
 })
-
-module.exports = app

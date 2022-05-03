@@ -12,40 +12,36 @@ const router = new Router('task_info')
 /**
  * 获取任务附加属性
  */
-router.get('/:key', async (req, res) => {
+router.get('/:key', async (req) => {
   const { key } = req.params
   const [taskInfo] = await selectTaskInfo({
     taskKey: key,
   })
   const {
-    template, rewrite, format, info, share_key: share, limit_people: people,
+    template, rewrite, format, info, share_key: share, limit_people: people, tip,
   } = taskInfo || {}
   let { ddl } = taskInfo || {}
   if (ddl) {
     ddl = new Date(ddl.getTime() + 8 * 60 * 60 * 1000)
   }
-  const logIp = getClientIp(req)
   selectTasks({
     k: key,
   }).then(([task]) => {
     if (task) {
       addBehavior(req, {
         module: 'taskInfo',
-        msg: `获取任务属性 ip:${logIp} 任务:${task.name} 成功`,
+        msg: `获取任务属性 任务:${task.name} 成功`,
         data: {
           key,
           name: task.name,
-          ip: logIp,
         },
       })
     }
   })
 
-  res.success(
-    {
-      template, rewrite, format, info, share, ddl, people,
-    },
-  )
+  return {
+    template, rewrite, format, info, share, ddl, people, tip,
+  }
 })
 
 /**
@@ -53,7 +49,7 @@ router.get('/:key', async (req, res) => {
  */
 router.put('/:key', async (req, res) => {
   const {
-    template, rewrite, format, info, ddl, people,
+    template, rewrite, format, info, ddl, people, tip,
   } = req.body
   let { share } = req.body
   const { key } = req.params
@@ -67,7 +63,7 @@ router.put('/:key', async (req, res) => {
     deleteFiles(`easypicker2/${key}_template/`)
   }
   const options = {
-    template, rewrite, format, info, ddl, shareKey: share, limitPeople: people,
+    template, rewrite, format, info, ddl, shareKey: share, limitPeople: people, tip,
   }
   await updateTaskInfo(options, { taskKey: key, userId })
 

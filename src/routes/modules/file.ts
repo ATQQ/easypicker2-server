@@ -1,5 +1,4 @@
 import { Router } from 'flash-wolves'
-import filenamify from 'filenamify'
 import { publicError } from '@/constants/errorMsg'
 import {
   deleteFileRecord, deleteFiles, insertFile, selectFiles,
@@ -13,7 +12,7 @@ import {
   batchDeleteFiles, batchFileStatus, checkFopTaskStatus, createDownloadUrl,
   deleteObjByKey, getUploadToken, judgeFileIsExist, makeZipWithKeys,
 } from '@/utils/qiniuUtil'
-import { getUniqueKey } from '@/utils/stringUtil'
+import { getUniqueKey, isSameInfo, normalizeFileName } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
 import { selectTaskInfo } from '@/db/taskInfoDb'
 
@@ -24,13 +23,9 @@ const router = new Router('file')
  */
 router.get('token', (req, res) => {
   const token = getUploadToken()
-  const logIp = getClientIp(req)
   addBehavior(req, {
     module: 'file',
-    msg: `获取文件上传令牌 ip:${logIp}`,
-    data: {
-      ip: logIp,
-    },
+    msg: '获取文件上传令牌',
   })
   res.success({
     token,
@@ -41,8 +36,6 @@ router.get('token', (req, res) => {
  * 记录提交的文件信息
  */
 router.post('info', async (req, res) => {
-  const logIp = getClientIp(req)
-
   const data: File = req.body
   const [task] = await selectTasks({
     k: data.taskKey,
@@ -50,28 +43,22 @@ router.post('info', async (req, res) => {
   if (!task) {
     addBehavior(req, {
       module: 'file',
-      msg: `提交文件 ip:${logIp} 参数错误`,
-      data: {
-        ip: logIp,
-        data,
-      },
+      msg: '提交文件: 参数错误',
+      data,
     })
     res.failWithError(publicError.request.errorParams)
     return
   }
   const { user_id } = task
   Object.assign<File, File>(data, {
-    user_id, date: new Date(), categoryKey: '', people: data.people || '',
+    user_id, date: new Date(), categoryKey: '', people: data.people || '', originName: data.originName || '',
   })
-  data.name = filenamify(data.name, { replacement: '_' })
+  data.name = normalizeFileName(data.name)
   await insertFile(data)
   addBehavior(req, {
     module: 'file',
-    msg: `提交文件 ip:${logIp} 文件名:${data.name} 成功`,
-    data: {
-      ip: logIp,
-      data,
-    },
+    msg: `提交文件: 文件名:${data.name} 成功`,
+    data,
   })
   res.success()
 })
@@ -103,17 +90,14 @@ router.get('list', async (req, res) => {
  * 获取模板文件下载链接
  */
 router.get('template', async (req, res) => {
-  const logIp = getClientIp(req)
-
   const { template, key } = req.query
   const k = `easypicker2/${key}_template/${template}`
   const isExist = await judgeFileIsExist(k)
   if (!isExist) {
     addBehavior(req, {
       module: 'file',
-      msg: `下载模板文件 ip:${logIp} 参数错误`,
+      msg: '下载模板文件 参数错误',
       data: {
-        ip: logIp,
         data: req.query,
       },
     })
@@ -122,9 +106,8 @@ router.get('template', async (req, res) => {
   }
   addBehavior(req, {
     module: 'file',
-    msg: `下载模板文件 ip:${logIp} 文件:${template}`,
+    msg: `下载模板文件 文件:${template}`,
     data: {
-      ip: logIp,
       template,
     },
   })
@@ -257,7 +240,6 @@ router.delete('one', async (req, res) => {
  * 撤回提交的文件
  */
 router.delete('withdraw', async (req, res) => {
-  const logIp = getClientIp(req)
   const {
     taskKey, taskName, filename, hash, peopleName, info,
   } = req.body
@@ -265,22 +247,21 @@ router.delete('withdraw', async (req, res) => {
   const limitPeople = (await selectTaskInfo({ taskKey }))?.[0]?.limit_people
 
   // 内容完全一致的提交记录，不包含限制的名字
-  const files = await selectFiles({
+  let files = await selectFiles({
     taskKey,
     taskName,
     name: filename,
     hash,
-    info,
   })
+  files = files.filter((file) => isSameInfo(file.info, info))
 
   const passFiles = files.filter((file) => file.people === peopleName)
 
   if (!passFiles.length) {
     addBehavior(req, {
       module: 'file',
-      msg: `撤回文件失败 ip:${logIp} ${peopleName} 文件:${filename} 信息不匹配`,
+      msg: `撤回文件失败 ${peopleName} 文件:${filename} 信息不匹配`,
       data: {
-        ip: logIp,
         filename,
         peopleName,
         data: req.body,
@@ -301,7 +282,6 @@ router.delete('withdraw', async (req, res) => {
     module: 'file',
     msg: `撤回文件成功 文件:${filename} 删除记录:${passFiles.length} 删除OSS资源:${isDelOss ? '是' : '否'}`,
     data: {
-      ip: logIp,
       limitPeople,
       isDelOss,
       filesCount: files.length,
@@ -324,7 +304,6 @@ router.delete('withdraw', async (req, res) => {
         module: 'file',
         msg: `姓名:${peopleName} 不存在`,
         data: {
-          ip: logIp,
           filename,
           peopleName,
           data: req.body,
@@ -409,7 +388,7 @@ router.post('batch/down', async (req, res) => {
       length: keys.length,
     },
   })
-  const value = await makeZipWithKeys(keys, filenamify(zipName, { replacement: '_' }) ?? `${getUniqueKey()}`)
+  const value = await makeZipWithKeys(keys, normalizeFileName(zipName) ?? `${getUniqueKey()}`)
   addBehavior(req, {
     module: 'file',
     msg: `批量下载任务 用户:${logAccount} 文件数量:${keys.length} 压缩任务名${value}`,
@@ -483,7 +462,7 @@ router.delete('batch/del', async (req, res) => {
   }
 
   // 删除OSS上文件
-  batchDeleteFiles([...keys])
+  batchDeleteFiles([...keys], req)
   await deleteFiles(files)
   res.success()
   addBehavior(req, {
@@ -540,11 +519,11 @@ router.post('compress/down', async (req, res) => {
 router.post('submit/people', async (req, res) => {
   const { taskKey, info, name = '' } = req.body
 
-  const files = await selectFiles({
+  let files = await selectFiles({
     taskKey,
-    info: JSON.stringify(info),
     people: name,
-  }, ['id']);
+  }, ['id', 'info'])
+  files = files.filter((v) => isSameInfo(v.info, JSON.stringify(info)));
   (async () => {
     const [task] = await selectTasks({
       k: taskKey,

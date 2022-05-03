@@ -15,4 +15,5 @@ export interface TaskInfo {
     shareKey?: string
     limit_people?: BOOLEAN
     limitPeople?: BOOLEAN
+    tip?: string
 }

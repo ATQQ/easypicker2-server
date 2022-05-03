@@ -28,7 +28,7 @@ export function sendMessage(phone, code, time = 2) {
     TemplateParamSet: args,
     TemplateID: txConfig.templateId,
     SmsSdkAppid: txConfig.smsSdkAppid,
-    Sign: '粥里有勺糖',
+    Sign: txConfig.signName,
   }
   console.log('---------send request-------')
   console.log(params)

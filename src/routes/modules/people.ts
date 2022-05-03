@@ -93,6 +93,8 @@ router.post('/:key', async (req, res) => {
 router.get('/:key', async (req, res) => {
   const { id: userId, account: logAccount } = await getUserInfo(req)
   const { key } = req.params
+  const { detail } = req.query
+  const showDetail = detail === '1'
   const people:any = (await selectPeople({
     userId,
     taskKey: key,
@@ -106,38 +108,39 @@ router.get('/:key', async (req, res) => {
   for (const p of people) {
     // 用户提交的还存在的记录(没有被管理员删除)
     const existPeopleSubmitFiles = await selectFiles({ userId, taskKey: key, people: p.name })
-
     // 真现存文件数量
-    const ossStatus = (p.status && existPeopleSubmitFiles.length) ? (await batchFileStatus(existPeopleSubmitFiles.map((v) => `easypicker2/${v.task_key}/${v.hash}/${v.name}`))) : []
+    const ossStatus = (p.status && existPeopleSubmitFiles.length && showDetail) ? (await batchFileStatus(existPeopleSubmitFiles.map((v) => `easypicker2/${v.task_key}/${v.hash}/${v.name}`))) : []
 
     const fileCount = p.status
       ? ossStatus.filter((v) => v.code === 200).length
       : 0
     p.fileCount = fileCount
 
-    // TODO:优化慢查询
+    // 慢查询
     // 从日志中取数据
     // 提交文件数量 = 提交次数 - 撤回次数
-    const submitCount = p.status ? await findLogCount({
-      type: 'behavior',
-      'data.info.data.data.taskKey': key,
-      'data.info.data.data.people': p.name,
-      'data.info.data.data.user_id': userId,
-      'data.req.path': '/file/info',
-      'data.info.msg': {
-        $regex: '成功$',
-      },
-    }) - await findLogCount({
-      type: 'behavior',
-      'data.info.data.data.taskKey': key,
-      'data.info.data.data.peopleName': p.name,
-      'data.user.userId': userId,
-      'data.req.path': '/file/withdraw',
-      'data.info.msg': {
-        $regex: '^撤回文件成功',
-      },
-    }) : 0
-
+    let submitCount = 0
+    if (showDetail) {
+      submitCount = p.status ? await findLogCount({
+        type: 'behavior',
+        'data.info.data.data.taskKey': key,
+        'data.info.data.data.people': p.name,
+        'data.info.data.data.user_id': userId,
+        'data.req.path': '/file/info',
+        'data.info.msg': {
+          $regex: '成功$',
+        },
+      }) - await findLogCount({
+        type: 'behavior',
+        'data.info.data.data.taskKey': key,
+        'data.info.data.data.peopleName': p.name,
+        'data.user.userId': userId,
+        'data.req.path': '/file/withdraw',
+        'data.info.msg': {
+          $regex: '^撤回文件成功',
+        },
+      }) : 0
+    }
     // 提交文件数量，兼容旧数据取较高的值
     p.submitCount = Math.max(submitCount, fileCount)
 
@@ -239,16 +242,13 @@ router.delete('/:key', async (req, res) => {
  * 更新人员提交信息
  */
 router.put('/:key', async (req, res) => {
-  const logIp = getClientIp(req)
-
   const { key } = req.params
   const { name, filename, hash } = req.body
   if (!name || !filename || !key || !hash) {
     addBehavior(req, {
       module: 'people',
-      msg: `更新提交人员信息 ip:${logIp} 参数错误`,
+      msg: '更新提交人员信息 参数错误',
       data: {
-        ip: logIp,
         key,
         name,
         filename,
@@ -266,9 +266,8 @@ router.put('/:key', async (req, res) => {
   if (files.length === 0) {
     addBehavior(req, {
       module: 'people',
-      msg: `更新提交人员信息 ip:${logIp} 参数错误`,
+      msg: '更新提交人员信息 参数错误',
       data: {
-        ip: logIp,
         key,
         name,
         filename,
@@ -297,9 +296,8 @@ router.put('/:key', async (req, res) => {
     if (task) {
       addBehavior(req, {
         module: 'people',
-        msg: `更新提交人员信息 ip:${logIp} 成功 任务:${task.name} 姓名:${name}`,
+        msg: `更新提交人员信息 成功 任务:${task.name} 姓名:${name}`,
         data: {
-          ip: logIp,
           key,
           taskName: task.name,
           name,

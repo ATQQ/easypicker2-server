@@ -45,4 +45,5 @@ export const txConfig = {
   secretKey: process.env.TENCENT_SECRET_KEY,
   templateId: process.env.TENCENT_MESSAGE_TemplateID,
   smsSdkAppid: process.env.TENCENT_MESSAGE_SmsSdkAppid,
+  signName: process.env.TENCENT_MESSAGE_SignName,
 }

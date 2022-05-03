@@ -55,7 +55,9 @@
             "never"
         ],
         "no-console":"off",
-        "camelcase":"warn",
-        "import/no-extraneous-dependencies":"off"
+        "camelcase":"off",
+        "import/no-extraneous-dependencies":"off",
+        "import/prefer-default-export":"off",
+        "consistent-return":"off"
     }
 }

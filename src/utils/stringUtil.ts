@@ -49,3 +49,38 @@ export function formatSize(size:number, pointLength?:number, units?:string[]) {
   }
   return (unit === 'B' ? size : size.toFixed(pointLength === undefined ? 2 : pointLength)) + unit
 }
+
+type InfoItemType = 'input' | 'radio' | 'text' | 'select'
+interface InfoItem {
+    type?: InfoItemType,
+    // 描述信息
+    text?: string,
+    // 表单项的值
+    value?: string,
+    children?: InfoItem[]
+}
+
+export function isSameInfo(userInfo:string, dbInfo:string) {
+  try {
+    const userItems:InfoItem[] = JSON.parse(userInfo)
+    const dbItems:InfoItem[] = JSON.parse(dbInfo)
+    if (userItems.length === 0) { return false }
+    if (userItems.length !== dbItems.length) { return false }
+    if (!dbItems.every((item) => userItems.find(
+      (userItem) => userItem.text === item.text && userItem.value === item.value,
+    ))) {
+      return false
+    }
+  } catch (error) {
+    console.log(error)
+    return false
+  }
+  return true
+}
+
+/**
+ * 文件名合法化
+ */
+export function normalizeFileName(name: string) {
+  return name.replace(/[\\/:*?"<>|]/g, '-')
+}

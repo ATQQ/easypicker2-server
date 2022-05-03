@@ -15,7 +15,6 @@ const interceptor: Middleware = async (req, res) => {
   const { method } = req
   if (allowOrigins.includes(req.headers.origin)) {
     // 允许跨域
-    // TODO:初始化实例的时候配置
   }
   // 设置响应头
   res.setHeader('Content-Type', 'application/json;charset=utf-8')

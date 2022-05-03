@@ -3,7 +3,6 @@ import { query } from '@/lib/dbConnect/mysql'
 import {
   deleteTableByModel, insertTableByModelMany, selectTableByModel, updateTableByModel,
 } from '@/utils/sqlUtil'
-import { getUniqueKey } from '@/utils/stringUtil'
 import { People } from './model/people'
 
 export function selectPeople(options: V2Array<People>, columns: string[] = ['name']) {
