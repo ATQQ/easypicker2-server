@@ -40,7 +40,6 @@ export default class PublicController {
     }
     console.log(new Date().toLocaleString(), `获取验证码 手机号:${logPhone}  验证码:${code} 成功`)
     setRedisValue(`code-${phone}`, code, 120)
-    return Response.success(undefined)
   }
 
   @Post('report/pv')

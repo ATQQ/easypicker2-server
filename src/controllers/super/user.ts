@@ -55,7 +55,7 @@ export default class SuperUserController {
       addBehavior(req, {
         module: 'super',
         data: req.body,
-        msg: '重置用户密码: 参数不合法',
+        msg: '管理员重置用户密码: 参数不合法',
       })
       return Response.fail(500, '参数不合法')
     }
@@ -63,7 +63,7 @@ export default class SuperUserController {
     addBehavior(req, {
       module: 'super',
       data: req.body,
-      msg: `重置用户密码: ${user[0].account}`,
+      msg: `管理员重置用户密码: ${user[0].account}`,
     })
     await updateUser({
       password: encryption(password),
