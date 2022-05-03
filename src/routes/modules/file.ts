@@ -23,13 +23,9 @@ const router = new Router('file')
  */
 router.get('token', (req, res) => {
   const token = getUploadToken()
-  const logIp = getClientIp(req)
   addBehavior(req, {
     module: 'file',
-    msg: `获取文件上传令牌 ip:${logIp}`,
-    data: {
-      ip: logIp,
-    },
+    msg: '获取文件上传令牌',
   })
   res.success({
     token,
@@ -94,17 +90,14 @@ router.get('list', async (req, res) => {
  * 获取模板文件下载链接
  */
 router.get('template', async (req, res) => {
-  const logIp = getClientIp(req)
-
   const { template, key } = req.query
   const k = `easypicker2/${key}_template/${template}`
   const isExist = await judgeFileIsExist(k)
   if (!isExist) {
     addBehavior(req, {
       module: 'file',
-      msg: `下载模板文件 ip:${logIp} 参数错误`,
+      msg: '下载模板文件 参数错误',
       data: {
-        ip: logIp,
         data: req.query,
       },
     })
@@ -113,9 +106,8 @@ router.get('template', async (req, res) => {
   }
   addBehavior(req, {
     module: 'file',
-    msg: `下载模板文件 ip:${logIp} 文件:${template}`,
+    msg: `下载模板文件 文件:${template}`,
     data: {
-      ip: logIp,
       template,
     },
   })
@@ -248,7 +240,6 @@ router.delete('one', async (req, res) => {
  * 撤回提交的文件
  */
 router.delete('withdraw', async (req, res) => {
-  const logIp = getClientIp(req)
   const {
     taskKey, taskName, filename, hash, peopleName, info,
   } = req.body
@@ -269,9 +260,8 @@ router.delete('withdraw', async (req, res) => {
   if (!passFiles.length) {
     addBehavior(req, {
       module: 'file',
-      msg: `撤回文件失败 ip:${logIp} ${peopleName} 文件:${filename} 信息不匹配`,
+      msg: `撤回文件失败 ${peopleName} 文件:${filename} 信息不匹配`,
       data: {
-        ip: logIp,
         filename,
         peopleName,
         data: req.body,
@@ -292,7 +282,6 @@ router.delete('withdraw', async (req, res) => {
     module: 'file',
     msg: `撤回文件成功 文件:${filename} 删除记录:${passFiles.length} 删除OSS资源:${isDelOss ? '是' : '否'}`,
     data: {
-      ip: logIp,
       limitPeople,
       isDelOss,
       filesCount: files.length,
@@ -315,7 +304,6 @@ router.delete('withdraw', async (req, res) => {
         module: 'file',
         msg: `姓名:${peopleName} 不存在`,
         data: {
-          ip: logIp,
           filename,
           peopleName,
           data: req.body,

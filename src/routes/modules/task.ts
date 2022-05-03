@@ -84,13 +84,11 @@ router.get('/:key', async (req, res) => {
   const [task] = await selectTasks({
     k: key,
   })
-  const ip = getClientIp(req)
   if (!task) {
     addBehavior(req, {
       module: 'task',
-      msg: `获取任务详细信息, 任务不存在 ip:${ip}`,
+      msg: '获取任务详细信息, 任务不存在',
       data: {
-        ip,
         key,
       },
     })
@@ -100,9 +98,8 @@ router.get('/:key', async (req, res) => {
 
   addBehavior(req, {
     module: 'task',
-    msg: `获取任务详细信息, ${task.name} ip:${ip}`,
+    msg: `获取任务详细信息, ${task.name}`,
     data: {
-      ip,
       name: task.name,
     },
   })

@@ -24,18 +24,16 @@ router.get('/:key', async (req) => {
   if (ddl) {
     ddl = new Date(ddl.getTime() + 8 * 60 * 60 * 1000)
   }
-  const logIp = getClientIp(req)
   selectTasks({
     k: key,
   }).then(([task]) => {
     if (task) {
       addBehavior(req, {
         module: 'taskInfo',
-        msg: `获取任务属性 ip:${logIp} 任务:${task.name} 成功`,
+        msg: `获取任务属性 任务:${task.name} 成功`,
         data: {
           key,
           name: task.name,
-          ip: logIp,
         },
       })
     }

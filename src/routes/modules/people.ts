@@ -242,16 +242,13 @@ router.delete('/:key', async (req, res) => {
  * 更新人员提交信息
  */
 router.put('/:key', async (req, res) => {
-  const logIp = getClientIp(req)
-
   const { key } = req.params
   const { name, filename, hash } = req.body
   if (!name || !filename || !key || !hash) {
     addBehavior(req, {
       module: 'people',
-      msg: `更新提交人员信息 ip:${logIp} 参数错误`,
+      msg: '更新提交人员信息 参数错误',
       data: {
-        ip: logIp,
         key,
         name,
         filename,
@@ -269,9 +266,8 @@ router.put('/:key', async (req, res) => {
   if (files.length === 0) {
     addBehavior(req, {
       module: 'people',
-      msg: `更新提交人员信息 ip:${logIp} 参数错误`,
+      msg: '更新提交人员信息 参数错误',
       data: {
-        ip: logIp,
         key,
         name,
         filename,
@@ -300,9 +296,8 @@ router.put('/:key', async (req, res) => {
     if (task) {
       addBehavior(req, {
         module: 'people',
-        msg: `更新提交人员信息 ip:${logIp} 成功 任务:${task.name} 姓名:${name}`,
+        msg: `更新提交人员信息 成功 任务:${task.name} 姓名:${name}`,
         data: {
-          ip: logIp,
           key,
           taskName: task.name,
           name,
