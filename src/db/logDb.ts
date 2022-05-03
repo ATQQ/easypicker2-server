@@ -8,8 +8,6 @@ import {
 } from './model/log'
 
 function getLogData(type: LogType, data: LogData): Log {
-  // TODO: 数据加密
-  // TODO: 过滤敏感数据
   return {
     id: getUniqueKey(),
     type,

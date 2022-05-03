@@ -12,7 +12,7 @@ const router = new Router('task_info')
 /**
  * 获取任务附加属性
  */
-router.get('/:key', async (req, res) => {
+router.get('/:key', async (req) => {
   const { key } = req.params
   const [taskInfo] = await selectTaskInfo({
     taskKey: key,
