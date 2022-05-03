@@ -3,10 +3,14 @@ import {
   Get, Put, ReqBody, Response, RouterController,
 } from 'flash-wolves'
 import { USER_POWER, USER_STATUS } from '@/db/model/user'
-import { selectAllUser, selectUserById, updateUser } from '@/db/userDb'
+import {
+  selectAllUser, selectUserByAccount, selectUserById, selectUserByPhone, updateUser,
+} from '@/db/userDb'
 import { addBehavior } from '@/db/logDb'
-import { rPassword } from '@/utils/regExp'
+import { rMobilePhone, rPassword, rVerCode } from '@/utils/regExp'
 import { encryption } from '@/utils/stringUtil'
+import { expiredRedisKey, getRedisVal } from '@/db/redisDb'
+import { UserError } from '@/constants/errorMsg'
 
 const power = {
   userPower: USER_POWER.SUPER,
@@ -67,6 +71,52 @@ export default class SuperUserController {
     })
     await updateUser({
       password: encryption(password),
+    }, {
+      id,
+    })
+  }
+
+  @Put('phone', power)
+  async resetPhone(@ReqBody('id') id: number, @ReqBody('phone') phone: string, @ReqBody('code') code:string, req:FWRequest) {
+    const user = await selectUserById(id)
+    if (!user.length || !rMobilePhone.test(phone) || !rVerCode.test(code)) {
+      addBehavior(req, {
+        module: 'super',
+        data: req.body,
+        msg: '管理员重置手机号: 参数不合法',
+      })
+      return Response.fail(500, '参数不合法')
+    }
+    const realCode = await getRedisVal(`code-${phone}`)
+    if (realCode !== code) {
+      addBehavior(req, {
+        module: 'super',
+        data: req.body,
+        msg: '管理员重置手机号: 验证码错误',
+      })
+      return Response.failWithError(UserError.code.fault)
+    }
+
+    let [otherUser] = await selectUserByPhone(phone)
+    if (!otherUser) {
+      ([otherUser] = await selectUserByAccount(phone))
+    }
+    if (otherUser) {
+      addBehavior(req, {
+        module: 'super',
+        msg: `管理员重置手机号: 手机号 ${phone} 已存在`,
+        data: req.body,
+      })
+      return Response.failWithError(UserError.mobile.exist)
+    }
+    expiredRedisKey(`code-${phone}`)
+    addBehavior(req, {
+      module: 'super',
+      data: req.body,
+      msg: `管理员重置用户手机号: ${user[0].account}`,
+    })
+    await updateUser({
+      phone,
     }, {
       id,
     })

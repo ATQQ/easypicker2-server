@@ -30,7 +30,7 @@ export default class PublicController {
     const logPhone = phone.slice(-4)
     addBehavior(req, {
       module: 'public',
-      msg: `获取验证码 手机号:${logPhone}  验证码:${code} 成功`,
+      msg: `获取验证码 手机尾号:${logPhone}  验证码:${code} 成功`,
       data: {
         phone: logPhone,
         code,
@@ -39,7 +39,7 @@ export default class PublicController {
     if (process.env.NODE_ENV !== 'development') {
       sendMessage(phone, code, 2)
     }
-    console.log(new Date().toLocaleString(), `获取验证码 手机号:${logPhone}  验证码:${code} 成功`)
+    console.log(new Date().toLocaleString(), `获取验证码 手机尾号:${logPhone}  验证码:${code} 成功`)
     setRedisValue(`code-${phone}`, code, 120)
   }
 
