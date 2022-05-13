@@ -78,6 +78,7 @@ router.put('/:key', async (req, res) => {
       info: '设置提交必填信息',
       ddl: '设置截止日期',
       limitPeople: '限制提交人员',
+      tip: '批注信息',
     }
 
     if (task) {
@@ -88,6 +89,7 @@ router.put('/:key', async (req, res) => {
           key,
           name: task.name,
           account: logAccount,
+          data: req.body,
         },
       })
     }
