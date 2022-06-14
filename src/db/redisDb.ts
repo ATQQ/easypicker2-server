@@ -18,20 +18,47 @@ export function setRedisValue(k: string, v: string, expiredTime = -1) {
   })
 }
 
-export function getRedisVal(k: string): Promise<string> {
+export function getRedisVal(k: string, originCallback?:any): Promise<string> {
   return new Promise((resolve) => {
     const v = storage.getItem(k)
     if (v?.value) {
       resolve(v.value)
+      // 异步更新数据逻辑
+      if (typeof originCallback === 'function') {
+        originCallback().then((v) => {
+          setRedisValue(k, JSON.stringify(v), 60 * 60 * 24 * 7)
+        })
+      }
       return
     }
     getClient().then((client) => {
       client.get(k, (err, reply) => {
         storage.setItem(k, reply, 60 * 60 * 24)
-        resolve(reply)
         client.quit()
+        if (reply === null && typeof originCallback === 'function') {
+          originCallback()
+            .then((v) => {
+              const str = JSON.stringify(v)
+              setRedisValue(k, str, 60 * 60 * 24 * 7)
+              resolve(str)
+            })
+            .catch(() => {
+              resolve(reply)
+            })
+        } else {
+          resolve(reply)
+        }
       })
     })
+  })
+}
+
+export function getRedisValueJSON<T>(k: string, defaultValue:T, originCallback?:any):Promise<T> {
+  return getRedisVal(k, originCallback).then((v) => {
+    if (v) {
+      return JSON.parse(v)
+    }
+    return defaultValue || null
   })
 }
 
