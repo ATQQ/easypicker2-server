@@ -12,8 +12,7 @@ const bucketZoneMap = {
   'huabei': qiniu.zone.Zone_z1,
   'huanan': qiniu.zone.Zone_z2,
   'beimei': qiniu.zone.Zone_na0,
-  'Southeast': qiniu.zone.Zone_as0,
-  'Asia': qiniu.zone.Zone_na0,
+  'SoutheastAsia': qiniu.zone.Zone_as0
 }
 const bucketZone = bucketZoneMap[qiniuConfig.bucketZone] || qiniu.zone.Zone_z2
 
