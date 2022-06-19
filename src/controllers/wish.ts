@@ -44,9 +44,9 @@ export default class WishController {
       const {
         title, des, status, id, contact,
       } = wish
-      const createDare = getObjectIdDate(id)
+      const createDate = getObjectIdDate(id)
       return {
-        title, des, status, id, contact, createDare,
+        title, des, status, id, contact, createDate,
       }
     })
   }
