@@ -5,6 +5,7 @@ import {
   FWRequest,
   Get,
   Put,
+  ReqParams,
 } from 'flash-wolves'
 import { Wish, WishStatus } from '@/db/model/wish'
 import { addWishData, findWish, updateWish } from '@/db/wishDb'
@@ -40,6 +41,12 @@ export default class WishController {
   @Get('all', adminPower)
   async getAllWish() {
     const wishes = await findWish({})
+    // 按照日期从大到小排序
+    wishes.sort((a, b) => {
+      const aDate = getObjectIdDate(a.id)
+      const bDate = getObjectIdDate(b.id)
+      return bDate - aDate
+    })
     return wishes.map((wish) => {
       const {
         title, des, status, id, contact,
@@ -54,5 +61,11 @@ export default class WishController {
   @Put('update', adminPower)
   async updateWishStatus(@ReqBody('id') id: string, @ReqBody('status') status: WishStatus) {
     await updateWish({ id }, { $set: { status } })
+  }
+
+  @Put('update/:id', adminPower)
+  async updateWish(@ReqParams('id') id: string, @ReqBody() body: Wish) {
+    const { title, des } = body
+    await updateWish({ id }, { $set: { title, des } })
   }
 }
