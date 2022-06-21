@@ -6,12 +6,16 @@ import {
   Get,
   Put,
   ReqParams,
+  Response,
 } from 'flash-wolves'
 import { Wish, WishStatus } from '@/db/model/wish'
 import { addWishData, findWish, updateWish } from '@/db/wishDb'
 import { getObjectIdDate, getUniqueKey } from '@/utils/stringUtil'
 import { addBehavior } from '@/db/logDb'
 import { USER_POWER } from '@/db/model/user'
+import { ReqIp } from '@/decorator'
+import { addAction, findAction, findActionCount } from '@/db/actionDb'
+import { ActionType } from '@/db/model/action'
 
 const adminPower = { needLogin: true, userPower: USER_POWER.SUPER }
 @RouterController('wish')
@@ -61,11 +65,62 @@ export default class WishController {
   @Put('update', adminPower)
   async updateWishStatus(@ReqBody('id') id: string, @ReqBody('status') status: WishStatus) {
     await updateWish({ id }, { $set: { status } })
+    // 不同状态，更新时间字段
+    if (status === WishStatus.START) {
+      await updateWish({ id }, { $set: { startDate: new Date() } })
+    }
+    if (status === WishStatus.CLOSE || status === WishStatus.END) {
+      await updateWish({ id }, { $set: { endDate: new Date() } })
+    }
   }
 
   @Put('update/:id', adminPower)
   async updateWish(@ReqParams('id') id: string, @ReqBody() body: Wish) {
     const { title, des } = body
     await updateWish({ id }, { $set: { title, des } })
+  }
+
+  @Get('all/docs', { CORS: true })
+  async getDocsWish(@ReqIp() ip:string) {
+    const wishes = await findWish({
+      $or: [
+        { status: WishStatus.START },
+        { status: WishStatus.WAIT },
+      ],
+    })
+    const result = []
+    for (const wish of wishes) {
+      const {
+        title, des, id, startDate,
+      } = wish
+      const count = await findActionCount({ thingId: wish.id, type: ActionType.PRAISE })
+      const alreadyPraise = (await findActionCount(
+        { thingId: wish.id, type: ActionType.PRAISE, ip },
+      )) > 0
+      result.push({
+        title, des, id, startDate, count, alreadyPraise,
+      })
+    }
+    return result
+  }
+
+  /**
+   * 点赞需求
+   */
+  @Post('praise/:id', { CORS: true })
+  async praiseWis(@ReqParams('id') id: string, @ReqIp() ip:string) {
+    const wishes = await findWish({ id })
+    if (!wishes.length) {
+      return Response.fail(-1, '需求不存在')
+    }
+    const praiseData = await findAction({ ip, thingId: id, type: ActionType.PRAISE })
+    if (praiseData.length) {
+      return Response.fail(1, '已经点赞过了')
+    }
+    await addAction({
+      type: ActionType.PRAISE,
+      thingId: id,
+      ip,
+    })
   }
 }
