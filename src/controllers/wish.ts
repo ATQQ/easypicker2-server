@@ -86,19 +86,20 @@ export default class WishController {
       $or: [
         { status: WishStatus.START },
         { status: WishStatus.WAIT },
+        { status: WishStatus.END },
       ],
     })
     const result = []
     for (const wish of wishes) {
       const {
-        title, des, id, startDate,
+        title, des, id, startDate, status,
       } = wish
       const count = await findActionCount({ thingId: wish.id, type: ActionType.PRAISE })
       const alreadyPraise = (await findActionCount(
         { thingId: wish.id, type: ActionType.PRAISE, ip },
       )) > 0
       result.push({
-        title, des, id, startDate, count, alreadyPraise,
+        title, des, id, startDate, count, alreadyPraise, status,
       })
     }
     return result
