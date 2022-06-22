@@ -102,6 +102,8 @@ export default class WishController {
         title, des, id, startDate, count, alreadyPraise, status,
       })
     }
+    // 从大到小
+    result.sort((a, b) => b.count - a.count)
     return result
   }
 
