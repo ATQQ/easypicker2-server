@@ -2,12 +2,30 @@ export enum ActionType {
     /**
      * 点赞
      */
-    PRAISE
+    PRAISE,
+
+    /**
+     * 文件下载
+     */
+    Download,
+
+    /**
+     * 文件归档
+     */
+    Compress
 }
-export interface Action {
+export interface Action<T=any> {
     id: string
-    userId: string
-    thingId: string
+    userId?: string
+    /**
+     * 关联事务的id
+     * 如wish的id
+     */
+    thingId?: string
     type: ActionType
     date: Date
+    ip: string
+    data?: T
 }
+
+export type PraiseAction = Action

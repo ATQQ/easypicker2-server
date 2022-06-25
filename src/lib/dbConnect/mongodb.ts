@@ -79,3 +79,11 @@ export function findCollection<T>(collection: string, query: FilterQuery<T>): Pr
     })
   })
 }
+
+export function findCollectionCount<T>(collection: string, query: FilterQuery<T>): Promise<number> {
+  return mongoDbQuery<number>((db, resolve) => {
+    db.collection<T>(collection).countDocuments(query).then((data) => {
+      resolve(data)
+    })
+  })
+}

@@ -17,6 +17,7 @@ import { USER_POWER } from '@/db/model/user'
 import { selectAllUser } from '@/db/userDb'
 import { batchDeleteFiles, getOSSFiles, getFileKeys } from '@/utils/qiniuUtil'
 import { formatSize } from '@/utils/stringUtil'
+import { getRedisValueJSON } from '@/db/redisDb'
 
 const power = {
   userPower: USER_POWER.SUPER,
@@ -101,7 +102,13 @@ export default class OverviewController {
 
     const files = await selectFiles({}, ['date', 'size'])
     const fileRecent = files.filter((f) => new Date(f.date) > nowDate).length
-    const ossFiles = await getOSSFiles('easypicker2/')
+
+    // redis做一层缓存
+    const ossFiles = await getRedisValueJSON<Qiniu.ItemInfo[]>(
+      'oss-files-easypicker2/',
+      [],
+      () => getOSSFiles('easypicker2/'),
+    )
 
     const logCount = await findLogCount({})
     const logRecent = await findLogWithTimeRange(nowDate)
@@ -114,7 +121,14 @@ export default class OverviewController {
     // 当日
     const todayPv = await findPvLogWithRange(nowDate)
     const todayUv = new Set(todayPv.map((pv) => pv.data.ip)).size
-    const compressData = await getFileKeys('easypicker2/temp_package')
+
+    // redis做一层缓存
+    const compressData = await getRedisValueJSON<Qiniu.ItemInfo[]>(
+      'oss-files-easypicker2/temp_package',
+      [],
+      () => getFileKeys('easypicker2/temp_package'),
+    )
+
     return {
       user: {
         sum: users.length,

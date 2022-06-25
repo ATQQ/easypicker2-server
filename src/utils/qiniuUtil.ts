@@ -6,6 +6,16 @@ import qiniu from 'qiniu'
 import { getKeyInfo } from './stringUtil'
 // [node-sdk文档地址](https://developer.qiniu.com/kodo/1289/nodejs#server-upload)
 const privateBucketDomain = qiniuConfig.bucketDomain
+
+const bucketZoneMap = {
+  'huadong': qiniu.zone.Zone_z0,
+  'huabei': qiniu.zone.Zone_z1,
+  'huanan': qiniu.zone.Zone_z2,
+  'beimei': qiniu.zone.Zone_na0,
+  'SoutheastAsia': qiniu.zone.Zone_as0
+}
+const bucketZone = bucketZoneMap[qiniuConfig.bucketZone] || qiniu.zone.Zone_z2
+
 // 12小时过期
 const getDeadline = () => Math.floor(Date.now() / 1000) + 3600 * 12
 
@@ -179,7 +189,7 @@ export function makeZipByPrefixWithKeys(prefix: string, zipName: string, keys: s
         const safeUrl = `/url/${urlsafeBase64Encode(createDownloadUrl(file.key))}/alias/${urlsafeBase64Encode(base)}`
         return safeUrl
       }).join('\n')
-      const config = new qiniu.conf.Config({ zone: qiniu.zone.Zone_z2 })
+      const config = new qiniu.conf.Config({ zone: bucketZone })
       const formUploader = new qiniu.form_up.FormUploader(config)
       const putExtra = new qiniu.form_up.PutExtra()
       const key = `${Date.now()}-${~~(Math.random() * 1000)}.txt`
@@ -248,7 +258,7 @@ export function makeZipWithKeys(keys: string[], zipName: string): Promise<string
       const safeUrl = `/url/${urlsafeBase64Encode(createDownloadUrl(key))}/alias/${urlsafeBase64Encode(base)}`
       return safeUrl
     }).join('\n')
-    const config = new qiniu.conf.Config({ zone: qiniu.zone.Zone_z2 })
+    const config = new qiniu.conf.Config({ zone: bucketZone })
     const formUploader = new qiniu.form_up.FormUploader(config)
     const putExtra = new qiniu.form_up.PutExtra()
     const key = `${Date.now()}-${~~(Math.random() * 1000)}.txt`

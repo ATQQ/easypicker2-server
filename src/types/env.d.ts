@@ -116,6 +116,11 @@ declare namespace NodeJS {
        * 七牛云图片预览压缩样式
        */
       QINIU_BUCKET_IMAGE_PREVIEW_STYLE: string
+      /**
+       * 七牛云存储空间所选区域
+       * @default 'huanan'
+       */
+      QINIU_BUCKET_ZONE: string
       // 腾讯云相关
       /**
        * SecretId

@@ -37,6 +37,7 @@ export const qiniuConfig = {
   bucketDomain: process.env.QINIU_BUCKET_DOMAIN,
   imageCoverStyle: process.env.QINIU_BUCKET_IMAGE_COVER_STYLE === 'false' ? '' : process.env.QINIU_BUCKET_IMAGE_COVER_STYLE,
   imagePreviewStyle: process.env.QINIU_BUCKET_IMAGE_PREVIEW_STYLE === 'false' ? '' : process.env.QINIU_BUCKET_IMAGE_PREVIEW_STYLE,
+  bucketZone: process.env.QINIU_BUCKET_ZONE,
 }
 
 // 腾讯云

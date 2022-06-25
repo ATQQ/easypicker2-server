@@ -84,3 +84,7 @@ export function isSameInfo(userInfo:string, dbInfo:string) {
 export function normalizeFileName(name: string) {
   return name.replace(/[\\/:*?"<>|]/g, '-')
 }
+
+export function getObjectIdDate(id: string) {
+  return +new ObjectId(id).getTimestamp()
+}

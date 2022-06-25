@@ -22,7 +22,6 @@ export enum WishStatus{
 }
 export interface Wish {
     id:string
-    userId:number
     /**
      * 需求标题
      */
