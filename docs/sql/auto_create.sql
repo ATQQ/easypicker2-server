@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: 2022-03-18 09:20:44
+-- Generation Time: 2022-06-28 23:21:06
 -- 服务器版本： 5.6.50-log
 -- PHP Version: 5.6.40
 
@@ -50,7 +50,8 @@ CREATE TABLE IF NOT EXISTS `files` (
   `hash` varchar(512) NOT NULL COMMENT '文件hash',
   `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '上传日期',
   `size` int(11) NOT NULL COMMENT '文件大小',
-  `people` varchar(256) DEFAULT NULL COMMENT '人员姓名'
+  `people` varchar(256) DEFAULT NULL COMMENT '人员姓名',
+  `origin_name` varchar(1024) DEFAULT '' COMMENT '原文件名'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='用户提交的问题';
 
 -- --------------------------------------------------------
@@ -99,7 +100,8 @@ CREATE TABLE IF NOT EXISTS `task_info` (
   `info` varchar(1024) DEFAULT NULL COMMENT '提交必填的内容(表单)',
   `ddl` timestamp NULL DEFAULT NULL COMMENT '截止日期',
   `share_key` varchar(128) NOT NULL COMMENT '用于分享的链接',
-  `limit_people` tinyint(4) NOT NULL DEFAULT '0' COMMENT '是否限制提交人员'
+  `limit_people` tinyint(4) NOT NULL DEFAULT '0' COMMENT '是否限制提交人员',
+  `tip` varchar(1024) DEFAULT '' COMMENT '批注信息'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='任务附加属性';
 
 -- --------------------------------------------------------
