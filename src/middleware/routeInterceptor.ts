@@ -28,7 +28,7 @@ const interceptor: Middleware = async (req, res) => {
     return
   }
 
-  if (userPower === USER_POWER.SUPER) {
+  if ([USER_POWER.SUPER, USER_POWER.SYSTEM].includes(userPower)) {
     const user = await getUserInfo(req)
     if (user.power !== userPower) {
       addBehavior(req, {

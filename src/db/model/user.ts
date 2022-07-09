@@ -9,7 +9,11 @@ export enum USER_POWER {
     /**
      * 超级管理员
      */
-    SUPER = 0
+    SUPER = 0,
+    /**
+     * 系统账号（只能维护系统后端服务）
+     */
+    SYSTEM
 }
 
 /**

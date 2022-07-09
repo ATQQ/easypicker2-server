@@ -5,7 +5,7 @@ import {
 
 import { UserError } from '@/constants/errorMsg'
 import { addBehavior } from '@/db/logDb'
-import { User, USER_STATUS } from '@/db/model/user'
+import { User, USER_POWER, USER_STATUS } from '@/db/model/user'
 import { expiredRedisKey, getRedisVal } from '@/db/redisDb'
 import {
   insertUser, selectUserByAccount, selectUserByPhone, updateUser,
@@ -13,10 +13,7 @@ import {
 import { rAccount, rMobilePhone, rPassword } from '@/utils/regExp'
 import { encryption, formatDate } from '@/utils/stringUtil'
 import tokenUtil from '@/utils/tokenUtil'
-
-const power = {
-  needLogin: true,
-}
+import { findUserConfig } from '@/db/configDB'
 
 @RouterController('user')
 export default class UserController {
@@ -130,6 +127,19 @@ export default class UserController {
 
   @Post('login')
   async login(@ReqBody('account') account:string, @ReqBody('pwd') pwd:string, req:FWRequest) {
+    // 先判断是否系统账号
+    const isSystemAccount = (await findUserConfig({ type: 'server', key: 'USER', value: account })).length !== 0
+    if (isSystemAccount) {
+      const isRightPwd = (await findUserConfig({ type: 'server', key: 'PWD', value: pwd })).length !== 0
+      if (isRightPwd) {
+        return {
+          token: tokenUtil.createToken({
+            account, power: USER_POWER.SYSTEM,
+          }, 60 * 60 * 24 * 7),
+          system: true,
+        }
+      }
+    }
     const isPhone = rMobilePhone.test(account)
     // 密码格式不正确
     if (!rPassword.test(pwd)) {
