@@ -4,7 +4,7 @@ import type { TaskInfo } from '@/db/model/taskInfo'
 import type { Task } from '@/db/model/task'
 import type { People } from '@/db/model/people'
 import type { User } from '@/db/model/user'
-import { query } from '@/lib/dbConnect/mysql'
+import { query, refreshPool } from '@/lib/dbConnect/mysql'
 import { getUniqueKey } from './stringUtil'
 import { addUserConfigData, findUserConfig } from '@/db/configDB'
 import { UserConfigType } from '@/db/model/config'
@@ -119,4 +119,14 @@ export async function initUserConfig() {
   await storeDbInfo('redis', redisConfig)
   await storeDbInfo('qiniu', qiniuConfig)
   await storeDbInfo('tx', txConfig)
+}
+
+export async function readyServerDepService() {
+  // 1. MySQL
+  try {
+    await query('show tables')
+  } catch {
+    // 重新创建连接池
+    await refreshPool()
+  }
 }

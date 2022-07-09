@@ -11,7 +11,7 @@ import controllers from './controllers'
 import {
   serverInterceptor, routeInterceptor, beforeRouteMatchInterceptor, beforeRuntimeErrorInterceptor,
 } from './middleware'
-import { initUserConfig, patchTable } from './utils/patch'
+import { initUserConfig, patchTable, readyServerDepService } from './utils/patch'
 
 console.time('server-start')
 
@@ -30,5 +30,6 @@ app.listen(serverConfig.port, serverConfig.hostname, async () => {
   console.timeEnd('server-start')
   // 存储一些配置
   await initUserConfig()
+  await readyServerDepService()
   await patchTable()
 })

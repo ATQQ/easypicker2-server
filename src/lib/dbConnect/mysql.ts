@@ -1,8 +1,22 @@
 import mysql from 'mysql'
 import { mysqlConfig } from '@/config'
+import { findUserConfig } from '@/db/configDB'
 // 创建连接池
-const pool = mysql.createPool(mysqlConfig)
+let pool = mysql.createPool(mysqlConfig)
 
+export async function refreshPool() {
+  // 从mongoDB 取数据
+  const cfg:any = (await findUserConfig({ type: 'mysql' })).reduce((prev, curr) => {
+    prev[curr.key] = curr.value
+    return prev
+  }, {})
+  pool.end()
+  mysqlConfig.user = cfg.user
+  mysqlConfig.password = cfg.password
+  mysqlConfig.database = cfg.database
+  // 重新创建连接池
+  pool = mysql.createPool(mysqlConfig)
+}
 export function getConnection(): Promise<mysql.PoolConnection> {
   return new Promise((res, rej) => {
     pool.getConnection((err, coon) => {
