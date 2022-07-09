@@ -222,11 +222,10 @@ router.put('password', async (req, res) => {
 router.get('power/super', async (req, res) => {
   const user = await getUserInfo(req)
   res.success({
-    power: user.power === USER_POWER.SUPER,
-    name: user.account,
+    power: user?.power === USER_POWER.SUPER,
+    name: user?.account,
+    system: user?.power === USER_POWER.SYSTEM,
   })
-}, {
-  needLogin: true,
 })
 
 router.get('login', async (req, res) => {
