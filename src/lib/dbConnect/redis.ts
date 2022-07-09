@@ -10,11 +10,26 @@ export function getClient(): Promise<RedisClient> {
     const client = redis.createClient(port, host, auth ? {
       password,
     } : {})
-    res(client)
-
+    // redis 服务器启动
+    client.on('ready', () => {
+      res(client)
+    })
     client.on('error', (err) => {
-      console.log(`Error ${err}`)
+      client.quit()
       rej(err)
     })
+  })
+}
+
+export function getRedisStatus() {
+  return new Promise<boolean>((res, rej) => {
+    getClient()
+      .then((c) => {
+        c.quit()
+        res(true)
+      })
+      .catch(() => {
+        res(false)
+      })
   })
 }

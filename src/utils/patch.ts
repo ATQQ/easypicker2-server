@@ -99,7 +99,9 @@ export async function initUserConfig() {
     })
   }
   // 打印日志
-  console.log('!!! 服务管理面板!!! ', '账号', userAccount, '密码', userPWD)
+  console.log('!!! 服务管理面板!!! ', '账号:', userAccount, '密码:', userPWD)
+  console.log('!!! 服务管理面板!!! ', '账号:', userAccount, '密码:', userPWD)
+  console.log('!!! 服务管理面板!!! ', '账号:', userAccount, '密码:', userPWD)
 
   const storeDbInfo = async (type:UserConfigType, config:Record<string, any>) => {
     const configList = await findUserConfig({ type })

@@ -4,9 +4,9 @@ import { getClient } from '@/lib/dbConnect/redis'
 import storage from '@/utils/storageUtil'
 
 export function setRedisValue(k: string, v: string, expiredTime = -1) {
+  storage.setItem(k, v, expiredTime)
   getClient().then((client) => {
     client.set(k, v, () => {
-      storage.setItem(k, v, expiredTime)
       if (expiredTime !== -1) {
         client.expire(k, expiredTime, () => {
           client.quit()

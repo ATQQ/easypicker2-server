@@ -19,6 +19,29 @@ const clientConfig = {
 
 const client = new SmsClient(clientConfig)
 
+export function getTxServiceStatus() {
+  const args = ['1234', `${2}`]
+  const params = {
+    PhoneNumberSet: [
+      '+861234',
+    ],
+    TemplateParamSet: args,
+    TemplateID: txConfig.templateId,
+    SmsSdkAppid: txConfig.smsSdkAppid,
+    Sign: txConfig.signName,
+  }
+  return new Promise((resolve) => {
+    client.SendSms(params).then(
+      () => {
+        resolve(true)
+      },
+      () => {
+        resolve(false)
+      },
+    )
+  })
+}
+
 export function sendMessage(phone, code, time = 2) {
   const args = [code, `${time}`]
   const params = {
