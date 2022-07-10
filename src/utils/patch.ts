@@ -11,6 +11,8 @@ import { UserConfigType } from '@/db/model/config'
 import {
   mongodbConfig, mysqlConfig, qiniuConfig, redisConfig, txConfig,
 } from '@/config'
+import { refreshQinNiuConfig } from './qiniuUtil'
+import { refreshTxConfig } from './tencent'
 
 type TableName = 'task_info' | 'category' | 'files' | 'task' | 'people' | 'user'
 type DBTables = {
@@ -127,6 +129,17 @@ export async function initUserConfig() {
  * 从 MongoDB 取出数据库鉴权需要的数据启动服务
  */
 export async function readyServerDepService() {
-  // 1. MySQL
-  await refreshPool()
+  await Promise.all([
+    // 1. MySQL
+    refreshPool(),
+    // 2. qiniu
+    refreshQinNiuConfig(),
+    // 5. tx
+    refreshTxConfig(),
+  ])
+
+  // 大多数情况下不需要额外配置
+  // 此功能依赖mongodb,所以不处理它
+  // 3. redis
+  // 4. mongodb
 }

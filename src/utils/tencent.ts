@@ -1,23 +1,27 @@
 import * as tencentcloud from 'tencentcloud-sdk-nodejs'
 import { txConfig } from '@/config'
+import { getUserConfigByType } from '@/db/configDB'
 // [文档地址](https://cloud.tencent.com/document/product/382/43197)
 
-const SmsClient = tencentcloud.sms.v20190711.Client
-
-const clientConfig = {
-  credential: {
-    secretId: txConfig.secretId,
-    secretKey: txConfig.secretKey,
-  },
-  region: '',
-  profile: {
-    httpProfile: {
-      endpoint: 'sms.tencentcloudapi.com',
+let client
+export async function refreshTxConfig() {
+  const cfg = await getUserConfigByType('tx')
+  Object.assign(txConfig, cfg)
+  const clientConfig = {
+    credential: {
+      secretId: txConfig.secretId,
+      secretKey: txConfig.secretKey,
     },
-  },
+    region: '',
+    profile: {
+      httpProfile: {
+        endpoint: 'sms.tencentcloudapi.com',
+      },
+    },
+  }
+  const SmsClient = tencentcloud.sms.v20190711.Client
+  client = new SmsClient(clientConfig)
 }
-
-const client = new SmsClient(clientConfig)
 
 export function getTxServiceStatus() {
   const args = ['1234', `${2}`]

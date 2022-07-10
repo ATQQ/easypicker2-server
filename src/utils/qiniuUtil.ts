@@ -1,11 +1,12 @@
 /* eslint-disable */
 import { qiniuConfig } from '@/config'
+import {  getUserConfigByType } from '@/db/configDB'
 import { addErrorLog } from '@/db/logDb'
 import { FWRequest } from 'flash-wolves'
 import qiniu from 'qiniu'
 import { getKeyInfo } from './stringUtil'
 // [node-sdk文档地址](https://developer.qiniu.com/kodo/1289/nodejs#server-upload)
-const privateBucketDomain = qiniuConfig.bucketDomain
+let privateBucketDomain = qiniuConfig.bucketDomain
 
 const bucketZoneMap = {
   'huadong': qiniu.zone.Zone_z0,
@@ -14,15 +15,24 @@ const bucketZoneMap = {
   'beimei': qiniu.zone.Zone_na0,
   'SoutheastAsia': qiniu.zone.Zone_as0
 }
-const bucketZone = bucketZoneMap[qiniuConfig.bucketZone] || qiniu.zone.Zone_z2
+let bucketZone = bucketZoneMap[qiniuConfig.bucketZone] || qiniu.zone.Zone_z2
 
 // 12小时过期
 const getDeadline = () => Math.floor(Date.now() / 1000) + 3600 * 12
 
-const bucket = qiniuConfig.bucketName
-const mac = new qiniu.auth.digest.Mac(qiniuConfig.accessKey, qiniuConfig.secretKey)
+let bucket = qiniuConfig.bucketName
+let mac = new qiniu.auth.digest.Mac(qiniuConfig.accessKey, qiniuConfig.secretKey)
 const { urlsafeBase64Encode } = qiniu.util
 
+export async function refreshQinNiuConfig(){
+    // 从mongoDB 取数据
+    const cfg = await getUserConfigByType('qiniu')
+    Object.assign(qiniuConfig, cfg)
+    privateBucketDomain = qiniuConfig.bucketDomain
+    bucketZone = bucketZoneMap[qiniuConfig.bucketZone] || qiniu.zone.Zone_z2
+    bucket = qiniuConfig.bucketName
+    mac = new qiniu.auth.digest.Mac(qiniuConfig.accessKey, qiniuConfig.secretKey)
+}
 /**
  * 获取OSS上文件的下载链接（默认12h有效）
  * @param key 文件的key
