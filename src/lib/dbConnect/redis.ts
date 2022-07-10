@@ -22,14 +22,21 @@ export function getClient(): Promise<RedisClient> {
 }
 
 export function getRedisStatus() {
-  return new Promise<boolean>((res, rej) => {
+  return new Promise<ServiceStatus>((res, rej) => {
     getClient()
       .then((c) => {
         c.quit()
-        res(true)
+        res({
+          type: 'redis',
+          status: true,
+        })
       })
-      .catch(() => {
-        res(false)
+      .catch((err) => {
+        res({
+          errMsg: err.message,
+          type: 'redis',
+          status: false,
+        })
       })
   })
 }

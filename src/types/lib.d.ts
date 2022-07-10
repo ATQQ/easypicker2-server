@@ -10,3 +10,8 @@ declare namespace Qiniu{
         md5:string;
     }
 }
+interface ServiceStatus{
+    type:'mysql'|'qiniu'|'redis'|'mongodb'|'tx';
+    status:boolean
+    errMsg?:string
+}

@@ -31,14 +31,21 @@ export function getDBConnection(): Promise<Res> {
 }
 
 export function getMongoDBStatus() {
-  return new Promise<boolean>((res) => {
+  return new Promise<ServiceStatus>((res) => {
     getDBConnection()
       .then((r) => {
         r.db.close()
-        res(true)
+        res({
+          type: 'mongodb',
+          status: true,
+        })
       })
-      .catch(() => {
-        res(false)
+      .catch((err) => {
+        res({
+          errMsg: err.message,
+          type: 'redis',
+          status: false,
+        })
       })
   })
 }

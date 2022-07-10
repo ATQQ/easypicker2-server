@@ -359,3 +359,63 @@ export function batchFileStatus(keys: string[]): Promise<FileStat[]> {
     })
   })
 }
+
+export function getQiniuStatus() {
+  return new Promise<ServiceStatus>((res) => {
+    if (!qiniuConfig.bucketDomain.startsWith('http')) {
+      res({
+        type: 'qiniu',
+        status: false,
+        errMsg: '域名配置错误，必须包含协议 http:/// 或 https://'
+      })
+      return
+    }
+    const config = new qiniu.conf.Config({ zone: bucketZone })
+
+    const checkRegion = new Promise((res, rej) => {
+      const formUploader = new qiniu.form_up.FormUploader(config)
+      const putExtra = new qiniu.form_up.PutExtra()
+      const key = `${Date.now()}-${~~(Math.random() * 1000)}.txt`
+      formUploader.put(getUploadToken(), key, 'status test', putExtra, (respErr,
+        respBody, respInfo) => {
+        const err = respErr || respBody?.error
+        if (err) {
+          rej(err)
+          return
+        }
+        deleteObjByKey(key)
+        res(key)
+      })
+    })
+
+    const bucketManager = new qiniu.rs.BucketManager(mac, config)
+    bucketManager.listPrefix(bucket, {
+      prefix: 'easypicker2/',
+      limit: 1
+    }, (err, respBody) => {
+      const errMsg = err?.message || respBody?.error
+      if (errMsg) {
+        res({
+          type: 'qiniu',
+          status: false,
+          errMsg
+        })
+        return
+      }
+      checkRegion
+        .then(() => {
+          res({
+            type: 'qiniu',
+            status: true,
+          })
+        })
+        .catch((err) => {
+          res({
+            type: 'qiniu',
+            status: false,
+            errMsg: err + '，存储区域配置不正确，请参看文档重新选择'
+          })
+        })
+    })
+  })
+}

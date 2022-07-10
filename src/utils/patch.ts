@@ -123,12 +123,10 @@ export async function initUserConfig() {
   await storeDbInfo('tx', txConfig)
 }
 
+/**
+ * 从 MongoDB 取出数据库鉴权需要的数据启动服务
+ */
 export async function readyServerDepService() {
   // 1. MySQL
-  try {
-    await query('show tables')
-  } catch {
-    // 重新创建连接池
-    await refreshPool()
-  }
+  await refreshPool()
 }

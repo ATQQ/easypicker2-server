@@ -2,7 +2,7 @@ import mysql from 'mysql'
 import { mysqlConfig } from '@/config'
 import { findUserConfig } from '@/db/configDB'
 // 创建连接池
-let pool = mysql.createPool(mysqlConfig)
+let pool:mysql.Pool
 
 export async function refreshPool() {
   // 从mongoDB 取数据
@@ -10,13 +10,18 @@ export async function refreshPool() {
     prev[curr.key] = curr.value
     return prev
   }, {})
-  pool.end()
+  pool?.end()
   mysqlConfig.user = cfg.user
   mysqlConfig.password = cfg.password
   mysqlConfig.database = cfg.database
   // 重新创建连接池
   pool = mysql.createPool(mysqlConfig)
+  pool.on('error', (err) => {
+    console.log('pool connect error')
+    console.error(err)
+  })
 }
+
 export function getConnection(): Promise<mysql.PoolConnection> {
   return new Promise((res, rej) => {
     pool.getConnection((err, coon) => {
@@ -30,11 +35,6 @@ export function getConnection(): Promise<mysql.PoolConnection> {
     })
   })
 }
-
-pool.on('error', (err) => {
-  console.log('pool connect error')
-  console.error(err)
-})
 
 type param = string | number
 /**
@@ -56,6 +56,26 @@ export function query<T>(sql: string, ...params: param[]): Promise<T> {
       })
     }).catch((err) => {
       reject(err)
+    })
+  })
+}
+
+export function getMysqlStatus() {
+  return new Promise<ServiceStatus>((res, rej) => {
+    pool.getConnection((err, coon) => {
+      if (err) {
+        res({
+          errMsg: err.message,
+          type: 'mysql',
+          status: false,
+        })
+        return
+      }
+      res({
+        type: 'mysql',
+        status: true,
+      })
+      coon.release()
     })
   })
 }

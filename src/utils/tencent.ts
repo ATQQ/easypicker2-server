@@ -30,13 +30,20 @@ export function getTxServiceStatus() {
     SmsSdkAppid: txConfig.smsSdkAppid,
     Sign: txConfig.signName,
   }
-  return new Promise((resolve) => {
+  return new Promise<ServiceStatus>((resolve) => {
     client.SendSms(params).then(
       () => {
-        resolve(true)
+        resolve({
+          type: 'tx',
+          status: true,
+        })
       },
-      () => {
-        resolve(false)
+      (err) => {
+        resolve({
+          type: 'tx',
+          status: false,
+          errMsg: err.message,
+        })
       },
     )
   })
