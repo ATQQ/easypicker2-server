@@ -101,11 +101,11 @@ declare namespace NodeJS {
        */
       QINIU_SECRET_KEY: string
       /**
-       * SSO存储空间名
+       * OSS存储空间名
        */
       QINIU_BUCKET_NAME: string
       /**
-       * SSO存储空间绑定的域名
+       * OSS存储空间绑定的域名
        */
       QINIU_BUCKET_DOMAIN: string
       /**
