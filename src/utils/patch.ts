@@ -13,6 +13,7 @@ import {
 import { refreshQinNiuConfig } from './qiniuUtil'
 import { refreshTxConfig } from './tencent'
 import LocalUserDB from './user-local-db'
+import { refreshMongoDb } from '@/lib/dbConnect/mongodb'
 
 type TableName = 'task_info' | 'category' | 'files' | 'task' | 'people' | 'user'
 type DBTables = {
@@ -134,12 +135,12 @@ export async function readyServerDepService() {
     refreshPool(),
     // 2. qiniu
     refreshQinNiuConfig(),
+    // 4 mongodb
+    refreshMongoDb(),
     // 5. tx
     refreshTxConfig(),
   ])
 
   // 大多数情况下不需要额外配置
-  // 此功能依赖mongodb,所以不处理它
   // 3. redis
-  // 4. mongodb
 }

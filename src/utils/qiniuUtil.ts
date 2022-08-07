@@ -25,7 +25,6 @@ let mac = new qiniu.auth.digest.Mac(qiniuConfig.accessKey, qiniuConfig.secretKey
 const { urlsafeBase64Encode } = qiniu.util
 
 export async function refreshQinNiuConfig(){
-    // 从mongoDB 取数据
     const cfg = LocalUserDB.getUserConfigByType('qiniu')
     Object.assign(qiniuConfig, cfg)
     privateBucketDomain = qiniuConfig.bucketDomain

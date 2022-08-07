@@ -2,16 +2,24 @@ import {
   Db, FilterQuery, InsertOneWriteOpResult, MongoClient, UpdateQuery, UpdateWriteOpResult, WithId,
 } from 'mongodb'
 import { mongodbConfig } from '@/config'
+import LocalUserDB from '@/utils/user-local-db'
 
 const {
   host, port, user, password, database, auth,
 } = mongodbConfig
 
-const url = auth ? `mongodb://${user}:${password}@${host}:${port}/${database}` : `mongodb://${host}:${port}/${database}?wtimeoutMS=2000`
+let url = auth ? `mongodb://${user}:${password}@${host}:${port}/${database}` : `mongodb://${host}:${port}/${database}?wtimeoutMS=2000`
 
 interface Res {
   db: MongoClient
   Db: Db
+}
+export function refreshMongoDb() {
+  const cfg = LocalUserDB.getUserConfigByType('mongo')
+  const {
+    host, port, user, password, database, auth,
+  } = cfg
+  url = auth ? `mongodb://${user}:${password}@${host}:${port}/${database}` : `mongodb://${host}:${port}/${database}?wtimeoutMS=2000`
 }
 
 export function getDBConnection(): Promise<Res> {
@@ -43,7 +51,7 @@ export function getMongoDBStatus() {
       .catch((err) => {
         res({
           errMsg: err.message,
-          type: 'redis',
+          type: 'mongodb',
           status: false,
         })
       })

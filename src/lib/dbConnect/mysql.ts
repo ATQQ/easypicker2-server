@@ -5,7 +5,6 @@ import LocalUserDB from '@/utils/user-local-db'
 let pool:mysql.Pool
 
 export function refreshPool() {
-  // 从mongoDB 取数据
   const cfg = LocalUserDB.getUserConfigByType('mysql')
   pool?.end()
   mysqlConfig.user = cfg.user

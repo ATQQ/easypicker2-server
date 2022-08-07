@@ -35,4 +35,12 @@ export const UserConfigLabels = {
     imagePreviewStyle: '图片预览压缩样式',
     bucketZone: '存储空间区域',
   },
+  mongo: {
+    host: '主机地址',
+    port: '端口号',
+    database: '数据库名',
+    user: '用户名',
+    password: '密码',
+    auth: '是否需要鉴权',
+  },
 }
