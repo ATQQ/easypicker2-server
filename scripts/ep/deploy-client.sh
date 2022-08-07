@@ -58,6 +58,7 @@ echo "使用分支 $branch 执行构建"
 
 # 安装依赖
 pnpm install
+pnpm install
 
 # 执行构建
 pnpm build

@@ -60,17 +60,18 @@ echo "使用分支 $branch 执行构建"
 
 # 安装依赖
 pnpm install
+pnpm install
 
 # 执行构建
 pnpm build
 
-if [ ! -f ".env.local" ]; then
-  echo "❌  env.local"
-  cp .env .env.local
-  echo "请记得修改 easypicker2-server 下的.env.local 文件内容，完善配置信息，然后执行下面指令启动服务"
-  else
-  echo "✅ .env.local"
-fi
+# if [ ! -f ".env.local" ]; then
+#   echo "❌  env.local"
+#   cp .env .env.local
+#   echo "请记得修改 easypicker2-server 下的.env.local 文件内容，完善配置信息，然后执行下面指令启动服务"
+#   else
+#   echo "✅ .env.local"
+# fi
 
 echo "记得在 easypicker2-server 目录下执行如下指令启动服务"
 echo "cd easypicker2-server"
