@@ -13,7 +13,7 @@ import {
 import { rAccount, rMobilePhone, rPassword } from '@/utils/regExp'
 import { encryption, formatDate } from '@/utils/stringUtil'
 import tokenUtil from '@/utils/tokenUtil'
-import { findUserConfig } from '@/db/configDB'
+import LocalUserDB from '@/utils/user-local-db'
 
 @RouterController('user')
 export default class UserController {
@@ -128,9 +128,9 @@ export default class UserController {
   @Post('login')
   async login(@ReqBody('account') account:string, @ReqBody('pwd') pwd:string, req:FWRequest) {
     // 先判断是否系统账号
-    const isSystemAccount = (await findUserConfig({ type: 'server', key: 'USER', value: account })).length !== 0
+    const isSystemAccount = LocalUserDB.findUserConfig({ type: 'server', key: 'USER', value: account }).length !== 0
     if (isSystemAccount) {
-      const isRightPwd = (await findUserConfig({ type: 'server', key: 'PWD', value: pwd })).length !== 0
+      const isRightPwd = LocalUserDB.findUserConfig({ type: 'server', key: 'PWD', value: pwd }).length !== 0
       if (isRightPwd) {
         return {
           token: tokenUtil.createToken({
@@ -139,6 +139,7 @@ export default class UserController {
           system: true,
         }
       }
+      return Response.failWithError(UserError.account.fault)
     }
     const isPhone = rMobilePhone.test(account)
     // 密码格式不正确

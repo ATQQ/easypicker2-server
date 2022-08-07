@@ -1,10 +1,10 @@
 /* eslint-disable */
 import { qiniuConfig } from '@/config'
-import {  getUserConfigByType } from '@/db/configDB'
 import { addErrorLog } from '@/db/logDb'
 import { FWRequest } from 'flash-wolves'
 import qiniu from 'qiniu'
 import { getKeyInfo } from './stringUtil'
+import LocalUserDB from './user-local-db'
 // [node-sdk文档地址](https://developer.qiniu.com/kodo/1289/nodejs#server-upload)
 let privateBucketDomain = qiniuConfig.bucketDomain
 
@@ -26,7 +26,7 @@ const { urlsafeBase64Encode } = qiniu.util
 
 export async function refreshQinNiuConfig(){
     // 从mongoDB 取数据
-    const cfg = await getUserConfigByType('qiniu')
+    const cfg = LocalUserDB.getUserConfigByType('qiniu')
     Object.assign(qiniuConfig, cfg)
     privateBucketDomain = qiniuConfig.bucketDomain
     bucketZone = bucketZoneMap[qiniuConfig.bucketZone] || qiniu.zone.Zone_z2

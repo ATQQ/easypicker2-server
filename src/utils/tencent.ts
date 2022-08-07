@@ -1,11 +1,11 @@
 import * as tencentcloud from 'tencentcloud-sdk-nodejs'
 import { txConfig } from '@/config'
-import { getUserConfigByType } from '@/db/configDB'
+import LocalUserDB from './user-local-db'
 // [文档地址](https://cloud.tencent.com/document/product/382/43197)
 
 let client
 export async function refreshTxConfig() {
-  const cfg = await getUserConfigByType('tx')
+  const cfg = LocalUserDB.getUserConfigByType('tx')
   Object.assign(txConfig, cfg)
   const clientConfig = {
     credential: {

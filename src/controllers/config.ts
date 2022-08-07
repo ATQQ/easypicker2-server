@@ -7,9 +7,9 @@ import { getMongoDBStatus } from '@/lib/dbConnect/mongodb'
 import { getTxServiceStatus, refreshTxConfig } from '@/utils/tencent'
 import { getMysqlStatus, refreshPool } from '@/lib/dbConnect/mysql'
 import { getQiniuStatus, refreshQinNiuConfig } from '@/utils/qiniuUtil'
-import { findUserConfig, updateUserConfig } from '@/db/configDB'
 import { UserConfig } from '@/db/model/config'
 import { UserConfigLabels } from '@/constants'
+import LocalUserDB from '@/utils/user-local-db'
 
 @RouterController('config', { userPower: USER_POWER.SYSTEM, needLogin: true })
 export default class UserController {
@@ -46,17 +46,17 @@ export default class UserController {
 
   @Get('service/config')
   async getUserConfig() {
-    const tx = this.cleanUserConfig((await findUserConfig({
+    const tx = this.cleanUserConfig(LocalUserDB.findUserConfig({
       type: 'tx',
-    })))
+    }))
 
-    const mysql = this.cleanUserConfig((await findUserConfig({
+    const mysql = this.cleanUserConfig(LocalUserDB.findUserConfig({
       type: 'mysql',
-    })))
+    }))
 
-    const qiniu = this.cleanUserConfig((await findUserConfig({
+    const qiniu = this.cleanUserConfig(LocalUserDB.findUserConfig({
       type: 'qiniu',
-    })))
+    }))
 
     return [
       { title: 'MySQL', data: mysql },
@@ -67,13 +67,11 @@ export default class UserController {
 
   @Put('service/config')
   async updateUserConfig(@ReqBody() data: Partial<UserConfig>) {
-    await updateUserConfig({
+    LocalUserDB.updateUserConfig({
       type: data.type,
       key: data.key,
     }, {
-      $set: {
-        value: data.value,
-      },
+      value: data.value,
     })
     if (data.type === 'mysql') {
       await refreshPool()

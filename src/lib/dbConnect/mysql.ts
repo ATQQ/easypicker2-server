@@ -1,12 +1,12 @@
 import mysql from 'mysql'
 import { mysqlConfig } from '@/config'
-import { getUserConfigByType } from '@/db/configDB'
+import LocalUserDB from '@/utils/user-local-db'
 // 创建连接池
 let pool:mysql.Pool
 
-export async function refreshPool() {
+export function refreshPool() {
   // 从mongoDB 取数据
-  const cfg = await getUserConfigByType('mysql')
+  const cfg = LocalUserDB.getUserConfigByType('mysql')
   pool?.end()
   mysqlConfig.user = cfg.user
   mysqlConfig.password = cfg.password

@@ -6,13 +6,13 @@ import type { People } from '@/db/model/people'
 import type { User } from '@/db/model/user'
 import { query, refreshPool } from '@/lib/dbConnect/mysql'
 import { getUniqueKey } from './stringUtil'
-import { addUserConfigData, findUserConfig } from '@/db/configDB'
 import { UserConfigType } from '@/db/model/config'
 import {
   mongodbConfig, mysqlConfig, qiniuConfig, redisConfig, txConfig,
 } from '@/config'
 import { refreshQinNiuConfig } from './qiniuUtil'
 import { refreshTxConfig } from './tencent'
+import LocalUserDB from './user-local-db'
 
 type TableName = 'task_info' | 'category' | 'files' | 'task' | 'people' | 'user'
 type DBTables = {
@@ -80,20 +80,20 @@ function getRandomPassword() {
   return key.slice(10, 18)
 }
 
-export async function initUserConfig() {
+export function initUserConfig() {
   // 创建1个单独可配置服务的用户
-  let userAccount = (await findUserConfig({ type: 'server', key: 'USER' }))?.[0]?.value
-  let userPWD = (await findUserConfig({ type: 'server', key: 'PWD' }))?.[0]?.value
+  let userAccount = LocalUserDB.findUserConfig({ type: 'server', key: 'USER' })?.[0]?.value
+  let userPWD = LocalUserDB.findUserConfig({ type: 'server', key: 'PWD' })?.[0]?.value
   if (!userAccount || !userPWD) {
     userAccount = getRandomUser()
     userPWD = getRandomPassword()
-    await addUserConfigData({
+    LocalUserDB.addUserConfigData({
       type: 'server',
       key: 'USER',
       value: userAccount,
       isSecret: true,
     })
-    await addUserConfigData({
+    LocalUserDB.addUserConfigData({
       type: 'server',
       key: 'PWD',
       value: userPWD,
@@ -105,11 +105,11 @@ export async function initUserConfig() {
   console.log('!!! 服务管理面板!!! ', '账号:', userAccount, '密码:', userPWD)
   console.log('!!! 服务管理面板!!! ', '账号:', userAccount, '密码:', userPWD)
 
-  const storeDbInfo = async (type:UserConfigType, config:Record<string, any>) => {
-    const configList = await findUserConfig({ type })
+  const storeDbInfo = (type:UserConfigType, config:Record<string, any>) => {
+    const configList = LocalUserDB.findUserConfig({ type })
     if (configList.length === 0) {
       Object.keys(config).forEach((key) => {
-        addUserConfigData({
+        LocalUserDB.addUserConfigData({
           type,
           key,
           value: config[key],
@@ -118,11 +118,11 @@ export async function initUserConfig() {
       })
     }
   }
-  await storeDbInfo('mysql', mysqlConfig)
-  await storeDbInfo('mongo', mongodbConfig)
-  await storeDbInfo('redis', redisConfig)
-  await storeDbInfo('qiniu', qiniuConfig)
-  await storeDbInfo('tx', txConfig)
+  storeDbInfo('mysql', mysqlConfig)
+  storeDbInfo('mongo', mongodbConfig)
+  storeDbInfo('redis', redisConfig)
+  storeDbInfo('qiniu', qiniuConfig)
+  storeDbInfo('tx', txConfig)
 }
 
 /**

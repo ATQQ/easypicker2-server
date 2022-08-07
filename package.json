@@ -6,7 +6,7 @@
   "main": "src/index.ts",
   "scripts": {
     "dev": "cross-env NODE_ENV=development run-p build:watch dev:server",
-    "dev:server": "nodemon dist/index.js",
+    "dev:server": "nodemon dist/index.js --ignore 'upload/*' --ignore user-config.json",
     "build:watch": "tsup --watch",
     "start:ts": "esno ./src/index.ts",
     "start": "cross-env NODE_ENV=production node ./dist/index.js",
@@ -18,7 +18,7 @@
     "deploy:prod": "zx scripts/deploy/env-prod.mjs",
     "deploy:test": "zx scripts/deploy/env-test.mjs",
     "deploy:dev": "zx scripts/deploy/env-dev.mjs",
-    "build": "tsup --minify"
+    "build": "tsup"
   },
   "keywords": [],
   "author": "",
