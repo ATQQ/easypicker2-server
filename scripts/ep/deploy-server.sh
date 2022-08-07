@@ -16,6 +16,11 @@ function isCmdExist() {
 exist=0
 notExist=2
 repository="https://github.com/ATQQ/easypicker2-server.git"
+branch="master"
+if [[ "$2" != "" ]]
+then
+    branch="$2"
+fi
 
 if [ $1 == "gitee" ]
 then
@@ -41,12 +46,17 @@ if [ ! -d "easypicker2-server/.git" ]; then
   echo "❌ git repository"
   git clone $repository
   cd easypicker2-server
+  git checkout "$branch"
   else
   cd easypicker2-server
+  # 切分支
+  git fetch && git checkout "$branch"
+  # 更新代码
   git pull
   echo "✅ git repository"
 fi
 
+echo "使用分支 $branch 执行构建"
 
 # 安装依赖
 pnpm install
@@ -63,4 +73,5 @@ if [ ! -f ".env.local" ]; then
 fi
 
 echo "记得在 easypicker2-server 目录下执行如下指令启动服务"
+echo "cd easypicker2-server"
 echo "curl https://script.sugarat.top/shell/ep/run-server.sh | bash -s ep-server"

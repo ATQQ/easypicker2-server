@@ -16,6 +16,11 @@ function isCmdExist() {
 exist=0
 notExist=2
 repository="https://github.com/ATQQ/easypicker2-client.git"
+branch="main"
+if [[ "$2" != "" ]]
+then
+    branch="$2"
+fi
 if [ $1 == "gitee" ]
 then
     echo "use gitee repository"
@@ -40,12 +45,16 @@ if [ ! -d "easypicker2-client/.git" ]; then
   echo "❌ git repository"
   git clone $repository
   cd easypicker2-client
+  git checkout "$branch"
   else
   cd easypicker2-client
+  # 切分支
+  git fetch && git checkout "$branch"
   git pull
   echo "✅ git repository"
 fi
 
+echo "使用分支 $branch 执行构建"
 
 # 安装依赖
 pnpm install
