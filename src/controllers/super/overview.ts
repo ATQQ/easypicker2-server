@@ -6,6 +6,7 @@ import {
 import { FilterQuery, ObjectId } from 'mongodb'
 import { selectFiles } from '@/db/fileDb'
 import {
+  addBehavior,
   findLog,
   findLogCount, findLogReserve, findLogWithPageOffset, findLogWithTimeRange, findPvLogWithRange,
 } from '@/db/logDb'
@@ -24,6 +25,7 @@ const power = {
   needLogin: true,
 }
 
+const tempTxtFileReg = /\d+-\d+.txt$/
 @RouterController('super/overview')
 export default class OverviewController {
   private cacheLogs: Log[] = []
@@ -123,11 +125,13 @@ export default class OverviewController {
     const todayUv = new Set(todayPv.map((pv) => pv.data.ip)).size
 
     // redis做一层缓存
-    const compressData = await getRedisValueJSON<Qiniu.ItemInfo[]>(
-      'oss-files-easypicker2/temp_package',
-      [],
-      () => getFileKeys('easypicker2/temp_package'),
-    )
+    // const compressData = await getRedisValueJSON<Qiniu.ItemInfo[]>(
+    //   'oss-files-easypicker2/temp_package',
+    //   [],
+    //   () => getFileKeys('easypicker2/temp_package'),
+    // )
+    const compressData = await getFileKeys('easypicker2/temp_package')
+    const tempTxtFilesData = await getFileKeys('1').then((v) => v.filter((v) => tempTxtFileReg.test(v.key)))
 
     return {
       user: {
@@ -161,15 +165,18 @@ export default class OverviewController {
       },
       compress: {
         all: {
-          sum: compressData.length,
-          size: formatSize(compressData.reduce((sum, item) => sum + item.fsize, 0)),
+          sum: compressData.length + tempTxtFilesData.length,
+          size: formatSize(
+            compressData.concat(tempTxtFilesData)
+              .reduce((sum, item) => sum + item.fsize, 0),
+          ),
         },
         expired: {
-          sum: compressData.filter(
+          sum: compressData.concat(tempTxtFilesData).filter(
             (item) => this.isExpiredCompressSource(item.putTime / 10000),
           ).length,
           size: formatSize(
-            compressData.filter(
+            compressData.concat(tempTxtFilesData).filter(
               (item) => this.isExpiredCompressSource(item.putTime / 10000),
             ).reduce((sum, item) => sum + item.fsize, 0),
           ),
@@ -180,11 +187,26 @@ export default class OverviewController {
 
   @Delete('compress', power)
   async clearExpiredCompress(req:FWRequest) {
+    // 清理过期压缩文件
     const compressData = await getFileKeys('easypicker2/temp_package')
     const expired = compressData.filter(
       (item) => this.isExpiredCompressSource(item.putTime / 10000),
     ).map((v) => v.key)
-    batchDeleteFiles(expired, req)
+    await batchDeleteFiles(expired, req)
+
+    // 清理txt临时文件
+    const txtFiles = (await getFileKeys('1')).filter((v) => tempTxtFileReg.test(v.key))
+    const expiredTxt = txtFiles.filter(
+      (item) => this.isExpiredCompressSource(item.putTime / 10000),
+    ).map((v) => v.key)
+    await batchDeleteFiles(expiredTxt, req)
+    addBehavior(req, {
+      module: 'super',
+      msg: `清理无用文件 ${expired.length + expiredTxt.length}个`,
+      data: {
+        keys: expired.concat(expiredTxt),
+      },
+    })
   }
 
   /**

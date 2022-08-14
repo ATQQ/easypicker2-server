@@ -270,9 +270,10 @@ export function makeZipWithKeys(keys: string[], zipName: string): Promise<string
     const config = new qiniu.conf.Config({ zone: bucketZone })
     const formUploader = new qiniu.form_up.FormUploader(config)
     const putExtra = new qiniu.form_up.PutExtra()
-    const key = `${Date.now()}-${~~(Math.random() * 1000)}.txt`
-
-    formUploader.put(getUploadToken(), key, content, putExtra, (respErr,
+    const inputKey = `${Date.now()}-${~~(Math.random() * 1000)}.txt`
+    // 择机删除不然越来越多
+    // 上传文本内容触发归档任务
+    formUploader.put(getUploadToken(), inputKey, content, putExtra, (respErr,
       respBody, respInfo) => {
       if (respErr) {
         throw respErr
