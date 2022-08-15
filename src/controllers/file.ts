@@ -3,12 +3,17 @@ import {
   Post,
   ReqBody,
   FWRequest,
+  Put,
+  Response,
 } from 'flash-wolves'
 import { addBehavior } from '@/db/logDb'
 import { getUserInfo } from '@/utils/userUtil'
-import { selectFiles } from '@/db/fileDb'
-import { batchFileStatus, createDownloadUrl } from '@/utils/qiniuUtil'
+import { selectFiles, updateFileInfo } from '@/db/fileDb'
+import {
+  batchFileStatus, createDownloadUrl, judgeFileIsExist, mvOssFile,
+} from '@/utils/qiniuUtil'
 import { qiniuConfig } from '@/config'
+import { fileError } from '@/constants/errorMsg'
 
 const power = {
   needLogin: true,
@@ -52,5 +57,37 @@ export default class FileController {
       }
     })
     return result
+  }
+
+  @Put('/name/rewrite', power)
+  async rewriteFilename(@ReqBody('id') id:number, @ReqBody('name')newName:string, req:FWRequest) {
+    const user = await getUserInfo(req)
+    const file = (await selectFiles({ id, userId: user.id }))[0]
+    if (!file) {
+      addBehavior(req, {
+        module: 'file',
+        msg: `重命名文件失败 用户:${user.account} 文件id:${id} 新文件名:${newName}`,
+      })
+      return Response.failWithError(fileError.noPower)
+    }
+    // 重命名OSS资源
+    const ossKey = `easypicker2/${file.task_key}/${file.hash}/${file.name}`
+    const newOssKey = `easypicker2/${file.task_key}/${file.hash}/${newName}`
+    const isOldExist = await judgeFileIsExist(ossKey)
+    const isNewExist = await judgeFileIsExist(newOssKey)
+    if (!isOldExist) {
+      return Response.failWithError(fileError.noOssFile)
+    }
+    if (isNewExist) {
+      return Response.failWithError(fileError.ossFileRepeat) // 文件重名
+    }
+    // 重命名OSS资源
+    await mvOssFile(ossKey, newOssKey, req)
+    // 更新数据库
+    await updateFileInfo({ id, userId: user.id }, { name: newName })
+    addBehavior(req, {
+      module: 'file',
+      msg: `重命名文件成功 用户:${user.account} 文件id:${id} 新文件名:${newName}`,
+    })
   }
 }

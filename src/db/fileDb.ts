@@ -30,6 +30,10 @@ export function selectFilesLimitCount(options: File, count: number) {
   return query<File[]>(sql, ...params)
 }
 
+export function updateFileInfo(_query:File, file: File) {
+  const { sql, params } = updateTableByModel('files', file, _query)
+  return query<OkPacket>(sql, ...params)
+}
 export function deleteFileRecord(file: File) {
   // 逻辑删
   const originData = JSON.stringify({

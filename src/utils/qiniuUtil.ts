@@ -1,6 +1,6 @@
 /* eslint-disable */
 import { qiniuConfig } from '@/config'
-import { addErrorLog } from '@/db/logDb'
+import { addBehavior, addErrorLog } from '@/db/logDb'
 import { FWRequest } from 'flash-wolves'
 import qiniu from 'qiniu'
 import { getKeyInfo } from './stringUtil'
@@ -24,13 +24,13 @@ let bucket = qiniuConfig.bucketName
 let mac = new qiniu.auth.digest.Mac(qiniuConfig.accessKey, qiniuConfig.secretKey)
 const { urlsafeBase64Encode } = qiniu.util
 
-export async function refreshQinNiuConfig(){
-    const cfg = LocalUserDB.getUserConfigByType('qiniu')
-    Object.assign(qiniuConfig, cfg)
-    privateBucketDomain = qiniuConfig.bucketDomain
-    bucketZone = bucketZoneMap[qiniuConfig.bucketZone] || qiniu.zone.Zone_z2
-    bucket = qiniuConfig.bucketName
-    mac = new qiniu.auth.digest.Mac(qiniuConfig.accessKey, qiniuConfig.secretKey)
+export async function refreshQinNiuConfig() {
+  const cfg = LocalUserDB.getUserConfigByType('qiniu')
+  Object.assign(qiniuConfig, cfg)
+  privateBucketDomain = qiniuConfig.bucketDomain
+  bucketZone = bucketZoneMap[qiniuConfig.bucketZone] || qiniu.zone.Zone_z2
+  bucket = qiniuConfig.bucketName
+  mac = new qiniu.auth.digest.Mac(qiniuConfig.accessKey, qiniuConfig.secretKey)
 }
 /**
  * 获取OSS上文件的下载链接（默认12h有效）
@@ -69,6 +69,7 @@ export function deleteFiles(prefix: string): void {
 }
 
 export function batchDeleteFiles(keys: string[], req?: FWRequest) {
+  if (!keys.length) return
   const config = new qiniu.conf.Config()
   const delOptions = keys.map((k) => qiniu.rs.deleteOp(bucket, k))
   const bucketManager = new qiniu.rs.BucketManager(mac, config)
@@ -216,7 +217,7 @@ export function makeZipByPrefixWithKeys(prefix: string, zipName: string, keys: s
           const fops = `mkzip/4/encoding/${urlsafeBase64Encode('gbk')}|saveas/${zipKey}`
           const operManager = new qiniu.fop.OperationManager(mac, config)
           const pipeline = '' // 使用公共队列
-          // 下行。不知用处
+          // 强制覆盖已有同名文件
           const options = { force: false }
           operManager.pfop(bucket, key, [fops], pipeline, options, (err, respBody, respInfo) => {
             if (err) {
@@ -286,7 +287,7 @@ export function makeZipWithKeys(keys: string[], zipName: string): Promise<string
         const fops = `mkzip/4/encoding/${urlsafeBase64Encode('gbk')}|saveas/${zipKey}`
         const operManager = new qiniu.fop.OperationManager(mac, config)
         const pipeline = '' // 使用公共队列
-        // 下行。不知用处
+        // 强制覆盖已有同名文件
         const options = { force: false }
         operManager.pfop(bucket, key, [fops], pipeline, options, (err, respBody, respInfo) => {
           if (err) {
@@ -427,5 +428,54 @@ export function getQiniuStatus() {
           })
         })
     })
+  })
+}
+
+export function mvOssFile(oldKey: string, newKey: string, req?: FWRequest) {
+  const config = new qiniu.conf.Config()
+  const bucketManager = new qiniu.rs.BucketManager(mac, config)
+  const srcBucket = qiniuConfig.bucketName;
+  const destBucket = qiniuConfig.bucketName;
+  // 强制覆盖已有同名文件
+  var options = {
+    force: false
+  }
+  return new Promise((resolve, reject) => {
+    bucketManager.move(srcBucket, oldKey, destBucket, newKey, options, function (
+      err, respBody, respInfo) {
+      if (err) {
+        console.log(err);
+        if (req) {
+          // 日志埋点
+          addBehavior(req, {
+            'module': 'file',
+            'msg': `资源重命名失败：${srcBucket}:${oldKey} -> ${destBucket}:${newKey}`,
+            data: {
+              oldKey,
+              newKey,
+              err
+            }
+          })
+        }
+        reject(err)
+      } else {
+        resolve(true)
+        //200 is success
+        if (req) {
+          // 日志埋点
+          // TODO:埋点优化
+          addBehavior(req, {
+            'module': 'file',
+            'msg': `OSS资源重命名成功：${srcBucket}:${oldKey} -> ${destBucket}:${newKey}`,
+            data: {
+              oldKey,
+              newKey,
+              respBody,
+              respInfo
+            }
+          })
+        }
+      }
+    });
   })
 }

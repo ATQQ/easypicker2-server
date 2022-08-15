@@ -3,7 +3,7 @@ import { publicError } from '@/constants/errorMsg'
 import {
   deleteFileRecord, deleteFiles, insertFile, selectFiles,
 } from '@/db/fileDb'
-import { addBehavior, addErrorLog, getClientIp } from '@/db/logDb'
+import { addBehavior, addErrorLog } from '@/db/logDb'
 import { File } from '@/db/model/file'
 import { selectPeople, updatePeople } from '@/db/peopleDb'
 import { selectTasks } from '@/db/taskDb'
