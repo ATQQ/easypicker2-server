@@ -5,13 +5,16 @@ import {
   ReqParams,
   FWRequest,
   Get,
-  Put
+  Put,
+  Response
 } from 'flash-wolves'
 import { selectTasks } from '@/db/taskDb'
 import { deletePeople, insertPeople, selectPeople } from '@/db/peopleDb'
 import { addBehavior, addErrorLog } from '@/db/logDb'
 import { getUserInfo } from '@/utils/userUtil'
 import { selectTaskInfo } from '@/db/taskInfoDb'
+import { peopleError } from '@/constants/errorMsg'
+import { People } from '@/db/model/people'
 
 const power = {
   needLogin: true
@@ -19,6 +22,36 @@ const power = {
 
 @RouterController('people')
 export default class PeopleController {
+  @Post('/add/:key', power)
+  async addPeople(
+    // TODO:需要装饰器支持校验参数
+    @ReqParams('key') key: string,
+    @ReqBody('name') name: string,
+    req: FWRequest
+  ) {
+    const user = await getUserInfo(req)
+    const defaultData: People = { taskKey: key, userId: user.id }
+
+    const exist =
+      (
+        await selectPeople({
+          ...defaultData,
+          name
+        })
+      ).length > 0
+    if (exist) {
+      return Response.failWithError(peopleError.exist)
+    }
+    await insertPeople(
+      [
+        {
+          name
+        }
+      ],
+      defaultData
+    )
+  }
+
   /**
    * 检查是否有提交权限
    */

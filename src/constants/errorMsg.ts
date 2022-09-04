@@ -45,3 +45,7 @@ export const fileError = {
   noOssFile: codeMsg(5002, 'no oss file'),
   ossFileRepeat: codeMsg(5003, 'oss file repeat')
 }
+
+export const peopleError = {
+  exist: codeMsg(6001, 'already exist')
+}
