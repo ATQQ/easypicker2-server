@@ -1,14 +1,21 @@
 import { OkPacket } from 'mysql'
 import { query } from '@/lib/dbConnect/mysql'
-import { insertTableByModel, selectTableByModel, updateTableByModel } from '@/utils/sqlUtil'
+import {
+  insertTableByModel,
+  selectTableByModel,
+  updateTableByModel
+} from '@/utils/sqlUtil'
 import { getUniqueKey } from '@/utils/stringUtil'
 import { BOOLEAN } from './model/public'
 import { TaskInfo } from './model/taskInfo'
 
-export function selectTaskInfo(options: V2Array<TaskInfo>, columns: string[] = []) {
+export function selectTaskInfo(
+  options: V2Array<TaskInfo>,
+  columns: string[] = []
+) {
   const { sql, params } = selectTableByModel('task_info', {
     data: options,
-    columns,
+    columns
   })
   return query<TaskInfo[]>(sql, ...params)
 }
@@ -22,7 +29,7 @@ export function insertTaskInfo(taskInfo: TaskInfo) {
     info: JSON.stringify(['姓名']),
     shareKey: getUniqueKey(),
     ddl: null,
-    ...taskInfo,
+    ...taskInfo
   }
   const { sql, params } = insertTableByModel('task_info', data)
   return query<OkPacket>(sql, ...params)

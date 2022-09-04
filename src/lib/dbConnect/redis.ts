@@ -1,15 +1,19 @@
 import redis, { RedisClient } from 'redis'
 import { redisConfig } from '@/config'
 
-const {
-  port, host, password, auth,
-} = redisConfig
+const { port, host, password, auth } = redisConfig
 
 export function getClient(): Promise<RedisClient> {
   return new Promise<RedisClient>((res, rej) => {
-    const client = redis.createClient(port, host, auth ? {
-      password,
-    } : {})
+    const client = redis.createClient(
+      port,
+      host,
+      auth
+        ? {
+            password
+          }
+        : {}
+    )
     // redis 服务器启动
     client.on('ready', () => {
       res(client)
@@ -28,14 +32,14 @@ export function getRedisStatus() {
         c.quit()
         res({
           type: 'redis',
-          status: true,
+          status: true
         })
       })
       .catch((err) => {
         res({
           errMsg: err.message,
           type: 'redis',
-          status: false,
+          status: false
         })
       })
   })

@@ -1,6 +1,6 @@
 interface Value {
-    value: any
-    duration: number
+  value: any
+  duration: number
 }
 
 /**
@@ -23,11 +23,11 @@ class LocalStorage {
   }
 
   /**
-     * 设置键
-     * @param key 键
-     * @param value 值
-     * @param duration(s) 过期时间(默认-1不过期)
-     */
+   * 设置键
+   * @param key 键
+   * @param value 值
+   * @param duration(s) 过期时间(默认-1不过期)
+   */
   public setItem(key: string, value: unknown, duration = -1) {
     if (this.map.size === 0) {
       this.loop()
@@ -37,37 +37,37 @@ class LocalStorage {
   }
 
   /**
-     * 移除键
-     */
+   * 移除键
+   */
   removeItem(key: string) {
     this.map.delete(key)
   }
 
   /**
-     * 过期指定键
-     */
+   * 过期指定键
+   */
   expireItem(key: string) {
     this.setItem(key, null, 0)
   }
 
   /**
-     * 获取键值
-     */
+   * 获取键值
+   */
   getItem(key: string) {
     // console.log('LocalStorage: get', key)
     return this.map.get(key)
   }
 
   /**
-     * 清除所有键值
-     */
+   * 清除所有键值
+   */
   clearItem() {
     this.map.clear()
   }
 
   /**
-     * 过期检测
-     */
+   * 过期检测
+   */
   expiredCheck() {
     const keys = this.map.keys()
     for (const key of keys) {
@@ -85,8 +85,8 @@ class LocalStorage {
   static instance: LocalStorage = null
 
   /**
-     * 获取对象
-     */
+   * 获取对象
+   */
   static getInstance() {
     if (!LocalStorage.instance) {
       LocalStorage.instance = new LocalStorage()

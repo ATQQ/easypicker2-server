@@ -8,4 +8,14 @@ import SuperUser from './super/user'
 import User from './user'
 import ConfigService from './config'
 
-export default [Wish, Overview, People, file, TaskInfo, Public, SuperUser, User, ConfigService]
+export default [
+  Wish,
+  Overview,
+  People,
+  file,
+  TaskInfo,
+  Public,
+  SuperUser,
+  User,
+  ConfigService
+]

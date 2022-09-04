@@ -9,9 +9,16 @@ import controllers from './controllers'
 
 // interceptor
 import {
-  serverInterceptor, routeInterceptor, beforeRouteMatchInterceptor, beforeRuntimeErrorInterceptor,
+  serverInterceptor,
+  routeInterceptor,
+  beforeRouteMatchInterceptor,
+  beforeRuntimeErrorInterceptor
 } from './middleware'
-import { initUserConfig, patchTable, readyServerDepService } from './utils/patch'
+import {
+  initUserConfig,
+  patchTable,
+  readyServerDepService
+} from './utils/patch'
 import LocalUserDB from './utils/user-local-db'
 
 console.time('server-start')
@@ -19,7 +26,7 @@ console.time('server-start')
 const app = new App(serverInterceptor, {
   beforeMathRoute: beforeRouteMatchInterceptor,
   beforeRunRoute: routeInterceptor,
-  beforeReturnRuntimeError: beforeRuntimeErrorInterceptor,
+  beforeReturnRuntimeError: beforeRuntimeErrorInterceptor
 })
 
 // 注册路由

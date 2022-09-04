@@ -18,7 +18,7 @@ export function setRedisValue(k: string, v: string, expiredTime = -1) {
   })
 }
 
-export function getRedisVal(k: string, originCallback?:any): Promise<string> {
+export function getRedisVal(k: string, originCallback?: any): Promise<string> {
   return new Promise((resolve) => {
     const v = storage.getItem(k)
     if (v?.value) {
@@ -53,7 +53,11 @@ export function getRedisVal(k: string, originCallback?:any): Promise<string> {
   })
 }
 
-export function getRedisValueJSON<T>(k: string, defaultValue:T, originCallback?:any):Promise<T> {
+export function getRedisValueJSON<T>(
+  k: string,
+  defaultValue: T,
+  originCallback?: any
+): Promise<T> {
   return getRedisVal(k, originCallback).then((v) => {
     if (v) {
       return JSON.parse(v)

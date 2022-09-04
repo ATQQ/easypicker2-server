@@ -6,7 +6,7 @@ import {
   Get,
   Put,
   ReqParams,
-  Response,
+  Response
 } from 'flash-wolves'
 import { Wish, WishStatus } from '@/db/model/wish'
 import { addWishData, findWish, updateWish } from '@/db/wishDb'
@@ -24,20 +24,17 @@ export default class WishController {
    * 提交需求
    */
   @Post('add', { CORS: true })
-  async addWish(
-    @ReqBody() body: Wish,
-      req: FWRequest,
-  ) {
+  async addWish(@ReqBody() body: Wish, req: FWRequest) {
     addBehavior(req, {
       module: 'wish',
       msg: '需求反馈',
-      data: body,
+      data: body
     })
 
     const wish: Wish = {
       ...body,
       id: getUniqueKey(),
-      status: WishStatus.REVIEW,
+      status: WishStatus.REVIEW
     }
     await addWishData(wish)
   }
@@ -52,18 +49,24 @@ export default class WishController {
       return bDate - aDate
     })
     return wishes.map((wish) => {
-      const {
-        title, des, status, id, contact,
-      } = wish
+      const { title, des, status, id, contact } = wish
       const createDate = getObjectIdDate(id)
       return {
-        title, des, status, id, contact, createDate,
+        title,
+        des,
+        status,
+        id,
+        contact,
+        createDate
       }
     })
   }
 
   @Put('update', adminPower)
-  async updateWishStatus(@ReqBody('id') id: string, @ReqBody('status') status: WishStatus) {
+  async updateWishStatus(
+    @ReqBody('id') id: string,
+    @ReqBody('status') status: WishStatus
+  ) {
     await updateWish({ id }, { $set: { status } })
     // 不同状态，更新时间字段
     if (status === WishStatus.START) {
@@ -81,25 +84,35 @@ export default class WishController {
   }
 
   @Get('all/docs', { CORS: true })
-  async getDocsWish(@ReqIp() ip:string) {
+  async getDocsWish(@ReqIp() ip: string) {
     const wishes = await findWish({
       $or: [
         { status: WishStatus.START },
         { status: WishStatus.WAIT },
-        { status: WishStatus.END },
-      ],
+        { status: WishStatus.END }
+      ]
     })
     const result = []
     for (const wish of wishes) {
-      const {
-        title, des, id, startDate, status,
-      } = wish
-      const count = await findActionCount({ thingId: wish.id, type: ActionType.PRAISE })
-      const alreadyPraise = (await findActionCount(
-        { thingId: wish.id, type: ActionType.PRAISE, ip },
-      )) > 0
+      const { title, des, id, startDate, status } = wish
+      const count = await findActionCount({
+        thingId: wish.id,
+        type: ActionType.PRAISE
+      })
+      const alreadyPraise =
+        (await findActionCount({
+          thingId: wish.id,
+          type: ActionType.PRAISE,
+          ip
+        })) > 0
       result.push({
-        title, des, id, startDate, count, alreadyPraise, status,
+        title,
+        des,
+        id,
+        startDate,
+        count,
+        alreadyPraise,
+        status
       })
     }
     // 从大到小
@@ -111,19 +124,23 @@ export default class WishController {
    * 点赞需求
    */
   @Post('praise/:id', { CORS: true })
-  async praiseWis(@ReqParams('id') id: string, @ReqIp() ip:string) {
+  async praiseWis(@ReqParams('id') id: string, @ReqIp() ip: string) {
     const wishes = await findWish({ id })
     if (!wishes.length) {
       return Response.fail(-1, '需求不存在')
     }
-    const praiseData = await findAction({ ip, thingId: id, type: ActionType.PRAISE })
+    const praiseData = await findAction({
+      ip,
+      thingId: id,
+      type: ActionType.PRAISE
+    })
     if (praiseData.length) {
       return Response.fail(1, '已经点赞过了')
     }
     await addAction({
       type: ActionType.PRAISE,
       thingId: id,
-      ip,
+      ip
     })
   }
 }

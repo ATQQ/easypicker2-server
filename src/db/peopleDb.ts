@@ -1,14 +1,20 @@
 import { OkPacket } from 'mysql'
 import { query } from '@/lib/dbConnect/mysql'
 import {
-  deleteTableByModel, insertTableByModelMany, selectTableByModel, updateTableByModel,
+  deleteTableByModel,
+  insertTableByModelMany,
+  selectTableByModel,
+  updateTableByModel
 } from '@/utils/sqlUtil'
 import { People } from './model/people'
 
-export function selectPeople(options: V2Array<People>, columns: string[] = ['name']) {
+export function selectPeople(
+  options: V2Array<People>,
+  columns: string[] = ['name']
+) {
   const { sql, params } = selectTableByModel('people', {
     data: options,
-    columns,
+    columns
   })
 
   return query<People[]>(sql, ...params)

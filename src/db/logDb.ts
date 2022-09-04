@@ -4,14 +4,20 @@ import { insertCollection, mongoDbQuery } from '@/lib/dbConnect/mongodb'
 import { getUniqueKey } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
 import {
-  Log, LogType, LogData, LogRequestData, LogBehaviorData, LogErrorData, PvData,
+  Log,
+  LogType,
+  LogData,
+  LogRequestData,
+  LogBehaviorData,
+  LogErrorData,
+  PvData
 } from './model/log'
 
 function getLogData(type: LogType, data: LogData): Log {
   return {
     id: getUniqueKey(),
     type,
-    data,
+    data
   }
 }
 
@@ -19,9 +25,7 @@ function getLogData(type: LogType, data: LogData): Log {
  * 记录请求日志
  */
 export async function addRequestLog(req: FWRequest) {
-  const {
-    query = {}, params = {}, method, url,
-  } = req
+  const { query = {}, params = {}, method, url } = req
   let { body = {} } = req
   if ((method !== 'GET' && !body) || body instanceof Buffer) {
     body = {}
@@ -44,7 +48,7 @@ export async function addRequestLog(req: FWRequest) {
     userAgent,
     refer,
     ip,
-    userId,
+    userId
   }
   insertCollection('log', getLogData('request', data))
 }
@@ -53,9 +57,7 @@ export async function addRequestLog(req: FWRequest) {
  * 记录用户行为日志
  */
 export async function addBehavior(req: FWRequest, info: LogBehaviorData.Info) {
-  const {
-    url,
-  } = req
+  const { url } = req
 
   const { headers, method } = req
   const userAgent = headers['user-agent']
@@ -72,12 +74,12 @@ export async function addBehavior(req: FWRequest, info: LogBehaviorData.Info) {
       path: url,
       userAgent,
       refer,
-      ip,
+      ip
     },
     user: {
-      userId,
+      userId
     },
-    info,
+    info
   }
   insertCollection('log', getLogData('behavior', data))
 }
@@ -85,10 +87,12 @@ export async function addBehavior(req: FWRequest, info: LogBehaviorData.Info) {
 /**
  * 记录服务端错误日志
  */
-export async function addErrorLog(req: FWRequest, msg: string, stack:any = {}) {
-  const {
-    query = {}, params = {}, method, url,
-  } = req
+export async function addErrorLog(
+  req: FWRequest,
+  msg: string,
+  stack: any = {}
+) {
+  const { query = {}, params = {}, method, url } = req
   let { body = {} } = req
   if ((method !== 'GET' && !body) || body instanceof Buffer) {
     body = {}
@@ -112,10 +116,10 @@ export async function addErrorLog(req: FWRequest, msg: string, stack:any = {}) {
       userAgent,
       refer,
       ip,
-      userId,
+      userId
     },
     msg,
-    stack,
+    stack
   }
   insertCollection('log', getLogData('error', data))
 }
@@ -123,7 +127,7 @@ export async function addErrorLog(req: FWRequest, msg: string, stack:any = {}) {
 /**
  * 记录页面访问日志
  */
-export function addPvLog(req: FWRequest, path:string) {
+export function addPvLog(req: FWRequest, path: string) {
   const { headers } = req
   const userAgent = headers['user-agent']
   const refer = headers.referer
@@ -132,84 +136,108 @@ export function addPvLog(req: FWRequest, path:string) {
     userAgent,
     refer,
     ip,
-    path,
+    path
   }
   insertCollection('log', getLogData('pv', data))
 }
 
 export function getClientIp(req: FWRequest): string {
-  return (req.headers['x-forwarded-for'] || req.connection.remoteAddress || req.socket.remoteAddress) as string
+  return (req.headers['x-forwarded-for'] ||
+    req.connection.remoteAddress ||
+    req.socket.remoteAddress) as string
 }
 
-function timeToObjId(d:Date) {
+function timeToObjId(d: Date) {
   const s = d.getTime() / 1000 // 转换成秒数
   return `${s.toString(16)}0000000000000000` // 转换成16进制的字符串，再加补齐16个0
 }
 
-export function findLogCount(q:FilterQuery<Log>) {
+export function findLogCount(q: FilterQuery<Log>) {
   return mongoDbQuery<number>((db, resolve) => {
     db.collection<Log>('log').countDocuments(q).then(resolve)
   })
 }
-export function findLogWithTimeRange(start:Date, end?:Date) {
+export function findLogWithTimeRange(start: Date, end?: Date) {
   if (end) {
     return mongoDbQuery<Log[]>((db, resolve) => {
-      db.collection<Log>('log').find({
-        _id: {
-          $gt: new ObjectId(timeToObjId(start)),
-          $lt: new ObjectId(timeToObjId(end)),
-        },
-      }).toArray().then(resolve)
+      db.collection<Log>('log')
+        .find({
+          _id: {
+            $gt: new ObjectId(timeToObjId(start)),
+            $lt: new ObjectId(timeToObjId(end))
+          }
+        })
+        .toArray()
+        .then(resolve)
     })
   }
   return mongoDbQuery<Log[]>((db, resolve) => {
-    db.collection<Log>('log').find({
-      _id: {
-        $gt: new ObjectId(timeToObjId(start)),
-      },
-    }).toArray().then(resolve)
+    db.collection<Log>('log')
+      .find({
+        _id: {
+          $gt: new ObjectId(timeToObjId(start))
+        }
+      })
+      .toArray()
+      .then(resolve)
   })
 }
 
-export function findLogWithPageOffset(startIdx:number, pageSize:number, query:FilterQuery<Log>) {
+export function findLogWithPageOffset(
+  startIdx: number,
+  pageSize: number,
+  query: FilterQuery<Log>
+) {
   return mongoDbQuery<Log[]>((db, resolve) => {
-    db.collection<Log>('log').find(query).sort({ _id: -1 }).skip(startIdx)
+    db.collection<Log>('log')
+      .find(query)
+      .sort({ _id: -1 })
+      .skip(startIdx)
       .limit(pageSize)
       .toArray()
       .then(resolve)
   })
 }
-export function findLog(query:FilterQuery<Log>) {
+export function findLog(query: FilterQuery<Log>) {
   return mongoDbQuery<Log[]>((db, resolve) => {
     db.collection<Log>('log').find(query).toArray().then(resolve)
   })
 }
 
-export function findLogReserve(q:Log) {
+export function findLogReserve(q: Log) {
   return mongoDbQuery<Log[]>((db, resolve) => {
-    db.collection<Log>('log').find(q).sort({ $natural: -1 }).toArray()
+    db.collection<Log>('log')
+      .find(q)
+      .sort({ $natural: -1 })
+      .toArray()
       .then(resolve)
   })
 }
 
-export function findPvLogWithRange(start:Date, end?:Date) {
+export function findPvLogWithRange(start: Date, end?: Date) {
   if (end) {
     return mongoDbQuery<Log[]>((db, resolve) => {
-      db.collection<Log>('log').find({
-        type: 'pv',
-        _id: {
-          $gt: new ObjectId(timeToObjId(start)),
-          $lt: new ObjectId(timeToObjId(end)),
-        },
-      }).toArray().then(resolve)
+      db.collection<Log>('log')
+        .find({
+          type: 'pv',
+          _id: {
+            $gt: new ObjectId(timeToObjId(start)),
+            $lt: new ObjectId(timeToObjId(end))
+          }
+        })
+        .toArray()
+        .then(resolve)
     })
   }
   return mongoDbQuery<Log[]>((db, resolve) => {
-    db.collection<Log>('log').find({
-      type: 'pv',
-      _id: {
-        $gt: new ObjectId(timeToObjId(start)),
-      },
-    }).toArray().then(resolve)
+    db.collection<Log>('log')
+      .find({
+        type: 'pv',
+        _id: {
+          $gt: new ObjectId(timeToObjId(start))
+        }
+      })
+      .toArray()
+      .then(resolve)
   })
 }

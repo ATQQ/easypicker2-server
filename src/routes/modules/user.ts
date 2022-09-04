@@ -4,9 +4,7 @@ import { UserError } from '@/constants/errorMsg'
 import { addBehavior } from '@/db/logDb'
 import { USER_POWER, USER_STATUS } from '@/db/model/user'
 import { expiredRedisKey, getRedisVal } from '@/db/redisDb'
-import {
-  insertUser, selectUserByPhone, updateUser,
-} from '@/db/userDb'
+import { insertUser, selectUserByPhone, updateUser } from '@/db/userDb'
 import { randomNumStr } from '@/utils/randUtil'
 import { rPassword } from '@/utils/regExp'
 import { encryption, formatDate, getUniqueKey } from '@/utils/stringUtil'
@@ -29,8 +27,8 @@ router.post('login/code', async (req, res) => {
       msg: `验证码登录 验证码错误:${code}`,
       data: {
         code,
-        rightCode: v,
-      },
+        rightCode: v
+      }
     })
     res.failWithError(UserError.code.fault)
     return
@@ -42,8 +40,8 @@ router.post('login/code', async (req, res) => {
       module: 'user',
       msg: `验证码登录 手机号:${logPhone} 不存在 创建新用户`,
       data: {
-        phone: logPhone,
-      },
+        phone: logPhone
+      }
     })
 
     // 不存在则直接创建
@@ -53,9 +51,9 @@ router.post('login/code', async (req, res) => {
       // 默认账号就为手机号
       account: phone,
       loginCount: 0,
-      phone,
-    });
-    ([user] = await selectUserByPhone(phone))
+      phone
+    })
+    ;[user] = await selectUserByPhone(phone)
   }
 
   const { account } = user
@@ -65,8 +63,8 @@ router.post('login/code', async (req, res) => {
       module: 'user',
       msg: `用户登录失败 账号:${account} 已被封禁`,
       data: {
-        account,
-      },
+        account
+      }
     })
     res.failWithError(UserError.account.ban)
     return
@@ -76,42 +74,50 @@ router.post('login/code', async (req, res) => {
     if (openDate.getTime() > Date.now()) {
       addBehavior(req, {
         module: 'user',
-        msg: `用户登录失败 账号:${account} 已被冻结 解冻时间${formatDate(openDate)}`,
+        msg: `用户登录失败 账号:${account} 已被冻结 解冻时间${formatDate(
+          openDate
+        )}`,
         data: {
           account,
-          openDate,
-        },
+          openDate
+        }
       })
       res.fail(UserError.account.freeze.code, UserError.account.freeze.msg, {
-        openTime: user.open_time,
+        openTime: user.open_time
       })
       return
     }
-    updateUser({
-      status: USER_STATUS.NORMAL,
-      open_time: null,
-    }, {
-      id: user.id,
-    })
+    updateUser(
+      {
+        status: USER_STATUS.NORMAL,
+        open_time: null
+      },
+      {
+        id: user.id
+      }
+    )
   }
   const token = tokenUtil.createToken(user)
-  await updateUser({
-    loginCount: user.login_count + 1,
-    loginTime: new Date(),
-  }, {
-    id: user.id,
-  })
+  await updateUser(
+    {
+      loginCount: user.login_count + 1,
+      loginTime: new Date()
+    },
+    {
+      id: user.id
+    }
+  )
 
   addBehavior(req, {
     module: 'user',
     msg: `验证码登录 手机号:${logPhone} 登录成功`,
     data: {
-      phone: logPhone,
-    },
+      phone: logPhone
+    }
   })
   expiredRedisKey(`code-${phone}`)
   res.success({
-    token,
+    token
   })
 })
 
@@ -130,8 +136,8 @@ router.put('password', async (req, res) => {
       data: {
         phone: logPhone,
         code,
-        rightCode: v,
-      },
+        rightCode: v
+      }
     })
     res.failWithError(UserError.code.fault)
     return
@@ -143,8 +149,8 @@ router.put('password', async (req, res) => {
       module: 'user',
       msg: `重置密码 手机号:${logPhone} 不存在`,
       data: {
-        phone: logPhone,
-      },
+        phone: logPhone
+      }
     })
     res.failWithError(UserError.mobile.noExist)
     return
@@ -154,24 +160,27 @@ router.put('password', async (req, res) => {
       module: 'user',
       msg: `重置密码 手机号:${logPhone} 密码格式不正确`,
       data: {
-        phone: logPhone,
-      },
+        phone: logPhone
+      }
     })
     res.failWithError(UserError.pwd.fault)
     return
   }
-  await updateUser({
-    password: encryption(pwd),
-  }, {
-    id: user.id,
-  })
+  await updateUser(
+    {
+      password: encryption(pwd)
+    },
+    {
+      id: user.id
+    }
+  )
   expiredRedisKey(`code-${phone}`)
   addBehavior(req, {
     module: 'user',
     msg: `重置密码 手机号:${logPhone} 重置成功`,
     data: {
-      phone: logPhone,
-    },
+      phone: logPhone
+    }
   })
 
   const { account } = user
@@ -181,8 +190,8 @@ router.put('password', async (req, res) => {
       module: 'user',
       msg: `用户登录失败 账号:${account} 已被封禁`,
       data: {
-        account,
-      },
+        account
+      }
     })
     res.failWithError(UserError.account.ban)
     return
@@ -192,27 +201,32 @@ router.put('password', async (req, res) => {
     if (openDate.getTime() > Date.now()) {
       addBehavior(req, {
         module: 'user',
-        msg: `用户登录失败 账号:${account} 已被冻结 解冻时间${formatDate(openDate)}`,
+        msg: `用户登录失败 账号:${account} 已被冻结 解冻时间${formatDate(
+          openDate
+        )}`,
         data: {
           account,
-          openDate,
-        },
+          openDate
+        }
       })
       res.fail(UserError.account.freeze.code, UserError.account.freeze.msg, {
-        openTime: user.open_time,
+        openTime: user.open_time
       })
       return
     }
-    updateUser({
-      status: USER_STATUS.NORMAL,
-      open_time: null,
-    }, {
-      id: user.id,
-    })
+    updateUser(
+      {
+        status: USER_STATUS.NORMAL,
+        open_time: null
+      },
+      {
+        id: user.id
+      }
+    )
   }
   const token = tokenUtil.createToken(user)
   res.success({
-    token,
+    token
   })
 })
 
@@ -224,7 +238,7 @@ router.get('power/super', async (req, res) => {
   res.success({
     power: user?.power === USER_POWER.SUPER,
     name: user?.account,
-    system: user?.power === USER_POWER.SYSTEM,
+    system: user?.power === USER_POWER.SYSTEM
   })
 })
 

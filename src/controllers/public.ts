@@ -1,6 +1,10 @@
 import {
   FWRequest,
-  Get, Post, ReqQuery, Response, RouterController,
+  Get,
+  Post,
+  ReqQuery,
+  Response,
+  RouterController
 } from 'flash-wolves'
 
 import { rMobilePhone } from '@/utils/regExp'
@@ -14,15 +18,15 @@ import { selectUserByAccount, selectUserByPhone } from '@/db/userDb'
 @RouterController('public')
 export default class PublicController {
   @Get('code')
-  getVerCode(@ReqQuery('phone') phone:string, req:FWRequest) {
+  getVerCode(@ReqQuery('phone') phone: string, req: FWRequest) {
     // 手机号不正确,直接返回
     if (!rMobilePhone.test(phone)) {
       addBehavior(req, {
         module: 'public',
         msg: `获取验证码 手机号:${phone} 格式不正确`,
         data: {
-          phone,
-        },
+          phone
+        }
       })
       return Response.failWithError(UserError.mobile.fault)
     }
@@ -33,45 +37,48 @@ export default class PublicController {
       msg: `获取验证码 手机尾号:${logPhone}  验证码:${code} 成功`,
       data: {
         phone: logPhone,
-        code,
-      },
+        code
+      }
     })
     if (process.env.NODE_ENV !== 'development') {
       sendMessage(phone, code, 2)
     }
-    console.log(new Date().toLocaleString(), `获取验证码 手机尾号:${logPhone}  验证码:${code} 成功`)
+    console.log(
+      new Date().toLocaleString(),
+      `获取验证码 手机尾号:${logPhone}  验证码:${code} 成功`
+    )
     setRedisValue(`code-${phone}`, code, 120)
   }
 
   @Post('report/pv')
-  reportPv(req:FWRequest) {
+  reportPv(req: FWRequest) {
     const { path } = req.body
     addPvLog(req, path)
   }
 
   @Get('check/phone')
-  async checkPhoneIsExist(@ReqQuery('phone') phone:string, req:FWRequest) {
+  async checkPhoneIsExist(@ReqQuery('phone') phone: string, req: FWRequest) {
     if (!rMobilePhone.test(phone)) {
       addBehavior(req, {
         module: 'public',
         msg: `检查手机号是否存在 手机号:${phone} 格式不正确`,
         data: {
-          phone,
-        },
+          phone
+        }
       })
       return Response.failWithError(UserError.mobile.fault)
     }
     let [user] = await selectUserByPhone(phone)
     if (!user) {
-      ([user] = await selectUserByAccount(phone))
+      ;[user] = await selectUserByAccount(phone)
     }
     if (user) {
       addBehavior(req, {
         module: 'public',
         msg: `检查手机号是否存在 手机号:${phone} 已存在`,
         data: {
-          phone,
-        },
+          phone
+        }
       })
       return Response.failWithError(UserError.mobile.exist)
     }
@@ -79,8 +86,8 @@ export default class PublicController {
       module: 'public',
       msg: `检查手机号是否存在 手机号:${phone} 不存在`,
       data: {
-        phone,
-      },
+        phone
+      }
     })
   }
 }

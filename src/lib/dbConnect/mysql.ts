@@ -2,7 +2,7 @@ import mysql from 'mysql'
 import { mysqlConfig } from '@/config'
 import LocalUserDB from '@/utils/user-local-db'
 // 创建连接池
-let pool:mysql.Pool
+let pool: mysql.Pool
 
 export function refreshPool() {
   const cfg = LocalUserDB.getUserConfigByType('mysql')
@@ -40,19 +40,21 @@ type param = string | number
  */
 export function query<T>(sql: string, ...params: param[]): Promise<T> {
   return new Promise<T>((resolve, reject) => {
-    getConnection().then((coon) => {
-      coon.query(sql, params, (err, result) => {
-        if (err) {
-          reject(err)
-          return
-        }
-        // 请求完就释放
-        coon.release()
-        resolve(result)
+    getConnection()
+      .then((coon) => {
+        coon.query(sql, params, (err, result) => {
+          if (err) {
+            reject(err)
+            return
+          }
+          // 请求完就释放
+          coon.release()
+          resolve(result)
+        })
       })
-    }).catch((err) => {
-      reject(err)
-    })
+      .catch((err) => {
+        reject(err)
+      })
   })
 }
 
@@ -63,13 +65,13 @@ export function getMysqlStatus() {
         res({
           errMsg: err.message,
           type: 'mysql',
-          status: false,
+          status: false
         })
         return
       }
       res({
         type: 'mysql',
-        status: true,
+        status: true
       })
       coon.release()
     })

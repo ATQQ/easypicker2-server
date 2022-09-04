@@ -1,6 +1,4 @@
-import {
-  Get, Put, ReqBody, RouterController,
-} from 'flash-wolves'
+import { Get, Put, ReqBody, RouterController } from 'flash-wolves'
 import { USER_POWER } from '@/db/model/user'
 import { getRedisStatus } from '@/lib/dbConnect/redis'
 import { getMongoDBStatus, refreshMongoDb } from '@/lib/dbConnect/mongodb'
@@ -20,7 +18,8 @@ export default class UserController {
       getTxServiceStatus(),
       getRedisStatus(),
       getMysqlStatus(),
-      getMongoDBStatus()])
+      getMongoDBStatus()
+    ])
 
     const result = data.reduce((pre, cur) => {
       const { type, ...rest } = cur
@@ -30,49 +29,55 @@ export default class UserController {
     return result
   }
 
-  cleanUserConfig(cfg:UserConfig[]) {
+  cleanUserConfig(cfg: UserConfig[]) {
     return cfg.map((v) => {
-      const {
-        key, isSecret, value, type,
-      } = v
+      const { key, isSecret, value, type } = v
       return {
         key,
         value: isSecret ? '******' : value,
         type,
-        label: UserConfigLabels[type][key],
+        label: UserConfigLabels[type][key]
       }
     })
   }
 
   @Get('service/config')
   async getUserConfig() {
-    const tx = this.cleanUserConfig(LocalUserDB.findUserConfig({
-      type: 'tx',
-    }))
+    const tx = this.cleanUserConfig(
+      LocalUserDB.findUserConfig({
+        type: 'tx'
+      })
+    )
 
-    const mysql = this.cleanUserConfig(LocalUserDB.findUserConfig({
-      type: 'mysql',
-    }))
+    const mysql = this.cleanUserConfig(
+      LocalUserDB.findUserConfig({
+        type: 'mysql'
+      })
+    )
 
-    const qiniu = this.cleanUserConfig(LocalUserDB.findUserConfig({
-      type: 'qiniu',
-    }))
+    const qiniu = this.cleanUserConfig(
+      LocalUserDB.findUserConfig({
+        type: 'qiniu'
+      })
+    )
 
-    const mongo = this.cleanUserConfig(LocalUserDB.findUserConfig({
-      type: 'mongo',
-    }))
+    const mongo = this.cleanUserConfig(
+      LocalUserDB.findUserConfig({
+        type: 'mongo'
+      })
+    )
 
     return [
       { title: 'MySQL', data: mysql },
       { title: 'MongoDB', data: mongo },
       { title: '七牛云', data: qiniu },
-      { title: '腾讯云', data: tx },
+      { title: '腾讯云', data: tx }
     ]
   }
 
   @Put('service/config')
   async updateUserConfig(@ReqBody() data: Partial<UserConfig>) {
-    const wrapperValue = (key:string, v:any) => {
+    const wrapperValue = (key: string, v: any) => {
       const num = ['port']
       const bool = ['auth']
       const boolString = ['imageCoverStyle', 'imagePreviewStyle']
@@ -87,12 +92,15 @@ export default class UserController {
       }
       return v
     }
-    LocalUserDB.updateUserConfig({
-      type: data.type,
-      key: data.key,
-    }, {
-      value: wrapperValue(data.key, data.value),
-    })
+    LocalUserDB.updateUserConfig(
+      {
+        type: data.type,
+        key: data.key
+      },
+      {
+        value: wrapperValue(data.key, data.value)
+      }
+    )
     if (data.type === 'mysql') {
       await refreshPool()
     }

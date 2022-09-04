@@ -7,19 +7,28 @@ const router = new Router('super/user')
 router.get(
   'list',
   async (req, res) => {
-    const columns = ['id', 'account', 'phone', 'status', 'join_time', 'login_time', 'login_count', 'open_time']
+    const columns = [
+      'id',
+      'account',
+      'phone',
+      'status',
+      'join_time',
+      'login_time',
+      'login_count',
+      'open_time'
+    ]
     const users = await selectAllUser(columns)
     res.success({
       list: users.map((u) => ({
         ...u,
-        phone: u?.phone?.slice(-4),
-      })),
+        phone: u?.phone?.slice(-4)
+      }))
     })
   },
   {
     userPower: USER_POWER.SUPER,
-    needLogin: true,
-  },
+    needLogin: true
+  }
 )
 
 router.put(
@@ -32,17 +41,20 @@ router.put(
     } else {
       openTime = new Date(new Date(openTime).getTime())
     }
-    await updateUser({
-      status,
-      openTime,
-    }, {
-      id,
-    })
+    await updateUser(
+      {
+        status,
+        openTime
+      },
+      {
+        id
+      }
+    )
     res.success()
   },
   {
     userPower: USER_POWER.SUPER,
-    needLogin: true,
-  },
+    needLogin: true
+  }
 )
 export default router

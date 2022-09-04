@@ -20,13 +20,18 @@
     "extends": [
         "airbnb-base",
         "eslint:recommended",
-        "plugin:@typescript-eslint/recommended"
+        "plugin:@typescript-eslint/recommended",
+        "plugin:prettier/recommended"
+
     ],
     "plugins": [
         "@typescript-eslint",
-        "todo-ddl"
+        "todo-ddl",
+        "prettier"
+
     ],
     "rules": {
+        "prettier/prettier": "error",
         "@typescript-eslint/no-explicit-any": [
             "off"
         ],

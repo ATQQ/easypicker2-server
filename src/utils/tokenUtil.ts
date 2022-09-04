@@ -6,8 +6,8 @@ import { encryption } from './stringUtil'
  */
 class TokenUtil {
   /**
-     * 生成token
-     */
+   * 生成token
+   */
   createToken(user: User, timeout = 60 * 60 * 24) {
     const { account, power } = user
     const token = encryption([account, power, Date.now()].join())

@@ -1,11 +1,11 @@
 export interface CodeMsg {
-    code: number
-    msg: string
+  code: number
+  msg: string
 }
 export function codeMsg(code: number, msg: string): CodeMsg {
   return {
     code,
-    msg,
+    msg
   }
 }
 
@@ -17,14 +17,14 @@ export const UserConfigLabels = {
     secretKey: 'SecretKey',
     templateId: '短信模板ID',
     smsSdkAppid: '短信应用appid',
-    signName: '短信签名',
+    signName: '短信签名'
   },
   mysql: {
     host: '主机地址',
     port: '端口号',
     database: '数据库名',
     user: '用户名',
-    password: '密码',
+    password: '密码'
   },
   qiniu: {
     accessKey: 'AccessKey',
@@ -33,7 +33,7 @@ export const UserConfigLabels = {
     bucketDomain: '绑定的域名',
     imageCoverStyle: '图片封面压缩样式',
     imagePreviewStyle: '图片预览压缩样式',
-    bucketZone: '存储空间区域',
+    bucketZone: '存储空间区域'
   },
   mongo: {
     host: '主机地址',
@@ -41,6 +41,6 @@ export const UserConfigLabels = {
     database: '数据库名',
     user: '用户名',
     password: '密码',
-    auth: '是否需要鉴权',
-  },
+    auth: '是否需要鉴权'
+  }
 }

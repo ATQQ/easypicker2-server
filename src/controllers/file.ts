@@ -4,19 +4,22 @@ import {
   ReqBody,
   FWRequest,
   Put,
-  Response,
+  Response
 } from 'flash-wolves'
 import { addBehavior } from '@/db/logDb'
 import { getUserInfo } from '@/utils/userUtil'
 import { selectFiles, updateFileInfo } from '@/db/fileDb'
 import {
-  batchFileStatus, createDownloadUrl, judgeFileIsExist, mvOssFile,
+  batchFileStatus,
+  createDownloadUrl,
+  judgeFileIsExist,
+  mvOssFile
 } from '@/utils/qiniuUtil'
 import { qiniuConfig } from '@/config'
 import { fileError } from '@/constants/errorMsg'
 
 const power = {
-  needLogin: true,
+  needLogin: true
 }
 
 @RouterController('file')
@@ -25,48 +28,59 @@ export default class FileController {
    * 获取图片的预览图
    */
   @Post('/image/preview', power)
-  async checkPeopleIsExist(
-    @ReqBody('ids') idList:number[],
-      req:FWRequest,
-  ) {
+  async checkPeopleIsExist(@ReqBody('ids') idList: number[], req: FWRequest) {
     const user = await getUserInfo(req)
     addBehavior(req, {
       module: 'file',
       msg: `获取图片预览链接 用户:${user.account}`,
       data: {
         account: user.account,
-        idList,
-      },
+        idList
+      }
     })
-    const files = await selectFiles({
-      id: idList as any,
-      userId: user.id,
-    }, ['task_key', 'name', 'hash'])
-    const keys = files.map((file) => `easypicker2/${file.task_key}/${file.hash}/${file.name}`)
+    const files = await selectFiles(
+      {
+        id: idList as any,
+        userId: user.id
+      },
+      ['task_key', 'name', 'hash']
+    )
+    const keys = files.map(
+      (file) => `easypicker2/${file.task_key}/${file.hash}/${file.name}`
+    )
     const filesStatus = await batchFileStatus(keys)
     const result = filesStatus.map((status, idx) => {
       if (status.code === 200 && status.data?.mimeType?.includes('image')) {
         return {
-          cover: createDownloadUrl(`${keys[idx]}${qiniuConfig.imageCoverStyle}`),
-          preview: createDownloadUrl(`${keys[idx]}${qiniuConfig.imagePreviewStyle}`),
+          cover: createDownloadUrl(
+            `${keys[idx]}${qiniuConfig.imageCoverStyle}`
+          ),
+          preview: createDownloadUrl(
+            `${keys[idx]}${qiniuConfig.imagePreviewStyle}`
+          )
         }
       }
       return {
         cover: '',
-        preview: 'https://img.cdn.sugarat.top/mdImg/MTY0OTkwMDMxNTY4NA==649900315684',
+        preview:
+          'https://img.cdn.sugarat.top/mdImg/MTY0OTkwMDMxNTY4NA==649900315684'
       }
     })
     return result
   }
 
   @Put('/name/rewrite', power)
-  async rewriteFilename(@ReqBody('id') id:number, @ReqBody('name')newName:string, req:FWRequest) {
+  async rewriteFilename(
+    @ReqBody('id') id: number,
+    @ReqBody('name') newName: string,
+    req: FWRequest
+  ) {
     const user = await getUserInfo(req)
     const file = (await selectFiles({ id, userId: user.id }))[0]
     if (!file) {
       addBehavior(req, {
         module: 'file',
-        msg: `重命名文件失败 用户:${user.account} 文件id:${id} 新文件名:${newName}`,
+        msg: `重命名文件失败 用户:${user.account} 文件id:${id} 新文件名:${newName}`
       })
       return Response.failWithError(fileError.noPower)
     }
@@ -87,7 +101,7 @@ export default class FileController {
     await updateFileInfo({ id, userId: user.id }, { name: newName })
     addBehavior(req, {
       module: 'file',
-      msg: `重命名文件成功 用户:${user.account} 文件id:${id} 新文件名:${newName}`,
+      msg: `重命名文件成功 用户:${user.account} 文件id:${id} 新文件名:${newName}`
     })
   }
 }
