@@ -35,7 +35,7 @@ const interceptor: Middleware = async (req, res) => {
 
   // 权限校验
   if ([USER_POWER.SUPER, USER_POWER.SYSTEM].includes(userPower)) {
-    if (loginUserInfo.power !== userPower) {
+    if (loginUserInfo?.power !== userPower) {
       addBehavior(req, {
         module: 'interceptor',
         msg: `非法操作,权限不足 path:${req.url} `,
@@ -50,7 +50,7 @@ const interceptor: Middleware = async (req, res) => {
   if (needLogin) {
     // 系统账号只能操作指定的几个接口，不能操作用户接口
     if (
-      loginUserInfo.power === USER_POWER.SYSTEM &&
+      loginUserInfo?.power === USER_POWER.SYSTEM &&
       userPower !== USER_POWER.SYSTEM
     ) {
       addBehavior(req, {
