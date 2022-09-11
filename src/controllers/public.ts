@@ -50,8 +50,14 @@ export default class PublicController {
     setRedisValue(`code-${phone}`, code, 120)
   }
 
+  @Get('report/pv')
   @Post('report/pv')
   reportPv(req: FWRequest) {
+    if (req.method === 'GET') {
+      const { path } = req.query
+      addPvLog(req, path)
+      return Response.plain('<h1>ok</h1>')
+    }
     const { path } = req.body
     addPvLog(req, path)
   }
