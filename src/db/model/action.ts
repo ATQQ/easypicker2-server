@@ -12,7 +12,12 @@ export enum ActionType {
   /**
    * 文件归档
    */
-  Compress
+  Compress,
+
+  /**
+   * 路由禁用
+   */
+  DisabledRoute
 }
 export interface Action<T = any> {
   id: string
@@ -24,7 +29,7 @@ export interface Action<T = any> {
   thingId?: string
   type: ActionType
   date: Date
-  ip: string
+  ip?: string
   data?: T
 }
 

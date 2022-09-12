@@ -5,6 +5,7 @@ import {
   Post,
   ReqBody,
   ReqParams,
+  ReqQuery,
   RouterController
 } from 'flash-wolves'
 import { FilterQuery, ObjectId } from 'mongodb'
@@ -31,6 +32,8 @@ import { selectAllUser } from '@/db/userDb'
 import { batchDeleteFiles, getOSSFiles, getFileKeys } from '@/utils/qiniuUtil'
 import { formatSize } from '@/utils/stringUtil'
 import { getRedisValueJSON } from '@/db/redisDb'
+import { addAction, findAction, updateAction } from '@/db/actionDb'
+import { ActionType } from '@/db/model/action'
 
 const power = {
   userPower: USER_POWER.SUPER,
@@ -354,6 +357,51 @@ export default class OverviewController {
     return {
       logs: this.filterLog(logs),
       sum: logCount
+    }
+  }
+
+  @Post('route/disabled', power)
+  async changeDisabledRoute(
+    @ReqBody('route') route: string,
+    @ReqBody('status') status: boolean
+  ) {
+    const actions = await findAction({
+      type: ActionType.DisabledRoute
+    })
+    const action = actions.find((v) => v.data.route === route)
+    if (!action) {
+      await addAction({
+        type: ActionType.DisabledRoute,
+        data: {
+          route,
+          status
+        }
+      })
+      return
+    }
+    await updateAction(
+      {
+        id: action.id
+      },
+      {
+        $set: {
+          data: {
+            route,
+            status
+          }
+        }
+      }
+    )
+  }
+
+  @Get('route/disabled')
+  async checkDisabledRoute(@ReqQuery('route') route: string) {
+    const actions = await findAction({
+      type: ActionType.DisabledRoute
+    })
+    const action = actions.find((v) => v.data.route === route)
+    return {
+      status: action?.data?.status || false
     }
   }
 }

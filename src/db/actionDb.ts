@@ -11,7 +11,7 @@ import { getUniqueKey } from '@/utils/stringUtil'
 export function addAction(action: Partial<Action>) {
   Object.assign<any, Partial<Action>>(action, {
     id: getUniqueKey(),
-    data: new Date()
+    date: new Date()
   })
   return insertCollection<any>('action', action)
 }
