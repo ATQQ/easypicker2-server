@@ -17,6 +17,7 @@ exist=0
 notExist=2
 repository="https://github.com/ATQQ/easypicker2-client.git"
 branch="main"
+mode="production"
 if [[ "$2" != "" ]]
 then
     branch="$2"
@@ -29,6 +30,10 @@ else
     echo "use github repository"
 fi
 
+if [[ "$3" != "" ]]
+then
+    mode="$3"
+fi
 
 isCmdExist "git"
 if [ $? == $notExist ]
@@ -60,8 +65,10 @@ echo "使用分支 $branch 执行构建"
 pnpm install
 pnpm install
 
+echo "🔧 use mode: $mode"
+
 # 执行构建
-pnpm build
+pnpm build -- --mode "$mode"
 
 clientPkgName="client.tar.gz"
 
