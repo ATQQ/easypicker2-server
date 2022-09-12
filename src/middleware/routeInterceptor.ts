@@ -20,7 +20,9 @@ const interceptor: Middleware = async (req, res) => {
   if (
     needLogin &&
     (!req.headers.token ||
-      ![USER_POWER.SUPER, USER_POWER.SYSTEM].includes(loginUserInfo?.power))
+      ![USER_POWER.SUPER, USER_POWER.SYSTEM, USER_POWER.NORMAL].includes(
+        loginUserInfo?.power
+      ))
   ) {
     addBehavior(req, {
       module: 'interceptor',
