@@ -106,7 +106,7 @@ export default class WishController {
           ip
         })) > 0
       result.push({
-        title,
+        title: status === WishStatus.END ? `(已上线) ${title}` : title,
         des,
         id,
         startDate,
