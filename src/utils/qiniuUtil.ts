@@ -1,11 +1,12 @@
 /* eslint-disable */
 import { qiniuConfig } from '@/config'
-import { addErrorLog } from '@/db/logDb'
+import { addBehavior, addErrorLog } from '@/db/logDb'
 import { FWRequest } from 'flash-wolves'
 import qiniu from 'qiniu'
 import { getKeyInfo } from './stringUtil'
+import LocalUserDB from './user-local-db'
 // [node-sdk文档地址](https://developer.qiniu.com/kodo/1289/nodejs#server-upload)
-const privateBucketDomain = qiniuConfig.bucketDomain
+let privateBucketDomain = qiniuConfig.bucketDomain
 
 const bucketZoneMap = {
   'huadong': qiniu.zone.Zone_z0,
@@ -14,15 +15,23 @@ const bucketZoneMap = {
   'beimei': qiniu.zone.Zone_na0,
   'SoutheastAsia': qiniu.zone.Zone_as0
 }
-const bucketZone = bucketZoneMap[qiniuConfig.bucketZone] || qiniu.zone.Zone_z2
+let bucketZone = bucketZoneMap[qiniuConfig.bucketZone] || qiniu.zone.Zone_z2
 
 // 12小时过期
 const getDeadline = () => Math.floor(Date.now() / 1000) + 3600 * 12
 
-const bucket = qiniuConfig.bucketName
-const mac = new qiniu.auth.digest.Mac(qiniuConfig.accessKey, qiniuConfig.secretKey)
+let bucket = qiniuConfig.bucketName
+let mac = new qiniu.auth.digest.Mac(qiniuConfig.accessKey, qiniuConfig.secretKey)
 const { urlsafeBase64Encode } = qiniu.util
 
+export async function refreshQinNiuConfig() {
+  const cfg = LocalUserDB.getUserConfigByType('qiniu')
+  Object.assign(qiniuConfig, cfg)
+  privateBucketDomain = qiniuConfig.bucketDomain
+  bucketZone = bucketZoneMap[qiniuConfig.bucketZone] || qiniu.zone.Zone_z2
+  bucket = qiniuConfig.bucketName
+  mac = new qiniu.auth.digest.Mac(qiniuConfig.accessKey, qiniuConfig.secretKey)
+}
 /**
  * 获取OSS上文件的下载链接（默认12h有效）
  * @param key 文件的key
@@ -60,6 +69,7 @@ export function deleteFiles(prefix: string): void {
 }
 
 export function batchDeleteFiles(keys: string[], req?: FWRequest) {
+  if (!keys.length) return
   const config = new qiniu.conf.Config()
   const delOptions = keys.map((k) => qiniu.rs.deleteOp(bucket, k))
   const bucketManager = new qiniu.rs.BucketManager(mac, config)
@@ -207,7 +217,7 @@ export function makeZipByPrefixWithKeys(prefix: string, zipName: string, keys: s
           const fops = `mkzip/4/encoding/${urlsafeBase64Encode('gbk')}|saveas/${zipKey}`
           const operManager = new qiniu.fop.OperationManager(mac, config)
           const pipeline = '' // 使用公共队列
-          // 下行。不知用处
+          // 强制覆盖已有同名文件
           const options = { force: false }
           operManager.pfop(bucket, key, [fops], pipeline, options, (err, respBody, respInfo) => {
             if (err) {
@@ -261,9 +271,10 @@ export function makeZipWithKeys(keys: string[], zipName: string): Promise<string
     const config = new qiniu.conf.Config({ zone: bucketZone })
     const formUploader = new qiniu.form_up.FormUploader(config)
     const putExtra = new qiniu.form_up.PutExtra()
-    const key = `${Date.now()}-${~~(Math.random() * 1000)}.txt`
-
-    formUploader.put(getUploadToken(), key, content, putExtra, (respErr,
+    const inputKey = `${Date.now()}-${~~(Math.random() * 1000)}.txt`
+    // 择机删除不然越来越多
+    // 上传文本内容触发归档任务
+    formUploader.put(getUploadToken(), inputKey, content, putExtra, (respErr,
       respBody, respInfo) => {
       if (respErr) {
         throw respErr
@@ -276,7 +287,7 @@ export function makeZipWithKeys(keys: string[], zipName: string): Promise<string
         const fops = `mkzip/4/encoding/${urlsafeBase64Encode('gbk')}|saveas/${zipKey}`
         const operManager = new qiniu.fop.OperationManager(mac, config)
         const pipeline = '' // 使用公共队列
-        // 下行。不知用处
+        // 强制覆盖已有同名文件
         const options = { force: false }
         operManager.pfop(bucket, key, [fops], pipeline, options, (err, respBody, respInfo) => {
           if (err) {
@@ -357,5 +368,114 @@ export function batchFileStatus(keys: string[]): Promise<FileStat[]> {
         }
       }
     })
+  })
+}
+
+export function getQiniuStatus() {
+  return new Promise<ServiceStatus>((res) => {
+    if (!qiniuConfig.bucketDomain.startsWith('http')) {
+      res({
+        type: 'qiniu',
+        status: false,
+        errMsg: '域名配置错误，必须包含协议 http:/// 或 https://'
+      })
+      return
+    }
+    const config = new qiniu.conf.Config({ zone: bucketZone })
+
+    const checkRegion = new Promise((res, rej) => {
+      const formUploader = new qiniu.form_up.FormUploader(config)
+      const putExtra = new qiniu.form_up.PutExtra()
+      const key = `${Date.now()}-${~~(Math.random() * 1000)}.txt`
+      formUploader.put(getUploadToken(), key, 'status test', putExtra, (respErr,
+        respBody, respInfo) => {
+        const err = respErr || respBody?.error
+        if (err) {
+          rej(err)
+          return
+        }
+        deleteObjByKey(key)
+        res(key)
+      })
+    })
+
+    const bucketManager = new qiniu.rs.BucketManager(mac, config)
+    bucketManager.listPrefix(bucket, {
+      prefix: 'easypicker2/',
+      limit: 1
+    }, (err, respBody) => {
+      const errMsg = err?.message || respBody?.error
+      if (errMsg) {
+        res({
+          type: 'qiniu',
+          status: false,
+          errMsg
+        })
+        return
+      }
+      checkRegion
+        .then(() => {
+          res({
+            type: 'qiniu',
+            status: true,
+          })
+        })
+        .catch((err) => {
+          res({
+            type: 'qiniu',
+            status: false,
+            errMsg: err + '，存储区域配置不正确，请参看文档重新选择'
+          })
+        })
+    })
+  })
+}
+
+export function mvOssFile(oldKey: string, newKey: string, req?: FWRequest) {
+  const config = new qiniu.conf.Config()
+  const bucketManager = new qiniu.rs.BucketManager(mac, config)
+  const srcBucket = qiniuConfig.bucketName;
+  const destBucket = qiniuConfig.bucketName;
+  // 强制覆盖已有同名文件
+  var options = {
+    force: false
+  }
+  return new Promise((resolve, reject) => {
+    bucketManager.move(srcBucket, oldKey, destBucket, newKey, options, function (
+      err, respBody, respInfo) {
+      if (err) {
+        console.log(err);
+        if (req) {
+          // 日志埋点
+          addBehavior(req, {
+            'module': 'file',
+            'msg': `资源重命名失败：${srcBucket}:${oldKey} -> ${destBucket}:${newKey}`,
+            data: {
+              oldKey,
+              newKey,
+              err
+            }
+          })
+        }
+        reject(err)
+      } else {
+        resolve(true)
+        //200 is success
+        if (req) {
+          // 日志埋点
+          // TODO:埋点优化
+          addBehavior(req, {
+            'module': 'file',
+            'msg': `OSS资源重命名成功：${srcBucket}:${oldKey} -> ${destBucket}:${newKey}`,
+            data: {
+              oldKey,
+              newKey,
+              respBody,
+              respInfo
+            }
+          })
+        }
+      }
+    });
   })
 }

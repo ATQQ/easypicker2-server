@@ -9,24 +9,36 @@ import controllers from './controllers'
 
 // interceptor
 import {
-  serverInterceptor, routeInterceptor, beforeRouteMatchInterceptor, beforeRuntimeErrorInterceptor,
+  serverInterceptor,
+  routeInterceptor,
+  beforeRouteMatchInterceptor,
+  beforeRuntimeErrorInterceptor
 } from './middleware'
-import patchTable from './utils/patch'
+import {
+  initUserConfig,
+  patchTable,
+  readyServerDepService
+} from './utils/patch'
+import LocalUserDB from './utils/user-local-db'
 
 console.time('server-start')
 
 const app = new App(serverInterceptor, {
   beforeMathRoute: beforeRouteMatchInterceptor,
   beforeRunRoute: routeInterceptor,
-  beforeReturnRuntimeError: beforeRuntimeErrorInterceptor,
+  beforeReturnRuntimeError: beforeRuntimeErrorInterceptor
 })
 
 // 注册路由
 app.addRoutes(routes)
 app.addController(controllers)
 
-app.listen(serverConfig.port, serverConfig.hostname, () => {
+app.listen(serverConfig.port, serverConfig.hostname, async () => {
   console.log('-----', new Date().toLocaleString(), '-----')
   console.timeEnd('server-start')
-  patchTable()
+  // 存储一些配置
+  await LocalUserDB.initUserConfig()
+  await initUserConfig()
+  await readyServerDepService()
+  await patchTable()
 })

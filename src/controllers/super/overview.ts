@@ -1,29 +1,46 @@
 import {
   Delete,
   FWRequest,
-  Get, Post, ReqBody, ReqParams, RouterController,
+  Get,
+  Post,
+  ReqBody,
+  ReqParams,
+  ReqQuery,
+  RouterController
 } from 'flash-wolves'
 import { FilterQuery, ObjectId } from 'mongodb'
 import { selectFiles } from '@/db/fileDb'
 import {
+  addBehavior,
   findLog,
-  findLogCount, findLogReserve, findLogWithPageOffset, findLogWithTimeRange, findPvLogWithRange,
+  findLogCount,
+  findLogReserve,
+  findLogWithPageOffset,
+  findLogWithTimeRange,
+  findPvLogWithRange
 } from '@/db/logDb'
 import {
   Log,
-  LogBehaviorData, LogErrorData, LogRequestData, LogType, PvData,
+  LogBehaviorData,
+  LogErrorData,
+  LogRequestData,
+  LogType,
+  PvData
 } from '@/db/model/log'
 import { USER_POWER } from '@/db/model/user'
 import { selectAllUser } from '@/db/userDb'
 import { batchDeleteFiles, getOSSFiles, getFileKeys } from '@/utils/qiniuUtil'
 import { formatSize } from '@/utils/stringUtil'
 import { getRedisValueJSON } from '@/db/redisDb'
+import { addAction, findAction, updateAction } from '@/db/actionDb'
+import { ActionType } from '@/db/model/action'
 
 const power = {
   userPower: USER_POWER.SUPER,
-  needLogin: true,
+  needLogin: true
 }
 
+const tempTxtFileReg = /\d+-\d+.txt$/
 @RouterController('super/overview')
 export default class OverviewController {
   private cacheLogs: Log[] = []
@@ -39,7 +56,7 @@ export default class OverviewController {
           date,
           type,
           ip: d.ip,
-          msg: `${d.method} ${d.url}`,
+          msg: `${d.method} ${d.url}`
         }
       }
       if (type === 'behavior') {
@@ -49,8 +66,8 @@ export default class OverviewController {
           id,
           date,
           type,
-          msg: (d?.info?.msg) || '未知',
-          ip: (d?.req?.ip) || '未知',
+          msg: d?.info?.msg || '未知',
+          ip: d?.req?.ip || '未知'
         }
       }
 
@@ -62,7 +79,7 @@ export default class OverviewController {
           date,
           type,
           ip: d.ip,
-          msg: `${d.path}`,
+          msg: `${d.path}`
         }
       }
       const d = data as LogErrorData
@@ -72,14 +89,14 @@ export default class OverviewController {
         id,
         date,
         type,
-        ip: (d?.req?.ip) || '未知',
-        msg: (d?.msg) || '未知',
+        ip: d?.req?.ip || '未知',
+        msg: d?.msg || '未知'
       }
     })
   }
 
-  private isExpiredCompressSource(putTime:number) {
-    return (Date.now() - putTime) > 1000 * 60 * 60 * 12
+  private isExpiredCompressSource(putTime: number) {
+    return Date.now() - putTime > 1000 * 60 * 60 * 12
   }
 
   /**
@@ -96,9 +113,13 @@ export default class OverviewController {
   @Get('count', power)
   async getDataOverview() {
     const now = new Date()
-    const nowDate = new Date(`${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`)
+    const nowDate = new Date(
+      `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`
+    )
     const users = await selectAllUser(['join_time'])
-    const userRecent = users.filter((u) => new Date(u.join_time) > nowDate).length
+    const userRecent = users.filter(
+      (u) => new Date(u.join_time) > nowDate
+    ).length
 
     const files = await selectFiles({}, ['date', 'size'])
     const fileRecent = files.filter((f) => new Date(f.date) > nowDate).length
@@ -107,7 +128,7 @@ export default class OverviewController {
     const ossFiles = await getRedisValueJSON<Qiniu.ItemInfo[]>(
       'oss-files-easypicker2/',
       [],
-      () => getOSSFiles('easypicker2/'),
+      () => getOSSFiles('easypicker2/')
     )
 
     const logCount = await findLogCount({})
@@ -115,7 +136,7 @@ export default class OverviewController {
 
     // 总
     const pvList = await findLogReserve({
-      type: 'pv',
+      type: 'pv'
     })
     const uv = new Set(pvList.map((pv) => pv.data.ip)).size
     // 当日
@@ -123,68 +144,98 @@ export default class OverviewController {
     const todayUv = new Set(todayPv.map((pv) => pv.data.ip)).size
 
     // redis做一层缓存
-    const compressData = await getRedisValueJSON<Qiniu.ItemInfo[]>(
-      'oss-files-easypicker2/temp_package',
-      [],
-      () => getFileKeys('easypicker2/temp_package'),
+    // const compressData = await getRedisValueJSON<Qiniu.ItemInfo[]>(
+    //   'oss-files-easypicker2/temp_package',
+    //   [],
+    //   () => getFileKeys('easypicker2/temp_package'),
+    // )
+    const compressData = await getFileKeys('easypicker2/temp_package')
+    const tempTxtFilesData = await getFileKeys('1').then((v) =>
+      v.filter((v) => tempTxtFileReg.test(v.key))
     )
 
     return {
       user: {
         sum: users.length,
-        recent: userRecent,
+        recent: userRecent
       },
       file: {
         server: {
           sum: files.length,
           recent: fileRecent,
-          size: formatSize(files.reduce((sum, f) => sum + f.size, 0)),
+          size: formatSize(files.reduce((sum, f) => sum + f.size, 0))
         },
         oss: {
           sum: ossFiles.length,
-          size: formatSize(ossFiles.reduce((sum, f) => sum + f.fsize, 0)),
-        },
+          size: formatSize(ossFiles.reduce((sum, f) => sum + f.fsize, 0))
+        }
       },
       log: {
         sum: logCount,
-        recent: logRecent.length,
+        recent: logRecent.length
       },
       pv: {
         today: {
           sum: todayPv.length,
-          uv: todayUv,
+          uv: todayUv
         },
         all: {
           sum: pvList.length,
-          uv,
-        },
+          uv
+        }
       },
       compress: {
         all: {
-          sum: compressData.length,
-          size: formatSize(compressData.reduce((sum, item) => sum + item.fsize, 0)),
+          sum: compressData.length + tempTxtFilesData.length,
+          size: formatSize(
+            compressData
+              .concat(tempTxtFilesData)
+              .reduce((sum, item) => sum + item.fsize, 0)
+          )
         },
         expired: {
-          sum: compressData.filter(
-            (item) => this.isExpiredCompressSource(item.putTime / 10000),
-          ).length,
+          sum: compressData
+            .concat(tempTxtFilesData)
+            .filter((item) =>
+              this.isExpiredCompressSource(item.putTime / 10000)
+            ).length,
           size: formatSize(
-            compressData.filter(
-              (item) => this.isExpiredCompressSource(item.putTime / 10000),
-            ).reduce((sum, item) => sum + item.fsize, 0),
-          ),
-        },
-      },
+            compressData
+              .concat(tempTxtFilesData)
+              .filter((item) =>
+                this.isExpiredCompressSource(item.putTime / 10000)
+              )
+              .reduce((sum, item) => sum + item.fsize, 0)
+          )
+        }
+      }
     }
   }
 
   @Delete('compress', power)
-  async clearExpiredCompress(req:FWRequest) {
+  async clearExpiredCompress(req: FWRequest) {
+    // 清理过期压缩文件
     const compressData = await getFileKeys('easypicker2/temp_package')
-    const expired = compressData.filter(
-      (item) => this.isExpiredCompressSource(item.putTime / 10000),
-    ).map((v) => v.key)
-    batchDeleteFiles(expired, req)
+    const expired = compressData
+      .filter((item) => this.isExpiredCompressSource(item.putTime / 10000))
+      .map((v) => v.key)
+    await batchDeleteFiles(expired, req)
+
+    // 清理txt临时文件
+    const txtFiles = (await getFileKeys('1')).filter((v) =>
+      tempTxtFileReg.test(v.key)
+    )
+    const expiredTxt = txtFiles
+      .filter((item) => this.isExpiredCompressSource(item.putTime / 10000))
+      .map((v) => v.key)
+    await batchDeleteFiles(expiredTxt, req)
+    addBehavior(req, {
+      module: 'super',
+      msg: `清理无用文件 ${expired.length + expiredTxt.length}个`,
+      data: {
+        keys: expired.concat(expiredTxt)
+      }
+    })
   }
 
   /**
@@ -205,7 +256,7 @@ export default class OverviewController {
     const result = this.filterLog(logs)
 
     return {
-      logs: result,
+      logs: result
     }
   }
 
@@ -213,9 +264,14 @@ export default class OverviewController {
    * 分页查询
    */
   @Post('log', power)
-  async getPartLog(@ReqBody('type') type:LogType, @ReqBody('pageSize') size = 6, @ReqBody('pageIndex') index = 1, @ReqBody('search') search = '') {
-    let query:FilterQuery<Log> = {
-      type,
+  async getPartLog(
+    @ReqBody('type') type: LogType,
+    @ReqBody('pageSize') size = 6,
+    @ReqBody('pageIndex') index = 1,
+    @ReqBody('search') search = ''
+  ) {
+    let query: FilterQuery<Log> = {
+      type
     }
     if (search) {
       switch (type) {
@@ -225,15 +281,15 @@ export default class OverviewController {
             $or: [
               {
                 'data.info.msg': {
-                  $regex: `.*${search}.*`,
-                },
+                  $regex: `.*${search}.*`
+                }
               },
               {
                 'data.req.ip': {
-                  $regex: `.*${search}.*`,
-                },
-              },
-            ],
+                  $regex: `.*${search}.*`
+                }
+              }
+            ]
           }
           break
         case 'request':
@@ -242,20 +298,20 @@ export default class OverviewController {
             $or: [
               {
                 'data.method': {
-                  $regex: `.*${search}.*`,
-                },
+                  $regex: `.*${search}.*`
+                }
               },
               {
                 'data.url': {
-                  $regex: `.*${search}.*`,
-                },
+                  $regex: `.*${search}.*`
+                }
               },
               {
                 'data.ip': {
-                  $regex: `.*${search}.*`,
-                },
-              },
-            ],
+                  $regex: `.*${search}.*`
+                }
+              }
+            ]
           }
           break
         case 'pv':
@@ -264,15 +320,15 @@ export default class OverviewController {
             $or: [
               {
                 'data.path': {
-                  $regex: `.*${search}.*`,
-                },
+                  $regex: `.*${search}.*`
+                }
               },
               {
                 'data.ip': {
-                  $regex: `.*${search}.*`,
-                },
-              },
-            ],
+                  $regex: `.*${search}.*`
+                }
+              }
+            ]
           }
           break
         case 'error':
@@ -281,15 +337,15 @@ export default class OverviewController {
             $or: [
               {
                 'data.req.ip': {
-                  $regex: `.*${search}.*`,
-                },
+                  $regex: `.*${search}.*`
+                }
               },
               {
                 'data.msg': {
-                  $regex: `.*${search}.*`,
-                },
-              },
-            ],
+                  $regex: `.*${search}.*`
+                }
+              }
+            ]
           }
           break
         default:
@@ -300,7 +356,52 @@ export default class OverviewController {
     const logs = await findLogWithPageOffset((index - 1) * size, size, query)
     return {
       logs: this.filterLog(logs),
-      sum: logCount,
+      sum: logCount
+    }
+  }
+
+  @Post('route/disabled', power)
+  async changeDisabledRoute(
+    @ReqBody('route') route: string,
+    @ReqBody('status') status: boolean
+  ) {
+    const actions = await findAction({
+      type: ActionType.DisabledRoute
+    })
+    const action = actions.find((v) => v.data.route === route)
+    if (!action) {
+      await addAction({
+        type: ActionType.DisabledRoute,
+        data: {
+          route,
+          status
+        }
+      })
+      return
+    }
+    await updateAction(
+      {
+        id: action.id
+      },
+      {
+        $set: {
+          data: {
+            route,
+            status
+          }
+        }
+      }
+    )
+  }
+
+  @Get('route/disabled')
+  async checkDisabledRoute(@ReqQuery('route') route: string) {
+    const actions = await findAction({
+      type: ActionType.DisabledRoute
+    })
+    const action = actions.find((v) => v.data.route === route)
+    return {
+      status: action?.data?.status || false
     }
   }
 }

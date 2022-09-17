@@ -1,4 +1,4 @@
 export enum BOOLEAN {
-    FALSE,
-    TRUE
+  FALSE,
+  TRUE
 }

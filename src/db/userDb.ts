@@ -1,13 +1,17 @@
 import { OkPacket } from 'mysql'
 import { query } from '@/lib/dbConnect/mysql'
-import { insertTableByModel, selectTableByModel, updateTableByModel } from '@/utils/sqlUtil'
+import {
+  insertTableByModel,
+  selectTableByModel,
+  updateTableByModel
+} from '@/utils/sqlUtil'
 import { User, USER_STATUS } from './model/user'
 
 export function selectUserByAccount(account: string): Promise<User[]> {
   const { sql, params } = selectTableByModel('user', {
     data: {
-      account,
-    },
+      account
+    }
   })
   return query<User[]>(sql, ...params)
 }
@@ -15,8 +19,8 @@ export function selectUserByAccount(account: string): Promise<User[]> {
 export function selectUserByPhone(phone: string): Promise<User[]> {
   const { sql, params } = selectTableByModel('user', {
     data: {
-      phone,
-    },
+      phone
+    }
   })
   return query<User[]>(sql, ...params)
 }
@@ -24,8 +28,8 @@ export function selectUserByPhone(phone: string): Promise<User[]> {
 export function selectUserById(id: number): Promise<User[]> {
   const { sql, params } = selectTableByModel('user', {
     data: {
-      id,
-    },
+      id
+    }
   })
   return query<User[]>(sql, ...params)
 }
@@ -33,7 +37,7 @@ export function selectUserById(id: number): Promise<User[]> {
 export function insertUser(options: User): Promise<OkPacket> {
   const { sql, params } = insertTableByModel('user', {
     status: USER_STATUS.NORMAL,
-    ...options,
+    ...options
   })
   return query<OkPacket>(sql, ...params)
 }
@@ -43,10 +47,10 @@ export function updateUser(options: User, q: User): Promise<OkPacket> {
   return query<OkPacket>(sql, ...params)
 }
 
-export function selectAllUser(columns:string[]): Promise<User[]> {
+export function selectAllUser(columns: string[]): Promise<User[]> {
   const { sql, params } = selectTableByModel('user', {
     data: {},
-    columns,
+    columns
   })
   return query<User[]>(sql, ...params)
 }
