@@ -40,5 +40,10 @@ app.listen(serverConfig.port, serverConfig.hostname, async () => {
   await LocalUserDB.initUserConfig()
   await initUserConfig()
   await readyServerDepService()
-  await patchTable()
+  try {
+    await patchTable()
+    console.log('😄😄 mysql patch scrip run success')
+  } catch (err) {
+    console.log('😭😭 mysql 还未正常配置，请检查数据库是否配置正确或版本不匹配')
+  }
 })
