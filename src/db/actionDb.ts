@@ -5,7 +5,7 @@ import {
   insertCollection,
   updateCollection
 } from '@/lib/dbConnect/mongodb'
-import { Action } from './model/action'
+import { Action, DownloadAction } from './model/action'
 import { getUniqueKey } from '@/utils/stringUtil'
 
 export function addAction(action: Partial<Action>) {
@@ -14,6 +14,9 @@ export function addAction(action: Partial<Action>) {
     date: new Date()
   })
   return insertCollection<any>('action', action)
+}
+export function addDownloadAction(action: Partial<DownloadAction>) {
+  return addAction(action)
 }
 
 export function findActionCount(query: FilterQuery<Action>) {

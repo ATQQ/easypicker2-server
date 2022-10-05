@@ -24,6 +24,8 @@ import {
 import { getUniqueKey, isSameInfo, normalizeFileName } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
 import { selectTaskInfo } from '@/db/taskInfoDb'
+import { addDownloadAction } from '@/db/actionDb'
+import { ActionType, DownloadStatus } from '@/db/model/action'
 
 const router = new Router('file')
 
@@ -193,8 +195,20 @@ router.get(
         mimeType
       }
     })
+    const link = createDownloadUrl(k)
+    addDownloadAction({
+      userId,
+      type: ActionType.Download,
+      thingId: file.id,
+      data: {
+        url: link,
+        status: DownloadStatus.SUCCESS,
+        ids: [file.id],
+        tip: file.name
+      }
+    })
     res.success({
-      link: createDownloadUrl(k),
+      link,
       mimeType
     })
   },
