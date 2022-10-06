@@ -15,6 +15,8 @@ import { getUserInfo } from '@/utils/userUtil'
 import { selectTaskInfo } from '@/db/taskInfoDb'
 import { peopleError } from '@/constants/errorMsg'
 import { People } from '@/db/model/people'
+import { ReqUserInfo } from '@/decorator'
+import { User } from '@/db/model/user'
 
 const power = {
   needLogin: true
@@ -27,9 +29,9 @@ export default class PeopleController {
     // TODO:需要装饰器支持校验参数
     @ReqParams('key') key: string,
     @ReqBody('name') name: string,
+    @ReqUserInfo() user: User,
     req: FWRequest
   ) {
-    const user = await getUserInfo(req)
     const defaultData: People = { taskKey: key, userId: user.id }
 
     const exist =
@@ -39,9 +41,18 @@ export default class PeopleController {
           name
         })
       ).length > 0
+    addBehavior(req, {
+      module: 'people',
+      msg: `直接添加成员${exist ? '失败' : '成功'}: ${name}`,
+      data: {
+        name,
+        exist
+      }
+    })
     if (exist) {
       return Response.failWithError(peopleError.exist)
     }
+
     await insertPeople(
       [
         {
@@ -91,9 +102,19 @@ export default class PeopleController {
   }
 
   @Get('/template/:key', power)
-  async getUsefulTemplate(@ReqParams('key') taskKey: string, req: FWRequest) {
-    // userInfo可以通过装饰器注入
-    const user = await getUserInfo(req)
+  async getUsefulTemplate(
+    @ReqParams('key') taskKey: string,
+    @ReqUserInfo() user: User,
+    req: FWRequest
+  ) {
+    addBehavior(req, {
+      module: 'people',
+      msg: '查询可用的成员列表模板',
+      data: {
+        taskKey
+      }
+    })
+
     const taskKeyList = (
       await selectTaskInfo(
         {

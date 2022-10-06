@@ -7,7 +7,6 @@ import {
   Response
 } from 'flash-wolves'
 import { addBehavior } from '@/db/logDb'
-import { getUserInfo } from '@/utils/userUtil'
 import { selectFiles, updateFileInfo } from '@/db/fileDb'
 import {
   batchFileStatus,
@@ -17,6 +16,8 @@ import {
 } from '@/utils/qiniuUtil'
 import { qiniuConfig } from '@/config'
 import { fileError } from '@/constants/errorMsg'
+import { User } from '@/db/model/user'
+import { ReqUserInfo } from '@/decorator'
 
 const power = {
   needLogin: true
@@ -28,8 +29,11 @@ export default class FileController {
    * 获取图片的预览图
    */
   @Post('/image/preview', power)
-  async checkPeopleIsExist(@ReqBody('ids') idList: number[], req: FWRequest) {
-    const user = await getUserInfo(req)
+  async checkPeopleIsExist(
+    @ReqBody('ids') idList: number[],
+    @ReqUserInfo() user: User,
+    req: FWRequest
+  ) {
     addBehavior(req, {
       module: 'file',
       msg: `获取图片预览链接 用户:${user.account}`,
@@ -73,9 +77,9 @@ export default class FileController {
   async rewriteFilename(
     @ReqBody('id') id: number,
     @ReqBody('name') newName: string,
+    @ReqUserInfo() user: User,
     req: FWRequest
   ) {
-    const user = await getUserInfo(req)
     const file = (await selectFiles({ id, userId: user.id }))[0]
     if (!file) {
       addBehavior(req, {
