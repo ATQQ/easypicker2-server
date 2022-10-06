@@ -50,7 +50,7 @@ export enum DownloadStatus {
   SUCCESS
 }
 export interface DownloadActionData {
-  url: string
+  url?: string
   status: DownloadStatus
   ids: number[]
   archiveKey?: string

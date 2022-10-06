@@ -196,7 +196,7 @@ router.get(
       }
     })
     const link = createDownloadUrl(k)
-    addDownloadAction({
+    await addDownloadAction({
       userId,
       type: ActionType.Download,
       thingId: file.id,
@@ -439,16 +439,24 @@ router.post(
         length: keys.length
       }
     })
-    const value = await makeZipWithKeys(
-      keys,
-      normalizeFileName(zipName) ?? `${getUniqueKey()}`
-    )
+    const filename = normalizeFileName(zipName) ?? `${getUniqueKey()}`
+    const value = await makeZipWithKeys(keys, filename)
     addBehavior(req, {
       module: 'file',
       msg: `批量下载任务 用户:${logAccount} 文件数量:${keys.length} 压缩任务名${value}`,
       data: {
         account: logAccount,
         length: keys.length
+      }
+    })
+    await addDownloadAction({
+      userId,
+      type: ActionType.Compress,
+      data: {
+        status: DownloadStatus.ARCHIVE,
+        ids,
+        tip: `${filename}.zip (${keys.length}个文件)`,
+        archiveKey: value
       }
     })
     res.success({
