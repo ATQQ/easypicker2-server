@@ -98,10 +98,57 @@ export default class ActionController {
       pageSize: size,
       actions: actions.map((v) => ({
         id: v.id,
+        type: v.type,
         status: v.data.status,
         url: v.data.url,
         tip: v.data.tip
       }))
     }
+  }
+
+  @Post('download/status')
+  async checkCompressTaskStatus(
+    @ReqUserInfo() user: User,
+    @ReqBody('ids') actionIds: string[]
+  ) {
+    if (!actionIds) {
+      return {}
+    }
+    const actions = await findAction<DownloadActionData>({
+      userId: user.id,
+      $or: actionIds.map((v) => ({ id: v }))
+    })
+    for (const action of actions) {
+      let needUpdate = false
+      // 检查归档是否完成
+      if (action.data.status === DownloadStatus.ARCHIVE) {
+        const data = await checkFopTaskStatus(action.data.archiveKey)
+        if (data.code === 0) {
+          action.data.status = DownloadStatus.SUCCESS
+          action.data.url = createDownloadUrl(data.key)
+          needUpdate = true
+        }
+      }
+      // 异步更新落库
+      if (needUpdate) {
+        updateAction<DownloadActionData>(
+          { id: action.id },
+          {
+            $set: {
+              data: {
+                ...action.data
+              }
+            }
+          }
+        )
+      }
+    }
+    return actions.map((v) => ({
+      id: v.id,
+      type: v.type,
+      status: v.data.status,
+      url: v.data.url,
+      tip: v.data.tip
+    }))
   }
 }

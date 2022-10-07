@@ -40,8 +40,8 @@ export function findActionWithPageOffset(
   })
 }
 
-export function findAction(action: FilterQuery<Action>) {
-  return findCollection<Action>('action', action)
+export function findAction<T = any>(action: FilterQuery<Action<T>>) {
+  return findCollection<Action<T>>('action', action)
 }
 
 export function updateAction<T = any>(
