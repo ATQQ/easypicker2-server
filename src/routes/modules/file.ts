@@ -204,7 +204,8 @@ router.get(
         url: link,
         status: DownloadStatus.SUCCESS,
         ids: [file.id],
-        tip: file.name
+        tip: file.name,
+        size: file.size
       }
     })
     res.success({

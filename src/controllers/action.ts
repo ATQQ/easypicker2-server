@@ -1,22 +1,8 @@
-import {
-  RouterController,
-  Post,
-  ReqBody,
-  FWRequest,
-  Get,
-  Put,
-  ReqParams,
-  Response
-} from 'flash-wolves'
+import { RouterController, Post, ReqBody, Get, ReqQuery } from 'flash-wolves'
 import { FilterQuery } from 'mongodb'
-import { Wish, WishStatus } from '@/db/model/wish'
-import { addWishData, findWish, updateWish } from '@/db/wishDb'
-import { getObjectIdDate, getUniqueKey } from '@/utils/stringUtil'
-import { addBehavior } from '@/db/logDb'
-import { User, USER_POWER } from '@/db/model/user'
-import { ReqIp, ReqUserInfo } from '@/decorator'
+import { User } from '@/db/model/user'
+import { ReqUserInfo } from '@/decorator'
 import {
-  addAction,
   findAction,
   findActionCount,
   findActionWithPageOffset,
@@ -29,7 +15,11 @@ import {
   DownloadActionData,
   DownloadStatus
 } from '@/db/model/action'
-import { checkFopTaskStatus, createDownloadUrl } from '@/utils/qiniuUtil'
+import {
+  checkFopTaskStatus,
+  createDownloadUrl,
+  getOSSFiles
+} from '@/utils/qiniuUtil'
 
 @RouterController('action', {
   needLogin: true
@@ -39,19 +29,19 @@ export default class ActionController {
   async getDownloadActionList(
     @ReqUserInfo() user: User,
     // TODO:支持传入默认值
-    @ReqBody('pageSize') size,
-    @ReqBody('pageIndex') index
+    @ReqQuery('pageSize') size: string,
+    @ReqQuery('pageIndex') index: string
   ) {
-    size = size ?? 3
-    index = index ?? 1
+    const pageSize = +(size ?? 3)
+    const pageIndex = +(index ?? 1)
     const query: FilterQuery<Action> = {
       $or: [{ type: ActionType.Download }, { type: ActionType.Compress }],
       userId: user.id
     }
     const count = await findActionCount(query)
     const actions: DownloadAction[] = await findActionWithPageOffset(
-      (index - 1) * size,
-      size,
+      (pageIndex - 1) * pageSize,
+      pageSize,
       query
     )
     // 校验是否有效
@@ -73,8 +63,10 @@ export default class ActionController {
       if (action.data.status === DownloadStatus.ARCHIVE) {
         const data = await checkFopTaskStatus(action.data.archiveKey)
         if (data.code === 0) {
+          const [fileInfo] = await getOSSFiles(data.key)
           action.data.status = DownloadStatus.SUCCESS
           action.data.url = createDownloadUrl(data.key)
+          action.data.size = fileInfo.fsize
           needUpdate = true
         }
       }
@@ -92,6 +84,8 @@ export default class ActionController {
         )
       }
     }
+
+    // 获取文件信息
     return {
       sum: count,
       pageIndex: index,
@@ -101,7 +95,9 @@ export default class ActionController {
         type: v.type,
         status: v.data.status,
         url: v.data.url,
-        tip: v.data.tip
+        tip: v.data.tip,
+        date: +v.date,
+        size: v.data.size
       }))
     }
   }
@@ -148,7 +144,8 @@ export default class ActionController {
       type: v.type,
       status: v.data.status,
       url: v.data.url,
-      tip: v.data.tip
+      tip: v.data.tip,
+      date: +v.date
     }))
   }
 }
