@@ -137,6 +137,11 @@ export async function patchTable() {
     fieldName: 'info',
     fieldType: 'varchar(10240)'
   })
+
+  await modifyTableField('task_info', {
+    fieldName: 'tip',
+    fieldType: 'varchar(2048)'
+  })
 }
 
 function getRandomUser() {
