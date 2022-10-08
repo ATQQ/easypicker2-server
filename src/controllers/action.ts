@@ -25,17 +25,24 @@ import {
   needLogin: true
 })
 export default class ActionController {
-  @Get('download/list')
+  @Post('download/list')
   async getDownloadActionList(
     @ReqUserInfo() user: User,
     // TODO:支持传入默认值
-    @ReqQuery('pageSize') size: string,
-    @ReqQuery('pageIndex') index: string
+    @ReqBody('pageSize') size: string,
+    @ReqBody('pageIndex') index: string,
+    @ReqBody('extraIds') ids: string[]
   ) {
-    const pageSize = +(size ?? 3)
     const pageIndex = +(index ?? 1)
+    const extraIds = ids ?? []
+    const pageSize = Math.max(+(size ?? 3), extraIds.length)
+
     const query: FilterQuery<Action> = {
-      $or: [{ type: ActionType.Download }, { type: ActionType.Compress }],
+      $or: [
+        ...extraIds.map((e) => ({ id: e })),
+        { type: ActionType.Download },
+        { type: ActionType.Compress }
+      ],
       userId: user.id
     }
     const count = await findActionCount(query)
