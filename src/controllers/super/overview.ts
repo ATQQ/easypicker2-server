@@ -114,7 +114,7 @@ export default class OverviewController {
   async getDataOverview() {
     const now = new Date()
     const nowDate = new Date(
-      `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`
+      `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()} GMT+8`
     )
     const users = await selectAllUser(['join_time'])
     const userRecent = users.filter(
