@@ -123,12 +123,7 @@ export function findCollection<T>(
   query: FilterQuery<T>
 ): Promise<T[]> {
   return mongoDbQuery<T[]>((db, resolve) => {
-    db.collection<T>(collection)
-      .find(query)
-      .toArray()
-      .then((data) => {
-        resolve(data)
-      })
+    db.collection<T>(collection).find(query).toArray().then(resolve)
   })
 }
 
@@ -137,10 +132,6 @@ export function findCollectionCount<T>(
   query: FilterQuery<T>
 ): Promise<number> {
   return mongoDbQuery<number>((db, resolve) => {
-    db.collection<T>(collection)
-      .countDocuments(query)
-      .then((data) => {
-        resolve(data)
-      })
+    db.collection<T>(collection).countDocuments(query).then(resolve)
   })
 }

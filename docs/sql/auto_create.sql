@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS `files` (
   `category_key` varchar(256) NOT NULL COMMENT '所属分类',
   `user_id` int(11) NOT NULL COMMENT '所属用户',
   `name` varchar(1024) NOT NULL COMMENT '文件名',
-  `info` varchar(1024) NOT NULL COMMENT '提交填写的信息',
+  `info` varchar(10240) NOT NULL COMMENT '提交填写的信息',
   `hash` varchar(512) NOT NULL COMMENT '文件hash',
   `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '上传日期',
   `size` int(11) NOT NULL COMMENT '文件大小',
@@ -97,11 +97,11 @@ CREATE TABLE IF NOT EXISTS `task_info` (
   `template` varchar(512) DEFAULT NULL COMMENT '模板文件名称',
   `rewrite` tinyint(4) NOT NULL DEFAULT '0' COMMENT '自动重命名',
   `format` varchar(1024) DEFAULT NULL COMMENT '文件名格式',
-  `info` varchar(1024) DEFAULT NULL COMMENT '提交必填的内容(表单)',
+  `info` varchar(10240) DEFAULT NULL COMMENT '提交必填的内容(表单)',
   `ddl` timestamp NULL DEFAULT NULL COMMENT '截止日期',
   `share_key` varchar(128) NOT NULL COMMENT '用于分享的链接',
   `limit_people` tinyint(4) NOT NULL DEFAULT '0' COMMENT '是否限制提交人员',
-  `tip` varchar(1024) DEFAULT '' COMMENT '批注信息'
+  `tip` varchar(2048) DEFAULT '' COMMENT '批注信息'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='任务附加属性';
 
 -- --------------------------------------------------------

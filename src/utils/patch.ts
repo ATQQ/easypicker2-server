@@ -76,6 +76,43 @@ async function addTableField<T extends TableName>(
   }
 }
 
+async function modifyTableField<T extends TableName>(
+  tableName: T,
+  field: Partial<TableField<T>>
+) {
+  const { fieldName, fieldType } = field
+  const { count } = (
+    await query(
+      'SELECT count(*) as count FROM information_schema.COLUMNS WHERE table_name = ? AND column_name = ?',
+      tableName,
+      `${String(fieldName)}`
+    )
+  )[0]
+  if (count === 0) {
+    console.log('表', tableName, '不存在字段', fieldName, fieldType)
+    return
+  }
+  const { COLUMN_TYPE: originType } = (
+    await query(
+      'SELECT * FROM information_schema.COLUMNS WHERE table_name = ? AND column_name = ?',
+      tableName,
+      `${String(fieldName)}`
+    )
+  )[0]
+
+  if (originType !== fieldType) {
+    console.log(`修改字段 ${tableName}.${String(fieldName)}`)
+    console.log(
+      `ALTER TABLE ${tableName} MODIFY ${String(fieldName)} ${fieldType}`
+    )
+    console.log(
+      await query(
+        `ALTER TABLE ${tableName} MODIFY ${String(fieldName)} ${fieldType}`
+      )
+    )
+  }
+}
+
 export async function patchTable() {
   await addTableField('task_info', {
     fieldName: 'tip',
@@ -89,6 +126,21 @@ export async function patchTable() {
     fieldType: 'varchar(1024)',
     comment: '原文件名',
     defaultValue: ''
+  })
+
+  await modifyTableField('task_info', {
+    fieldName: 'info',
+    fieldType: 'varchar(10240)'
+  })
+
+  await modifyTableField('files', {
+    fieldName: 'info',
+    fieldType: 'varchar(10240)'
+  })
+
+  await modifyTableField('task_info', {
+    fieldName: 'tip',
+    fieldType: 'varchar(2048)'
   })
 }
 
@@ -152,7 +204,7 @@ export function initUserConfig() {
 }
 
 /**
- * 从 MongoDB 取出数据库鉴权需要的数据启动服务
+ * 从本地配置文件 user-config 取出数据库与第三方服务所需配置
  */
 export async function readyServerDepService() {
   await Promise.all([

@@ -7,6 +7,7 @@ import Public from './public'
 import SuperUser from './super/user'
 import User from './user'
 import ConfigService from './config'
+import Action from './action'
 
 export default [
   Wish,
@@ -17,5 +18,6 @@ export default [
   Public,
   SuperUser,
   User,
-  ConfigService
+  ConfigService,
+  Action
 ]

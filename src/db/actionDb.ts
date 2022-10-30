@@ -3,9 +3,10 @@ import {
   findCollection,
   findCollectionCount,
   insertCollection,
+  mongoDbQuery,
   updateCollection
 } from '@/lib/dbConnect/mongodb'
-import { Action } from './model/action'
+import { Action, DownloadAction } from './model/action'
 import { getUniqueKey } from '@/utils/stringUtil'
 
 export function addAction(action: Partial<Action>) {
@@ -15,18 +16,37 @@ export function addAction(action: Partial<Action>) {
   })
   return insertCollection<any>('action', action)
 }
+export function addDownloadAction(action: Partial<DownloadAction>) {
+  return addAction(action)
+}
 
 export function findActionCount(query: FilterQuery<Action>) {
   return findCollectionCount<Action>('action', query)
 }
 
-export function findAction(action: FilterQuery<Action>) {
-  return findCollection<Action>('action', action)
+export function findActionWithPageOffset(
+  startIdx: number,
+  pageSize: number,
+  query: FilterQuery<Action>
+) {
+  return mongoDbQuery<Action[]>((db, resolve) => {
+    db.collection<Action>('action')
+      .find(query)
+      .sort({ _id: -1 })
+      .skip(startIdx)
+      .limit(pageSize)
+      .toArray()
+      .then(resolve)
+  })
 }
 
-export function updateAction(
-  query: FilterQuery<Action>,
-  action: UpdateQuery<Action>
+export function findAction<T = any>(action: FilterQuery<Action<T>>) {
+  return findCollection<Action<T>>('action', action)
+}
+
+export function updateAction<T = any>(
+  query: FilterQuery<Action<T>>,
+  action: UpdateQuery<Action<T>>
 ) {
-  return updateCollection<Action>('action', query, action)
+  return updateCollection<Action<T>>('action', query, action)
 }

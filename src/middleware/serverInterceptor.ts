@@ -3,6 +3,7 @@ import formidable from 'formidable'
 import { existsSync, mkdirSync } from 'fs'
 import { uploadFileDir } from '@/constants'
 import { getClientIp } from '@/db/logDb'
+import { getUserInfo } from '@/utils/userUtil'
 
 // 允许跨域访问的源
 const allowOrigins = [
@@ -65,9 +66,13 @@ const interceptor: Middleware = async (req, res) => {
   }
 
   // 添加ip，供 @ReqIp 取用
-  const ip = getClientIp(req)
   Object.defineProperty(req, '_ip', {
-    value: ip
+    value: getClientIp(req)
+  })
+
+  // 添加userInfo，供@ReqUserInfo
+  Object.defineProperty(req, '_userinfo', {
+    value: await getUserInfo(req)
   })
 }
 export default interceptor

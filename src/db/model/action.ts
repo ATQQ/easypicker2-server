@@ -21,16 +21,41 @@ export enum ActionType {
 }
 export interface Action<T = any> {
   id: string
-  userId?: string
+  type: ActionType
+  date: Date
+  userId?: string | number
   /**
    * 关联事务的id
    * 如wish的id
    */
-  thingId?: string
-  type: ActionType
-  date: Date
+  thingId?: string | number
   ip?: string
   data?: T
 }
 
 export type PraiseAction = Action
+
+export enum DownloadStatus {
+  /**
+   * 归档中
+   */
+  ARCHIVE,
+  /**
+   * 链接已失效
+   */
+  EXPIRED,
+  /**
+   * 可下载
+   */
+  SUCCESS
+}
+export interface DownloadActionData {
+  status: DownloadStatus
+  ids: number[]
+  archiveKey?: string
+  tip?: string
+  url?: string
+  size?: number
+}
+
+export type DownloadAction = Action<DownloadActionData>

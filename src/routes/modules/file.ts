@@ -24,6 +24,8 @@ import {
 import { getUniqueKey, isSameInfo, normalizeFileName } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
 import { selectTaskInfo } from '@/db/taskInfoDb'
+import { addDownloadAction } from '@/db/actionDb'
+import { ActionType, DownloadStatus } from '@/db/model/action'
 
 const router = new Router('file')
 
@@ -193,8 +195,21 @@ router.get(
         mimeType
       }
     })
+    const link = createDownloadUrl(k)
+    await addDownloadAction({
+      userId,
+      type: ActionType.Download,
+      thingId: file.id,
+      data: {
+        url: link,
+        status: DownloadStatus.SUCCESS,
+        ids: [file.id],
+        tip: file.name,
+        size: file.size
+      }
+    })
     res.success({
-      link: createDownloadUrl(k),
+      link,
       mimeType
     })
   },
@@ -425,16 +440,24 @@ router.post(
         length: keys.length
       }
     })
-    const value = await makeZipWithKeys(
-      keys,
-      normalizeFileName(zipName) ?? `${getUniqueKey()}`
-    )
+    const filename = normalizeFileName(zipName) ?? `${getUniqueKey()}`
+    const value = await makeZipWithKeys(keys, filename)
     addBehavior(req, {
       module: 'file',
       msg: `批量下载任务 用户:${logAccount} 文件数量:${keys.length} 压缩任务名${value}`,
       data: {
         account: logAccount,
         length: keys.length
+      }
+    })
+    await addDownloadAction({
+      userId,
+      type: ActionType.Compress,
+      data: {
+        status: DownloadStatus.ARCHIVE,
+        ids,
+        tip: `${filename}.zip (${keys.length}个文件)`,
+        archiveKey: value
       }
     })
     res.success({
