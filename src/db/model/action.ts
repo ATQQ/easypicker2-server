@@ -47,7 +47,11 @@ export enum DownloadStatus {
   /**
    * 可下载
    */
-  SUCCESS
+  SUCCESS,
+  /**
+   * 归档失败
+   */
+  FAIL
 }
 export interface DownloadActionData {
   status: DownloadStatus
@@ -56,6 +60,7 @@ export interface DownloadActionData {
   tip?: string
   url?: string
   size?: number
+  error?: string
 }
 
 export type DownloadAction = Action<DownloadActionData>

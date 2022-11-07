@@ -69,6 +69,11 @@ export default class ActionController {
       // 检查归档是否完成
       if (action.data.status === DownloadStatus.ARCHIVE) {
         const data = await checkFopTaskStatus(action.data.archiveKey)
+        if (data.error) {
+          action.data.status = DownloadStatus.FAIL
+          action.data.error = data.error
+          needUpdate = true
+        }
         if (data.code === 0) {
           const [fileInfo] = await getOSSFiles(data.key)
           action.data.status = DownloadStatus.SUCCESS
@@ -104,7 +109,8 @@ export default class ActionController {
         url: v.data.url,
         tip: v.data.tip,
         date: +v.date,
-        size: v.data.size
+        size: v.data.size,
+        error: v.data.error
       }))
     }
   }

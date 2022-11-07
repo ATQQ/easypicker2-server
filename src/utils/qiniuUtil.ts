@@ -47,6 +47,7 @@ export function createDownloadUrl(key: string, expiredTime = getDeadline()): str
 
   // encode 一些特殊字符，避免文件下载失败
   const specialChars = ['#']
+  // TODO：不支持中文和#共存的场景
   return specialChars.reduce((pre,char)=>{
     return pre.replace(new RegExp(char,'g'),encodeURIComponent(char))
   },url)
