@@ -43,14 +43,12 @@ export function createDownloadUrl(key: string, expiredTime = getDeadline()): str
   // 鉴权的内容，请求的时候生成，避免过期
   const bucketManager = new qiniu.rs.BucketManager(mac, config)
 
-  const url = bucketManager.privateDownloadUrl(privateBucketDomain, key, expiredTime)
-
-  // encode 一些特殊字符，避免文件下载失败
-  const specialChars = ['#']
-  // TODO：不支持中文和#共存的场景
-  return specialChars.reduce((pre,char)=>{
-    return pre.replace(new RegExp(char,'g'),encodeURIComponent(char))
-  },url)
+  const paths = key.split('/')
+  const url = bucketManager.privateDownloadUrl(privateBucketDomain, 
+    // 对最后的文件名做encode，避免文件下载失败
+    paths.map((v,idx)=>idx===paths.length-1?encodeURIComponent(v):v).join('/'),
+     expiredTime)
+  return url
 }
 
 export function getUploadToken(): string {
