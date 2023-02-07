@@ -1,5 +1,6 @@
 import {
   FWRequest,
+  Get,
   Post,
   ReqBody,
   Response,
@@ -20,6 +21,7 @@ import { rAccount, rMobilePhone, rPassword } from '@/utils/regExp'
 import { encryption, formatDate } from '@/utils/stringUtil'
 import tokenUtil from '@/utils/tokenUtil'
 import LocalUserDB from '@/utils/user-local-db'
+import { ReqUserInfo } from '@/decorator'
 
 @RouterController('user')
 export default class UserController {
@@ -275,5 +277,14 @@ export default class UserController {
     return {
       token: tokenUtil.createToken(user, 60 * 60 * 24 * 7)
     }
+  }
+
+  @Get('logout', { needLogin: true })
+  async logout(@ReqUserInfo() user: User, req: FWRequest) {
+    tokenUtil.expiredToken(req.headers.token as string)
+    addBehavior(req, {
+      module: 'user',
+      msg: `退出登录 ${user.account}`
+    })
   }
 }

@@ -33,7 +33,7 @@ export function getRedisVal(k: string, originCallback?: any): Promise<string> {
     }
     getClient().then((client) => {
       client.get(k, (err, reply) => {
-        storage.setItem(k, reply, 60 * 60 * 24)
+        storage.setItem(k, reply, 60 * 60 * 24 * 7)
         client.quit()
         if (reply === null && typeof originCallback === 'function') {
           originCallback()
