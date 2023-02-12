@@ -242,6 +242,9 @@ router.get('power/super', async (req, res) => {
   })
 })
 
+/**
+ * 判断是否登录
+ */
 router.get('login', async (req, res) => {
   const user = await getUserInfo(req)
   res.success(!!user)

@@ -66,7 +66,11 @@ export default class OverviewController {
           id,
           date,
           type,
-          msg: d?.info?.msg || '未知',
+          msg:
+            (d?.info?.msg || '未知') +
+            // 特殊展示提交的文件大小
+            ((d.info?.data?.size && ` ${formatSize(d.info?.data?.size)}`) ||
+              ''),
           ip: d?.req?.ip || '未知'
         }
       }

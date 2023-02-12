@@ -192,7 +192,8 @@ router.get(
       data: {
         account: logAccount,
         name: file.name,
-        mimeType
+        mimeType,
+        size: file.size
       }
     })
     const link = createDownloadUrl(k)
@@ -417,8 +418,12 @@ router.post(
     }
 
     const filesStatus = await batchFileStatus(keys)
+    let size = 0
     keys = keys.filter((_, idx) => {
       const { code } = filesStatus[idx]
+      if (code === 200) {
+        size += filesStatus[idx].data.fsize || 0
+      }
       return code === 200
     })
     if (keys.length === 0) {
@@ -437,7 +442,8 @@ router.post(
       msg: `批量下载文件成功 用户:${logAccount} 文件数量:${keys.length}`,
       data: {
         account: logAccount,
-        length: keys.length
+        length: keys.length,
+        size
       }
     })
     const filename = normalizeFileName(zipName) ?? `${getUniqueKey()}`
@@ -447,7 +453,8 @@ router.post(
       msg: `批量下载任务 用户:${logAccount} 文件数量:${keys.length} 压缩任务名${value}`,
       data: {
         account: logAccount,
-        length: keys.length
+        length: keys.length,
+        size
       }
     })
     await addDownloadAction({
