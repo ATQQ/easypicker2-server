@@ -1,5 +1,6 @@
-import { RouterController, Post, ReqBody, Get, ReqQuery } from 'flash-wolves'
+import { RouterController, Post, ReqBody, FWRequest } from 'flash-wolves'
 import { FilterQuery } from 'mongodb'
+import path from 'path'
 import { User } from '@/db/model/user'
 import { ReqUserInfo } from '@/decorator'
 import {
@@ -20,6 +21,7 @@ import {
   createDownloadUrl,
   getOSSFiles
 } from '@/utils/qiniuUtil'
+import { addBehavior } from '@/db/logDb'
 
 @RouterController('action', {
   needLogin: true
@@ -31,7 +33,8 @@ export default class ActionController {
     // TODO:支持传入默认值
     @ReqBody('pageSize') size: string,
     @ReqBody('pageIndex') index: string,
-    @ReqBody('extraIds') ids: string[]
+    @ReqBody('extraIds') ids: string[],
+    req: FWRequest
   ) {
     const pageIndex = +(index ?? 1)
     const extraIds = ids ?? []
@@ -79,6 +82,18 @@ export default class ActionController {
           action.data.status = DownloadStatus.SUCCESS
           action.data.url = createDownloadUrl(data.key)
           action.data.size = fileInfo.fsize
+          const filename = path.parse(fileInfo.key).name
+          // 归档完成，常理上前端会触发下载，记录一下
+          addBehavior(req, {
+            module: 'file',
+            msg: `归档下载文件成功 用户:${user.account} 文件:${filename} 类型:${fileInfo.mimeType}`,
+            data: {
+              account: user.account,
+              name: filename,
+              size: fileInfo.fsize,
+              mimeType: fileInfo.mimeType
+            }
+          })
           needUpdate = true
         }
       }

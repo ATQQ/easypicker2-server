@@ -347,6 +347,7 @@ interface FileStat {
     mimeType?: string,
     putTime?: number,
     type?: number
+    fsize?: number
   }
 }
 /**
