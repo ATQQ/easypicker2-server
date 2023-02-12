@@ -50,7 +50,8 @@ export function updateUser(options: User, q: User): Promise<OkPacket> {
 export function selectAllUser(columns: string[]): Promise<User[]> {
   const { sql, params } = selectTableByModel('user', {
     data: {},
-    columns
+    columns,
+    order: 'order by id desc'
   })
   return query<User[]>(sql, ...params)
 }
