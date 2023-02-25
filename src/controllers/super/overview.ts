@@ -34,6 +34,7 @@ import { formatSize } from '@/utils/stringUtil'
 import { getRedisValueJSON } from '@/db/redisDb'
 import { addAction, findAction, updateAction } from '@/db/actionDb'
 import { ActionType } from '@/db/model/action'
+import LocalUserDB from '@/utils/user-local-db'
 
 const power = {
   userPower: USER_POWER.SUPER,
@@ -128,9 +129,12 @@ export default class OverviewController {
     const files = await selectFiles({}, ['date', 'size'])
     const fileRecent = files.filter((f) => new Date(f.date) > nowDate).length
 
+    const systemUser = LocalUserDB.getUserConfigByType('server').USER || 'local'
+    const cacheKey = `${systemUser}-oss-files-easypicker2/`
+
     // redis做一层缓存
     const ossFiles = await getRedisValueJSON<Qiniu.ItemInfo[]>(
-      'oss-files-easypicker2/',
+      cacheKey,
       [],
       () => getOSSFiles('easypicker2/')
     )
@@ -148,11 +152,6 @@ export default class OverviewController {
     const todayUv = new Set(todayPv.map((pv) => pv.data.ip)).size
 
     // redis做一层缓存
-    // const compressData = await getRedisValueJSON<Qiniu.ItemInfo[]>(
-    //   'oss-files-easypicker2/temp_package',
-    //   [],
-    //   () => getFileKeys('easypicker2/temp_package'),
-    // )
     const compressData = await getFileKeys('easypicker2/temp_package')
     const tempTxtFilesData = await getFileKeys('1').then((v) =>
       v.filter((v) => tempTxtFileReg.test(v.key))
