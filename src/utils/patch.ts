@@ -51,13 +51,15 @@ async function addTableField<T extends TableName>(
   tableName: T,
   field: TableField<T>
 ) {
+  const cfg = LocalUserDB.getUserConfigByType('mysql')
+  const dbName = cfg.database
+
   const { fieldName, defaultValue, comment, fieldType } = field
+
+  const checkFieldCountSql =
+    'SELECT count(*) as count FROM information_schema.COLUMNS WHERE table_name = ? AND column_name = ? AND table_schema = ?'
   const { count } = (
-    await query(
-      'SELECT count(*) as count FROM information_schema.COLUMNS WHERE table_name = ? AND column_name = ?',
-      tableName,
-      `${String(fieldName)}`
-    )
+    await query(checkFieldCountSql, tableName, `${String(fieldName)}`, dbName)
   )[0]
   if (count === 0) {
     console.log(`添加字段 ${tableName}.${String(fieldName)}`)
@@ -80,24 +82,23 @@ async function modifyTableField<T extends TableName>(
   tableName: T,
   field: Partial<TableField<T>>
 ) {
+  const cfg = LocalUserDB.getUserConfigByType('mysql')
+  const dbName = cfg.database
   const { fieldName, fieldType } = field
+  const checkFieldCountSql =
+    'SELECT count(*) as count FROM information_schema.COLUMNS WHERE table_name = ? AND column_name = ? AND table_schema = ?'
   const { count } = (
-    await query(
-      'SELECT count(*) as count FROM information_schema.COLUMNS WHERE table_name = ? AND column_name = ?',
-      tableName,
-      `${String(fieldName)}`
-    )
+    await query(checkFieldCountSql, tableName, `${String(fieldName)}`, dbName)
   )[0]
   if (count === 0) {
     console.log('表', tableName, '不存在字段', fieldName, fieldType)
     return
   }
+
+  const getColumnTypeSql =
+    'SELECT * FROM information_schema.COLUMNS WHERE table_name = ? AND column_name = ? AND table_schema = ?'
   const { COLUMN_TYPE: originType } = (
-    await query(
-      'SELECT * FROM information_schema.COLUMNS WHERE table_name = ? AND column_name = ?',
-      tableName,
-      `${String(fieldName)}`
-    )
+    await query(getColumnTypeSql, tableName, `${String(fieldName)}`, dbName)
   )[0]
 
   if (originType !== fieldType) {
@@ -114,9 +115,10 @@ async function modifyTableField<T extends TableName>(
 }
 
 export async function patchTable() {
+  const TenK = Math.round(1024 * 10)
   await addTableField('task_info', {
     fieldName: 'tip',
-    fieldType: 'varchar(1024)',
+    fieldType: 'text',
     comment: '批注信息',
     defaultValue: ''
   })
@@ -130,17 +132,17 @@ export async function patchTable() {
 
   await modifyTableField('task_info', {
     fieldName: 'info',
-    fieldType: 'varchar(10240)'
+    fieldType: `varchar(${TenK})`
   })
 
   await modifyTableField('files', {
     fieldName: 'info',
-    fieldType: 'varchar(10240)'
+    fieldType: `varchar(${TenK})`
   })
 
   await modifyTableField('task_info', {
     fieldName: 'tip',
-    fieldType: 'varchar(2048)'
+    fieldType: 'text'
   })
 }
 
