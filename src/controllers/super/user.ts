@@ -6,6 +6,7 @@ import {
   Response,
   RouterController
 } from 'flash-wolves'
+import SuperService from '@/service/super'
 import { USER_POWER, USER_STATUS } from '@/db/model/user'
 import {
   selectAllUser,
@@ -18,6 +19,7 @@ import { addBehavior } from '@/db/logDb'
 import { rMobilePhone, rPassword, rVerCode } from '@/utils/regExp'
 import { encryption } from '@/utils/stringUtil'
 import { expiredRedisKey, getRedisVal } from '@/db/redisDb'
+import { selectFiles } from '@/db/fileDb'
 import { UserError } from '@/constants/errorMsg'
 
 const power = {
@@ -42,7 +44,13 @@ export default class SuperUserController {
       'login_count',
       'open_time'
     ]
+    // 用户数据
     const users = await selectAllUser(columns)
+    // 获取文件数据
+    const files = await selectFiles({}, ['task_key', 'user_id', 'hash', 'name'])
+    // 云文件数据
+    const ossFiles = await SuperService.getOssFiles()
+    console.log(ossFiles[0])
     return {
       list: users.map((u) => ({
         ...u,
