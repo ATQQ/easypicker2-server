@@ -25,6 +25,7 @@
   "license": "ISC",
   "dependencies": {
     "cross-env": "^7.0.3",
+    "dayjs": "^1.11.7",
     "flash-wolves": "^0.3.2",
     "formidable": "^2.0.1",
     "mongodb": "^3.7.3",
