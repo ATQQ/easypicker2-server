@@ -3,6 +3,7 @@ import {
   Delete,
   FWRequest,
   Get,
+  Post,
   Put,
   ReqBody,
   Response,
@@ -10,7 +11,7 @@ import {
 } from 'flash-wolves'
 import dayjs from 'dayjs'
 import SuperService from '@/service/super'
-import { USER_POWER, USER_STATUS } from '@/db/model/user'
+import { User, USER_POWER, USER_STATUS } from '@/db/model/user'
 import {
   selectAllUser,
   selectUserByAccount,
@@ -26,6 +27,9 @@ import { selectFiles } from '@/db/fileDb'
 import { UserError } from '@/constants/errorMsg'
 import FileService from '@/service/file'
 import { batchDeleteFiles } from '@/utils/qiniuUtil'
+import { MessageType } from '@/db/model/message'
+import MessageService from '@/service/message'
+import { ReqUserInfo } from '@/decorator'
 
 const power = {
   userPower: USER_POWER.SUPER,
@@ -34,6 +38,51 @@ const power = {
 
 @RouterController('super/user', power)
 export default class SuperUserController {
+  @Post('message')
+  async sendMessage(
+    @ReqBody('type')
+    type: MessageType,
+    @ReqBody('text')
+    text: string,
+    @ReqUserInfo() user: User,
+    @ReqBody('target')
+    target?: number
+  ) {
+    // 数据格式校验
+    if ((type === MessageType.USER_PUSH && !target) || !text.trim()) {
+      return
+    }
+    if (type === MessageType.USER_PUSH) {
+      MessageService.sendMessage(user.id, target, text)
+    } else if (type === MessageType.GLOBAL_PUSH) {
+      MessageService.sendGlobalMessage(user.id, text)
+    }
+  }
+
+  @Get('message', {
+    userPower: USER_POWER.NORMAL
+  })
+  async getMessageList(@ReqUserInfo() user: User) {
+    const messageList = await MessageService.getMessageList(user.id)
+    return messageList.map((v) => {
+      return {
+        id: v.id,
+        type: v.type,
+        style: v.style,
+        date: v.date,
+        text: v.text,
+        read: v.read
+      }
+    })
+  }
+
+  @Put('message', {
+    userPower: USER_POWER.NORMAL
+  })
+  readMessage(@ReqUserInfo() user: User, @ReqBody('id') id: string) {
+    MessageService.readMessage(user.id, id)
+  }
+
   /**
    * 获取用户列表
    */
