@@ -6,7 +6,8 @@ export enum MessageType {
 export enum MessageStyle {
   Dialog,
   Notification,
-  MESSAGE
+  MESSAGE,
+  Link
 }
 
 export interface Message {

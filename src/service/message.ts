@@ -30,7 +30,7 @@ class MessageService {
           id: getUniqueKey(),
           source,
           target: u.id,
-          type: MessageType.USER_PUSH,
+          type: MessageType.GLOBAL_PUSH,
           style: MessageStyle.Dialog,
           date: new Date(),
           text,
@@ -42,7 +42,10 @@ class MessageService {
   }
 
   getMessageList(userId: number) {
-    return findCollection<Message>('message', { target: userId })
+    return findCollection<Message>('message', { target: userId }).then((v) => {
+      v.sort((a, b) => b.date.getTime() - a.date.getTime())
+      return v
+    })
   }
 
   readMessage(userId: number, msgId: string) {
