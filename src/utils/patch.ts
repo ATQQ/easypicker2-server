@@ -130,6 +130,13 @@ export async function patchTable() {
     defaultValue: ''
   })
 
+  await addTableField('task', {
+    fieldName: 'del',
+    fieldType: 'tinyint',
+    comment: '是否删除',
+    defaultValue: 0
+  })
+
   await modifyTableField('task_info', {
     fieldName: 'info',
     fieldType: `varchar(${TenK})`
