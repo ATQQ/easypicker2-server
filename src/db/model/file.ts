@@ -16,4 +16,5 @@ export interface File {
   people?: string
   originName?: string
   origin_name?: string
+  del?: number
 }

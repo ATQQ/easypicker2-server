@@ -12,9 +12,22 @@ export function insertFile(file: File) {
   return query<OkPacket>(sql, ...params)
 }
 
-export function selectFiles(options: File, columns: string[] = []) {
+export function selectFilesNew(options: File, columns: string[] = []) {
   const { sql, params } = selectTableByModel('files', {
     data: options,
+    columns,
+    // 逆序
+    order: 'order by id desc'
+  })
+  return query<File[]>(sql, ...params)
+}
+
+export function selectFiles(options: File, columns: string[] = []) {
+  const { sql, params } = selectTableByModel('files', {
+    data: {
+      del: 0,
+      ...options
+    },
     columns,
     // 逆序
     order: 'order by id desc'
@@ -38,17 +51,26 @@ export function updateFileInfo(_query: File, file: File) {
 }
 export function deleteFileRecord(file: File) {
   // 逻辑删
-  const originData = JSON.stringify({
-    userId: file.user_id,
-    categoryKey: file.category_key,
-    taskKey: file.task_key
-  })
+  // const originData = JSON.stringify({
+  //   userId: file.user_id,
+  //   categoryKey: file.category_key,
+  //   taskKey: file.task_key
+  // })
+  // const { sql, params } = updateTableByModel(
+  //   'files',
+  //   {
+  //     userId: 0,
+  //     taskKey: 'local_trash',
+  //     categoryKey: originData
+  //   },
+  //   {
+  //     id: file.id
+  //   }
+  // )
   const { sql, params } = updateTableByModel(
     'files',
     {
-      userId: 0,
-      taskKey: 'local_trash',
-      categoryKey: originData
+      del: 1
     },
     {
       id: file.id
@@ -62,11 +84,20 @@ export function deleteFileRecord(file: File) {
 export function deleteFiles(files: File[]) {
   const ids = files.map((v) => v.id)
   // 逻辑删
+  // const { sql, params } = updateTableByModel(
+  //   'files',
+  //   {
+  //     userId: 0,
+  //     taskKey: 'local_trash'
+  //   },
+  //   {
+  //     id: ids
+  //   }
+  // )
   const { sql, params } = updateTableByModel(
     'files',
     {
-      userId: 0,
-      taskKey: 'local_trash'
+      del: 1
     },
     {
       id: ids

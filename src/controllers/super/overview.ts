@@ -9,7 +9,7 @@ import {
   RouterController
 } from 'flash-wolves'
 import { FilterQuery, ObjectId } from 'mongodb'
-import { selectFiles } from '@/db/fileDb'
+import { selectFilesNew } from '@/db/fileDb'
 import {
   addBehavior,
   findLog,
@@ -125,7 +125,7 @@ export default class OverviewController {
       (u) => new Date(u.join_time) > nowDate
     ).length
 
-    const files = await selectFiles({}, ['date', 'size'])
+    const files = await selectFilesNew({}, ['date', 'size'])
     const fileRecent = files.filter((f) => new Date(f.date) > nowDate).length
 
     // redis做一层缓存
