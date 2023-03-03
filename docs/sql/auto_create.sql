@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net
 --
 -- Host: localhost
--- Generation Time: 2022-06-28 23:21:06
+-- Generation Time: 2023-03-03 22:38:29
 -- 服务器版本： 5.6.50-log
 -- PHP Version: 5.6.40
 
@@ -46,12 +46,13 @@ CREATE TABLE IF NOT EXISTS `files` (
   `category_key` varchar(256) NOT NULL COMMENT '所属分类',
   `user_id` int(11) NOT NULL COMMENT '所属用户',
   `name` varchar(1024) NOT NULL COMMENT '文件名',
-  `info` varchar(10240) NOT NULL COMMENT '提交填写的信息',
+  `info` varchar(10240) DEFAULT NULL COMMENT '提交填写的信息',
   `hash` varchar(512) NOT NULL COMMENT '文件hash',
   `date` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '上传日期',
   `size` int(11) NOT NULL COMMENT '文件大小',
   `people` varchar(256) DEFAULT NULL COMMENT '人员姓名',
-  `origin_name` varchar(1024) DEFAULT '' COMMENT '原文件名'
+  `origin_name` varchar(1024) DEFAULT '' COMMENT '原文件名',
+  `del` tinyint(4) DEFAULT '0' COMMENT '是否删除'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='用户提交的问题';
 
 -- --------------------------------------------------------
@@ -81,7 +82,8 @@ CREATE TABLE IF NOT EXISTS `task` (
   `user_id` int(11) NOT NULL COMMENT '所属用户id',
   `category_key` varchar(128) NOT NULL COMMENT '关联分类key',
   `name` varchar(256) NOT NULL COMMENT '任务名称',
-  `k` varchar(128) NOT NULL COMMENT '任务唯一标识'
+  `k` varchar(128) NOT NULL COMMENT '任务唯一标识',
+  `del` tinyint(4) DEFAULT '0' COMMENT '是否删除'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='任务表';
 
 -- --------------------------------------------------------
@@ -101,7 +103,7 @@ CREATE TABLE IF NOT EXISTS `task_info` (
   `ddl` timestamp NULL DEFAULT NULL COMMENT '截止日期',
   `share_key` varchar(128) NOT NULL COMMENT '用于分享的链接',
   `limit_people` tinyint(4) NOT NULL DEFAULT '0' COMMENT '是否限制提交人员',
-  `tip` TEXT DEFAULT '' COMMENT '批注信息'
+  `tip` text DEFAULT '' COMMENT '批注信息'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='任务附加属性';
 
 -- --------------------------------------------------------
