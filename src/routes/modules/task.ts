@@ -46,7 +46,8 @@ router.get(
   async (req, res) => {
     const { id, account: logAccount } = await getUserInfo(req)
     const data = await selectTasks({
-      userId: id
+      userId: id,
+      del: 0
     })
 
     const tasks = data.map((t) => {
@@ -91,7 +92,8 @@ router.get(
 router.get('/:key', async (req, res) => {
   const { key } = req.params
   const [task] = await selectTasks({
-    k: key
+    k: key,
+    del: 0
   })
   if (!task) {
     addBehavior(req, {
@@ -128,13 +130,37 @@ router.delete(
     const { key } = req.params
     const [task] = await selectTasks({
       userId: id,
-      k: key
+      k: key,
+      del: 0
     })
     if (task) {
-      await deleteTask({
-        userId: id,
-        k: key
-      })
+      // 首次删除，移动至回收站
+      if (task.category_key !== 'trash') {
+        await updateTask(
+          {
+            categoryKey: 'trash'
+          },
+          {
+            userId: id,
+            k: key
+          }
+        )
+      } else {
+        // 二次删除，真滴移除（软删）
+        await updateTask(
+          {
+            del: 1
+          },
+          {
+            userId: id,
+            k: key
+          }
+        )
+        // await deleteTask({
+        //   userId: id,
+        //   k: key
+        // })
+      }
     }
 
     // 不删除该任务下已经提交的文件

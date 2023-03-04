@@ -1,12 +1,17 @@
+/* eslint-disable no-loop-func */
 import {
+  Delete,
   FWRequest,
   Get,
+  Post,
   Put,
   ReqBody,
   Response,
   RouterController
 } from 'flash-wolves'
-import { USER_POWER, USER_STATUS } from '@/db/model/user'
+import dayjs from 'dayjs'
+import SuperService from '@/service/super'
+import { User, USER_POWER, USER_STATUS } from '@/db/model/user'
 import {
   selectAllUser,
   selectUserByAccount,
@@ -16,21 +21,72 @@ import {
 } from '@/db/userDb'
 import { addBehavior } from '@/db/logDb'
 import { rMobilePhone, rPassword, rVerCode } from '@/utils/regExp'
-import { encryption } from '@/utils/stringUtil'
+import { encryption, formatSize } from '@/utils/stringUtil'
 import { expiredRedisKey, getRedisVal } from '@/db/redisDb'
+import { selectFiles } from '@/db/fileDb'
 import { UserError } from '@/constants/errorMsg'
+import FileService from '@/service/file'
+import { batchDeleteFiles } from '@/utils/qiniuUtil'
+import { MessageType } from '@/db/model/message'
+import MessageService from '@/service/message'
+import { ReqUserInfo } from '@/decorator'
 
 const power = {
   userPower: USER_POWER.SUPER,
   needLogin: true
 }
 
-@RouterController('super/user')
+@RouterController('super/user', power)
 export default class SuperUserController {
+  @Post('message')
+  async sendMessage(
+    @ReqBody('type')
+    type: MessageType,
+    @ReqBody('text')
+    text: string,
+    @ReqUserInfo() user: User,
+    @ReqBody('target')
+    target?: number
+  ) {
+    // 数据格式校验
+    if ((type === MessageType.USER_PUSH && !target) || !text.trim()) {
+      return
+    }
+    if (type === MessageType.USER_PUSH) {
+      MessageService.sendMessage(user.id, target, text)
+    } else if (type === MessageType.GLOBAL_PUSH) {
+      MessageService.sendGlobalMessage(user.id, text)
+    }
+  }
+
+  @Get('message', {
+    userPower: USER_POWER.NORMAL
+  })
+  async getMessageList(@ReqUserInfo() user: User) {
+    const messageList = await MessageService.getMessageList(user.id)
+    return messageList.map((v) => {
+      return {
+        id: v.id,
+        type: v.type,
+        style: v.style,
+        date: v.date,
+        text: v.text,
+        read: v.read
+      }
+    })
+  }
+
+  @Put('message', {
+    userPower: USER_POWER.NORMAL
+  })
+  readMessage(@ReqUserInfo() user: User, @ReqBody('id') id: string) {
+    MessageService.readMessage(user.id, id)
+  }
+
   /**
-   * 获取用户劣列表
+   * 获取用户列表
    */
-  @Get('list', power)
+  @Get('list')
   async getUserList() {
     const columns = [
       'id',
@@ -42,7 +98,55 @@ export default class SuperUserController {
       'login_count',
       'open_time'
     ]
+    // 用户数据
     const users = await selectAllUser(columns)
+    // 获取文件数据
+    const files = await selectFiles({}, [
+      'task_key',
+      'user_id',
+      'hash',
+      'name',
+      'date'
+    ])
+    // 云文件数据
+    const ossFiles = await SuperService.getOssFiles()
+    const filesMap = new Map<string, Qiniu.ItemInfo>()
+    ossFiles.forEach((v) => {
+      filesMap.set(v.key, v)
+    })
+
+    // 遍历用户，获取文件数和占用空间数据
+    for (const user of users) {
+      const fileInfo = files.filter((file) => file.user_id === user.id)
+      let AMonthAgoSize = 0
+      let AQuarterAgoSize = 0
+      let AHalfYearAgoSize = 0
+      const fileSize = fileInfo.reduce((pre, v) => {
+        const { date } = v
+        const ossKey = FileService.getOssKey(v)
+        const { fsize = 0 } = filesMap.get(ossKey) || {}
+
+        if (dayjs(date).isBefore(dayjs().subtract(1, 'month'))) {
+          AMonthAgoSize += fsize
+        }
+        if (dayjs(date).isBefore(dayjs().subtract(3, 'month'))) {
+          AQuarterAgoSize += fsize
+        }
+        if (dayjs(date).isBefore(dayjs().subtract(6, 'month'))) {
+          AHalfYearAgoSize += fsize
+        }
+
+        return pre + fsize
+      }, 0)
+
+      Object.assign(user, {
+        fileCount: fileInfo.length,
+        resources: formatSize(fileSize),
+        monthAgoSize: formatSize(AMonthAgoSize),
+        quarterAgoSize: formatSize(AQuarterAgoSize),
+        halfYearSize: formatSize(AHalfYearAgoSize)
+      })
+    }
     return {
       list: users.map((u) => ({
         ...u,
@@ -51,10 +155,43 @@ export default class SuperUserController {
     }
   }
 
+  @Delete('clear/oss')
+  async clearOssFiles(
+    @ReqBody('id') id: number,
+    @ReqBody('type')
+    type: 'month' | 'quarter' | 'half'
+  ) {
+    const user = (await selectUserById(id))[0]
+    if (!user) {
+      return
+    }
+    const months = {
+      month: 1,
+      quarter: 3,
+      half: 6
+    }
+    if (!months[type]) {
+      return
+    }
+    const beforeDate = dayjs().subtract(months[type], 'month')
+    const files = (
+      await selectFiles(
+        {
+          userId: id
+        },
+        ['task_key', 'user_id', 'hash', 'name', 'date']
+      )
+    ).filter((v) => {
+      return dayjs(v.date).isBefore(beforeDate)
+    })
+    const delKeys = files.map(FileService.getOssKey)
+    batchDeleteFiles(delKeys)
+  }
+
   /**
    * 修改账号状态
    */
-  @Put('status', power)
+  @Put('status')
   async changeStatus(
     @ReqBody('id') id: number,
     @ReqBody('status') status: USER_STATUS,
@@ -76,7 +213,7 @@ export default class SuperUserController {
     )
   }
 
-  @Put('password', power)
+  @Put('password')
   async resetPassword(
     @ReqBody('id') id: number,
     @ReqBody('password') password: string,
@@ -107,7 +244,7 @@ export default class SuperUserController {
     )
   }
 
-  @Put('phone', power)
+  @Put('phone')
   async resetPhone(
     @ReqBody('id') id: number,
     @ReqBody('phone') phone: string,

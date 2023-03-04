@@ -9,7 +9,7 @@ import {
   RouterController
 } from 'flash-wolves'
 import { FilterQuery, ObjectId } from 'mongodb'
-import { selectFiles } from '@/db/fileDb'
+import { selectFilesNew } from '@/db/fileDb'
 import {
   addBehavior,
   findLog,
@@ -29,9 +29,9 @@ import {
 } from '@/db/model/log'
 import { USER_POWER } from '@/db/model/user'
 import { selectAllUser } from '@/db/userDb'
-import { batchDeleteFiles, getOSSFiles, getFileKeys } from '@/utils/qiniuUtil'
+import { batchDeleteFiles, getFileKeys } from '@/utils/qiniuUtil'
 import { formatSize } from '@/utils/stringUtil'
-import { getRedisValueJSON } from '@/db/redisDb'
+import SuperService from '@/service/super'
 import { addAction, findAction, updateAction } from '@/db/actionDb'
 import { ActionType } from '@/db/model/action'
 
@@ -125,15 +125,11 @@ export default class OverviewController {
       (u) => new Date(u.join_time) > nowDate
     ).length
 
-    const files = await selectFiles({}, ['date', 'size'])
+    const files = await selectFilesNew({}, ['date', 'size'])
     const fileRecent = files.filter((f) => new Date(f.date) > nowDate).length
 
     // redis做一层缓存
-    const ossFiles = await getRedisValueJSON<Qiniu.ItemInfo[]>(
-      'oss-files-easypicker2/',
-      [],
-      () => getOSSFiles('easypicker2/')
-    )
+    const ossFiles = await SuperService.getOssFiles()
 
     const logCount = await findLogCount({})
     const logRecent = await findLogWithTimeRange(nowDate)
@@ -148,11 +144,6 @@ export default class OverviewController {
     const todayUv = new Set(todayPv.map((pv) => pv.data.ip)).size
 
     // redis做一层缓存
-    // const compressData = await getRedisValueJSON<Qiniu.ItemInfo[]>(
-    //   'oss-files-easypicker2/temp_package',
-    //   [],
-    //   () => getFileKeys('easypicker2/temp_package'),
-    // )
     const compressData = await getFileKeys('easypicker2/temp_package')
     const tempTxtFilesData = await getFileKeys('1').then((v) =>
       v.filter((v) => tempTxtFileReg.test(v.key))
