@@ -10,3 +10,4 @@
   * log.ts
   * wish.ts
   * action.ts
+  * message.ts
