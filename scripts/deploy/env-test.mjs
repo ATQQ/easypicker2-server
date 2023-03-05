@@ -1,14 +1,13 @@
 #!/usr/bin/env zx
 
 // user config
-const originName = 'ep.test'
-const serverName = 'ep-server'
+const originName = ['ep.test','ep.dev']
+const serverName = ['ep-server-test','ep-server-dev']
 
 // not care
-const compressPkgName = `${originName}.tar.gz`
+const compressPkgName = `test-pkg.tar.gz`
 const user = 'root'
 const origin = 'sugarat.top'
-const fullOrigin = `${originName}.${origin}`
 const baseServerDir = '/www/wwwroot'
 const destDir = 'easypicker2-server'
 
@@ -23,10 +22,17 @@ await $`rm -rf ${compressPkgName}`
 
 await $`echo ==✅ 部署代码 ==`
 if (destDir) {
-    await $`ssh -p22 ${user}@${origin} "mkdir -p ${baseServerDir}/${fullOrigin}/${destDir}"`
+    for (const name of originName) {
+        await $`ssh -p22 ${user}@${origin} "mkdir -p ${baseServerDir}/${name}.${origin}/${destDir}"`
+    }
 }
-await $`ssh -p22 ${user}@${origin} "tar -xf ${compressPkgName} -C ${baseServerDir}/${fullOrigin}/${destDir}"`
-await $`ssh -p22 ${user}@${origin} "cd ${baseServerDir}/${fullOrigin}/${destDir} && pnpm install"`
+for (const name of originName) {
+    await $`ssh -p22 ${user}@${origin} "tar -xf ${compressPkgName} -C ${baseServerDir}/${name}.${origin}/${destDir}"`
+    await $`ssh -p22 ${user}@${origin} "cd ${baseServerDir}/${name}.${origin}/${destDir} && pnpm install"`
+}
+
 
 await $`echo ==🏆︎ 重启服务 ==`
-await $`ssh -p22 ${user}@${origin} "pm2 restart ${serverName}"`
+for (const name of serverName) {
+    await $`ssh -p22 ${user}@${origin} "pm2 restart ${name}"`
+}
