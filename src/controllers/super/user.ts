@@ -159,7 +159,9 @@ export default class SuperUserController {
   async clearOssFiles(
     @ReqBody('id') id: number,
     @ReqBody('type')
-    type: 'month' | 'quarter' | 'half'
+    type: 'month' | 'quarter' | 'half',
+    @ReqUserInfo()
+    userInfo: User
   ) {
     const user = (await selectUserById(id))[0]
     if (!user) {
@@ -185,6 +187,15 @@ export default class SuperUserController {
       return dayjs(v.date).isBefore(beforeDate)
     })
     const delKeys = files.map(FileService.getOssKey)
+    MessageService.sendMessage(
+      userInfo.id,
+      user.id,
+      MessageService.clearMessageFormat('文件清理提醒', [
+        `<strong style="font-weight: bold; color: rgb(71, 193, 168);">由于服务运维费用过高，系统已<span style="color:red;">自动清理 ${months[type]} 个月</span>之前收集的文件</strong>`,
+        '如有特殊疑问，或者以后不希望被清理，请联系系统管理员Thanks♪(･ω･)ﾉ'
+      ])
+    )
+
     batchDeleteFiles(delKeys)
   }
 
