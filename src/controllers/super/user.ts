@@ -26,7 +26,7 @@ import { expiredRedisKey, getRedisVal } from '@/db/redisDb'
 import { selectFiles } from '@/db/fileDb'
 import { UserError } from '@/constants/errorMsg'
 import FileService from '@/service/file'
-import { batchDeleteFiles } from '@/utils/qiniuUtil'
+import { batchDeleteFiles, getOSSFiles } from '@/utils/qiniuUtil'
 import { MessageType } from '@/db/model/message'
 import MessageService from '@/service/message'
 import { ReqUserInfo } from '@/decorator'
@@ -106,7 +106,8 @@ export default class SuperUserController {
       'user_id',
       'hash',
       'name',
-      'date'
+      'date',
+      'category_key'
     ])
     // 云文件数据
     const ossFiles = await SuperService.getOssFiles()
@@ -114,6 +115,24 @@ export default class SuperUserController {
     ossFiles.forEach((v) => {
       filesMap.set(v.key, v)
     })
+
+    // 兼容ep1网站数据
+    const oldPrefixList = new Set(
+      files
+        .filter((v) => v.category_key)
+        .map((v) => {
+          return v.category_key.split('/')[0]
+        })
+        .filter((v) => !v.includes('"'))
+        .filter((v) => !v.startsWith('easypicker2'))
+    )
+
+    for (const prefix of oldPrefixList) {
+      const ossSources = await SuperService.getOssFilesByPrefix(`${prefix}/`)
+      ossSources.forEach((v) => {
+        filesMap.set(v.key, v)
+      })
+    }
 
     // 遍历用户，获取文件数和占用空间数据
     for (const user of users) {
@@ -124,7 +143,8 @@ export default class SuperUserController {
       const fileSize = fileInfo.reduce((pre, v) => {
         const { date } = v
         const ossKey = FileService.getOssKey(v)
-        const { fsize = 0 } = filesMap.get(ossKey) || {}
+        const { fsize = 0 } =
+          filesMap.get(ossKey) || filesMap.get(v.category_key) || {}
 
         if (dayjs(date).isBefore(dayjs().subtract(1, 'month'))) {
           AMonthAgoSize += fsize
@@ -159,7 +179,9 @@ export default class SuperUserController {
   async clearOssFiles(
     @ReqBody('id') id: number,
     @ReqBody('type')
-    type: 'month' | 'quarter' | 'half'
+    type: 'month' | 'quarter' | 'half',
+    @ReqUserInfo()
+    userInfo: User
   ) {
     const user = (await selectUserById(id))[0]
     if (!user) {
@@ -185,6 +207,15 @@ export default class SuperUserController {
       return dayjs(v.date).isBefore(beforeDate)
     })
     const delKeys = files.map(FileService.getOssKey)
+    MessageService.sendMessage(
+      userInfo.id,
+      user.id,
+      MessageService.clearMessageFormat('文件清理提醒', [
+        `<strong style="font-weight: bold; color: rgb(71, 193, 168);">由于服务运维费用过高，系统已<span style="color:red;">自动清理 ${months[type]} 个月</span>之前收集的文件</strong>`,
+        '如有特殊疑问，或者以后不希望被清理，请联系系统管理员Thanks♪(･ω･)ﾉ'
+      ])
+    )
+
     batchDeleteFiles(delKeys)
   }
 

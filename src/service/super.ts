@@ -15,6 +15,22 @@ class SuperService {
     )
     return ossFiles
   }
+
+  async getOssFilesByPrefix(prefix: string) {
+    if (!prefix) {
+      return
+    }
+    const systemUser = LocalUserDB.getUserConfigByType('server').USER || 'local'
+    const cacheKey = `${systemUser}-oss-files-${prefix}`
+
+    // redis做一层缓存
+    const ossFiles = await getRedisValueJSON<Qiniu.ItemInfo[]>(
+      cacheKey,
+      [],
+      () => getOSSFiles(prefix)
+    )
+    return ossFiles
+  }
 }
 
 export default new SuperService()

@@ -146,8 +146,8 @@ export function getOSSFiles(prefix: string): Promise<Qiniu.ItemInfo[]> {
         ops.marker = marker
       }
       bucketManager.listPrefix(bucket, ops, (err, respBody) => {
-        data = data.concat(respBody?.items)
-        if (respBody.marker) {
+        data = data.concat(respBody?.items || [])
+        if (respBody?.marker) {
           marker = respBody.marker
           analyze()
         } else {
