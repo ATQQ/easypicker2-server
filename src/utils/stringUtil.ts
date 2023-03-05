@@ -122,3 +122,11 @@ export function normalizeFileName(name: string) {
 export function getObjectIdDate(id: string) {
   return +new ObjectId(id).getTimestamp()
 }
+
+export function getTipImageKey(
+  key: string,
+  name: string,
+  uid?: number | string
+) {
+  return `easypicker2/tip/${key}/${uid || Date.now()}/${name}`
+}

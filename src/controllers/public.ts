@@ -4,7 +4,8 @@ import {
   Post,
   ReqQuery,
   Response,
-  RouterController
+  RouterController,
+  ReqBody
 } from 'flash-wolves'
 
 import { rMobilePhone } from '@/utils/regExp'
@@ -14,6 +15,8 @@ import { setRedisValue } from '@/db/redisDb'
 import { sendMessage } from '@/utils/tencent'
 import { addBehavior, addPvLog } from '@/db/logDb'
 import { selectUserByAccount, selectUserByPhone } from '@/db/userDb'
+import { createDownloadUrl } from '@/utils/qiniuUtil'
+import { qiniuConfig } from '@/config'
 
 @RouterController('public')
 export default class PublicController {
@@ -97,5 +100,24 @@ export default class PublicController {
         phone
       }
     })
+  }
+
+  @Post('tip/image')
+  getTipImage(
+    @ReqBody('key') key: string,
+    @ReqBody('data')
+    data: {
+      uid: number
+      name: string
+    }[]
+  ) {
+    return data.map((v) => ({
+      cover: createDownloadUrl(
+        `easypicker2/tip/${key}/${v.uid}/${v.name}${qiniuConfig.imageCoverStyle}`
+      ),
+      preview: createDownloadUrl(
+        `easypicker2/tip/${key}/${v.uid}/${v.name}${qiniuConfig.imagePreviewStyle}`
+      )
+    }))
   }
 }
