@@ -26,7 +26,7 @@ import { expiredRedisKey, getRedisVal } from '@/db/redisDb'
 import { selectFiles } from '@/db/fileDb'
 import { UserError } from '@/constants/errorMsg'
 import FileService from '@/service/file'
-import { batchDeleteFiles } from '@/utils/qiniuUtil'
+import { batchDeleteFiles, getOSSFiles } from '@/utils/qiniuUtil'
 import { MessageType } from '@/db/model/message'
 import MessageService from '@/service/message'
 import { ReqUserInfo } from '@/decorator'
@@ -106,7 +106,8 @@ export default class SuperUserController {
       'user_id',
       'hash',
       'name',
-      'date'
+      'date',
+      'category_key'
     ])
     // 云文件数据
     const ossFiles = await SuperService.getOssFiles()
@@ -114,6 +115,20 @@ export default class SuperUserController {
     ossFiles.forEach((v) => {
       filesMap.set(v.key, v)
     })
+
+    // 兼容ep1网站数据
+    const oldPrefixList = files
+      .filter((v) => v.category_key)
+      .map((v) => {
+        return v.category_key.split('/')[0]
+      })
+      .filter((v) => !v.includes('"'))
+    for (const prefix of oldPrefixList) {
+      const ossSources = await SuperService.getOssFilesByPrefix(`${prefix}/`)
+      ossSources.forEach((v) => {
+        filesMap.set(v.key, v)
+      })
+    }
 
     // 遍历用户，获取文件数和占用空间数据
     for (const user of users) {
@@ -124,7 +139,8 @@ export default class SuperUserController {
       const fileSize = fileInfo.reduce((pre, v) => {
         const { date } = v
         const ossKey = FileService.getOssKey(v)
-        const { fsize = 0 } = filesMap.get(ossKey) || {}
+        const { fsize = 0 } =
+          filesMap.get(ossKey) || filesMap.get(v.category_key) || {}
 
         if (dayjs(date).isBefore(dayjs().subtract(1, 'month'))) {
           AMonthAgoSize += fsize
