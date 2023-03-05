@@ -117,12 +117,16 @@ export default class SuperUserController {
     })
 
     // 兼容ep1网站数据
-    const oldPrefixList = files
-      .filter((v) => v.category_key)
-      .map((v) => {
-        return v.category_key.split('/')[0]
-      })
-      .filter((v) => !v.includes('"'))
+    const oldPrefixList = new Set(
+      files
+        .filter((v) => v.category_key)
+        .map((v) => {
+          return v.category_key.split('/')[0]
+        })
+        .filter((v) => !v.includes('"'))
+        .filter((v) => !v.startsWith('easypicker2'))
+    )
+
     for (const prefix of oldPrefixList) {
       const ossSources = await SuperService.getOssFilesByPrefix(`${prefix}/`)
       ossSources.forEach((v) => {
