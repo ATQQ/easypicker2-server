@@ -7,6 +7,8 @@ let pool: mysql.Pool
 export function refreshPool() {
   const cfg = LocalUserDB.getUserConfigByType('mysql')
   pool?.end()
+  mysqlConfig.host = cfg.host
+  mysqlConfig.port = cfg.port
   mysqlConfig.user = cfg.user
   mysqlConfig.password = cfg.password
   mysqlConfig.database = cfg.database
