@@ -20,6 +20,9 @@ class TokenUtil {
   }
 
   async getUserInfo(token: string): Promise<User> {
+    if (!token) {
+      return null
+    }
     const v = await getRedisVal(token)
     if (v) {
       return JSON.parse(v)

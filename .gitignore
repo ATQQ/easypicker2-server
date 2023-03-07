@@ -2,3 +2,4 @@ node_modules
 dist
 *.local
 user-config.json
+*.tar.gz

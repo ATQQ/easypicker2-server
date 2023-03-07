@@ -7,7 +7,6 @@ import { getUserInfo } from '@/utils/userUtil'
 const interceptor: Middleware = async (req, res) => {
   const { meta } = req.route
   if (!meta || Object.keys(meta).length === 0) return
-  // console.log(`路由拦截:${req.method} - ${req.url}`)
   const { needLogin, userPower, CORS } = meta
   if (CORS) {
     res.setHeader('Access-Control-Allow-Origin', '*')
@@ -46,6 +45,7 @@ const interceptor: Middleware = async (req, res) => {
         }
       })
       res.failWithError(publicError.request.notLogin)
+      return
     }
   }
 
