@@ -9,6 +9,7 @@
     "esModuleInterop": true,
     "allowJs": true,
     "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "baseUrl": ".",
     "outDir": "./dist/",
     "typeRoots": [

@@ -222,8 +222,8 @@ export function initUserConfig() {
 /**
  * 从本地配置文件 user-config 取出数据库与第三方服务所需配置
  */
-export async function readyServerDepService() {
-  await Promise.all([
+export function readyServerDepService() {
+  return Promise.all([
     // 1. MySQL
     refreshPool(),
     // 2. qiniu

@@ -8,6 +8,7 @@ import { getQiniuStatus, refreshQinNiuConfig } from '@/utils/qiniuUtil'
 import { UserConfig } from '@/db/model/config'
 import { UserConfigLabels } from '@/constants'
 import LocalUserDB from '@/utils/user-local-db'
+import { initTypeORM } from '@/db'
 
 @RouterController('config', { userPower: USER_POWER.SYSTEM, needLogin: true })
 export default class UserController {
@@ -102,6 +103,7 @@ export default class UserController {
       }
     )
     if (data.type === 'mysql') {
+      await initTypeORM()
       await refreshPool()
     }
     if (data.type === 'qiniu') {

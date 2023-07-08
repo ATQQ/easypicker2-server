@@ -28,7 +28,9 @@
     "mysql": "^2.18.1",
     "qiniu": "^7.4.0",
     "redis": "^3.1.2",
-    "tencentcloud-sdk-nodejs": "^4.0.318"
+    "reflect-metadata": "^0.1.13",
+    "tencentcloud-sdk-nodejs": "^4.0.318",
+    "typeorm": "^0.3.17"
   },
   "devDependencies": {
     "@types/mongodb": "^3.6.20",
