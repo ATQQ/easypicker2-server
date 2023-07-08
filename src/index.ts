@@ -15,9 +15,12 @@ import {
   beforeRouteMatchInterceptor,
   beforeRuntimeErrorInterceptor
 } from './middleware'
-import { initUserConfig, readyServerDepService } from './utils/patch'
+import {
+  initUserConfig,
+  patchTable,
+  readyServerDepService
+} from './utils/patch'
 import LocalUserDB from './utils/user-local-db'
-import { initTypeORM } from './db'
 
 console.time('server-start')
 
@@ -39,7 +42,7 @@ app.listen(serverConfig.port, serverConfig.hostname, async () => {
   await initUserConfig()
   await readyServerDepService()
   try {
-    await initTypeORM()
+    await patchTable()
     console.log('😄😄 mysql connect success')
   } catch (err) {
     console.log('😭😭 mysql 还未正常配置，请检查数据库是否配置正确或版本不匹配')

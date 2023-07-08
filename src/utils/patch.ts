@@ -18,6 +18,7 @@ import { refreshQinNiuConfig } from './qiniuUtil'
 import { refreshTxConfig } from './tencent'
 import LocalUserDB from './user-local-db'
 import { refreshMongoDb } from '@/lib/dbConnect/mongodb'
+import { initTypeORM } from '@/db'
 
 type TableName = 'task_info' | 'category' | 'files' | 'task' | 'people' | 'user'
 type DBTables = {
@@ -225,6 +226,7 @@ export function initUserConfig() {
 export function readyServerDepService() {
   return Promise.all([
     // 1. MySQL
+    initTypeORM(),
     refreshPool(),
     // 2. qiniu
     refreshQinNiuConfig(),

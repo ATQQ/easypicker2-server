@@ -12,8 +12,8 @@ export async function initTypeORM() {
     password: cfg.password,
     database: cfg.database,
     entities,
-    synchronize: true,
-    logging: false
+    synchronize: false,
+    logging: process.env.NODE_ENV === 'development'
   })
 
   await AppDataSource.initialize()
