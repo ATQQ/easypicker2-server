@@ -10,35 +10,6 @@ import { taskError } from '@/constants/errorMsg'
 const router = new Router('task')
 
 /**
- * 创建任务
- */
-router.post(
-  'create',
-  async (req, res) => {
-    const { name, category } = req.body
-    const { id, account: logAccount } = await getUserInfo(req)
-    const options: Task = {
-      name,
-      categoryKey: category || '',
-      userId: id
-    }
-    await insertTask(options)
-    addBehavior(req, {
-      module: 'task',
-      msg: `创建任务 用户:${logAccount} 任务:${name} 成功`,
-      data: {
-        account: logAccount,
-        name
-      }
-    })
-    res.success()
-  },
-  {
-    needLogin: true
-  }
-)
-
-/**
  * 获取任务列表
  */
 router.get(

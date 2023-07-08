@@ -34,10 +34,18 @@ export class TaskInfo {
   @Column('timestamp', { nullable: true, comment: '截止日期' })
   ddl: Date | null
 
-  @Column('varchar', { length: 128, comment: '用于分享的链接' })
+  @Column('varchar', {
+    name: 'share_key',
+    length: 128,
+    comment: '用于分享的链接'
+  })
   shareKey: string
 
-  @Column('tinyint', { comment: '是否限制提交人员', default: 0 })
+  @Column('tinyint', {
+    name: 'limit_people',
+    comment: '是否限制提交人员',
+    default: 0
+  })
   limitPeople: number
 
   @Column('text', { nullable: true })

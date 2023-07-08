@@ -43,7 +43,7 @@ app.listen(serverConfig.port, serverConfig.hostname, async () => {
   await readyServerDepService()
   try {
     await patchTable()
-    console.log('😄😄 mysql connect success')
+    console.log('😄😄 mysql patch success')
   } catch (err) {
     console.log('😭😭 mysql 还未正常配置，请检查数据库是否配置正确或版本不匹配')
   }

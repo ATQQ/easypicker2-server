@@ -19,10 +19,15 @@ export class People {
 
   @Column('timestamp', {
     comment: '最后提交时间',
+    name: 'submit_date',
     default: () => 'CURRENT_TIMESTAMP'
   })
   submitDate: Date
 
-  @Column('int', { default: 0, comment: '提交次数' })
+  @Column('int', {
+    name: 'submit_count',
+    default: 0,
+    comment: '提交次数'
+  })
   submitCount: number
 }
