@@ -9,7 +9,8 @@ import {
 
 import { UserError } from '@/constants/errorMsg'
 import { addBehavior } from '@/db/logDb'
-import { User, USER_POWER, USER_STATUS } from '@/db/model/user'
+import { USER_POWER, USER_STATUS } from '@/db/model/user'
+import type { User } from '@/db/model/user'
 import { expiredRedisKey, getRedisVal } from '@/db/redisDb'
 import {
   insertUser,

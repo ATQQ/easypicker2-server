@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm'
 
-@Entity()
+@Entity('task_info')
 export class TaskInfo {
   @PrimaryGeneratedColumn({ type: 'int' })
   id: number

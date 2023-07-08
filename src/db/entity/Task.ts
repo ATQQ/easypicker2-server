@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm'
 
-@Entity()
+@Entity('task')
 export class Task {
   @PrimaryGeneratedColumn({ type: 'int', comment: '主键' })
   id: number

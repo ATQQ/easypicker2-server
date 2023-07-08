@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm'
 
-@Entity()
+@Entity('category')
 export class Category {
   @PrimaryGeneratedColumn({ type: 'int', unsigned: true, comment: '主键自增' })
   id: number

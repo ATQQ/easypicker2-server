@@ -8,7 +8,8 @@ import {
   ReqParams,
   Response
 } from 'flash-wolves'
-import { Wish, WishStatus } from '@/db/model/wish'
+import { WishStatus } from '@/db/model/wish'
+import type { Wish } from '@/db/model/wish'
 import { addWishData, findWish, updateWish } from '@/db/wishDb'
 import { getObjectIdDate, getUniqueKey } from '@/utils/stringUtil'
 import { addBehavior } from '@/db/logDb'

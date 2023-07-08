@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm'
 
-@Entity()
+@Entity('user')
 export class User {
   @PrimaryGeneratedColumn({ type: 'int', comment: '唯一标识' })
   id: number

@@ -11,7 +11,8 @@ import {
 } from 'flash-wolves'
 import dayjs from 'dayjs'
 import SuperService from '@/service/super'
-import { User, USER_POWER, USER_STATUS } from '@/db/model/user'
+import { USER_POWER, USER_STATUS } from '@/db/model/user'
+import type { User } from '@/db/model/user'
 import {
   selectAllUser,
   selectUserByAccount,

@@ -16,7 +16,7 @@ import {
 } from '@/utils/qiniuUtil'
 import { qiniuConfig } from '@/config'
 import { fileError } from '@/constants/errorMsg'
-import { User } from '@/db/model/user'
+import type { User } from '@/db/model/user'
 import { ReqUserInfo } from '@/decorator'
 
 const power = {

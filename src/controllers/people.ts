@@ -16,7 +16,7 @@ import { selectTaskInfo } from '@/db/taskInfoDb'
 import { peopleError } from '@/constants/errorMsg'
 import { People } from '@/db/model/people'
 import { ReqUserInfo } from '@/decorator'
-import { User } from '@/db/model/user'
+import type { User } from '@/db/model/user'
 
 const power = {
   needLogin: true
