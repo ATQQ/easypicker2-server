@@ -73,4 +73,8 @@ export class UserRepository {
   insertUser(options: UserEntity) {
     return this.userRepository.save(options)
   }
+
+  updateUser(options: UserEntity) {
+    return this.userRepository.save(options)
+  }
 }
