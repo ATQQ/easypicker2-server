@@ -158,7 +158,9 @@ router.get(
       res.failWithError(publicError.file.notExist)
       return
     }
-    let k = `easypicker2/${file.task_key}/${file.hash}/${file.name}`
+    // let k = `easypicker2/${file.task_key}/${file.hash}/${file.name}`
+    // 特殊要求去掉文件hash
+    let k = `easypicker2/${file.task_key}/${file.name}`
     let isExist = false
     // 兼容旧路径的逻辑
     if (file.category_key) {
@@ -243,7 +245,9 @@ router.delete(
       res.failWithError(publicError.file.notExist)
       return
     }
-    let k = `easypicker2/${file.task_key}/${file.hash}/${file.name}`
+    // let k = `easypicker2/${file.task_key}/${file.hash}/${file.name}`
+    // 特殊要求去掉文件hash
+    let k = `easypicker2/${file.task_key}/${file.name}`
     // 兼容旧路径的逻辑
     if (file.category_key) {
       k = file.category_key
@@ -315,7 +319,9 @@ router.delete('withdraw', async (req, res) => {
   // 删除提交记录
   // 删除文件
   if (isDelOss) {
-    const key = `easypicker2/${taskKey}/${hash}/${filename}`
+    // const key = `easypicker2/${taskKey}/${hash}/${filename}`
+    // 特殊要求去掉文件hash
+    const key = `easypicker2/${taskKey}/${filename}`
     deleteObjByKey(key)
   }
   await deleteFiles(passFiles)
@@ -402,7 +408,9 @@ router.post(
     let keys = []
     for (const file of files) {
       const { name, task_key, hash, category_key } = file
-      const key = `easypicker2/${task_key}/${hash}/${name}`
+      // const key = `easypicker2/${task_key}/${hash}/${name}`
+      // 特殊要求去掉文件hash
+      const key = `easypicker2/${task_key}/${name}`
       if (!category_key) {
         keys.push(key)
       }
@@ -537,7 +545,9 @@ router.delete(
           (v) => v.task_key === task_key && v.hash === hash && v.name === name
         ).length
         if (dbCount <= delCount) {
-          keys.add(`easypicker2/${task_key}/${hash}/${name}`)
+          // keys.add(`easypicker2/${task_key}/${hash}/${name}`)
+          // 特殊要求去掉文件hash
+          keys.add(`easypicker2/${task_key}/${name}`)
         }
       }
     }

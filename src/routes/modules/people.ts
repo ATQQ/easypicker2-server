@@ -137,7 +137,9 @@ router.get(
         p.status && existPeopleSubmitFiles.length && showDetail
           ? await batchFileStatus(
               existPeopleSubmitFiles.map(
-                (v) => `easypicker2/${v.task_key}/${v.hash}/${v.name}`
+                // (v) => `easypicker2/${v.task_key}/${v.hash}/${v.name}`
+                // 特殊要求去掉hash
+                (v) => `easypicker2/${v.task_key}/${v.name}`
               )
             )
           : []

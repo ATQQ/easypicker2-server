@@ -50,7 +50,9 @@ export default class FileController {
       ['task_key', 'name', 'hash']
     )
     const keys = files.map(
-      (file) => `easypicker2/${file.task_key}/${file.hash}/${file.name}`
+      // (file) => `easypicker2/${file.task_key}/${file.hash}/${file.name}`
+      // 特殊要求去掉hash
+      (file) => `easypicker2/${file.task_key}/${file.name}`
     )
     const filesStatus = await batchFileStatus(keys)
     const result = filesStatus.map((status, idx) => {
@@ -89,8 +91,11 @@ export default class FileController {
       return Response.failWithError(fileError.noPower)
     }
     // 重命名OSS资源
-    const ossKey = `easypicker2/${file.task_key}/${file.hash}/${file.name}`
-    const newOssKey = `easypicker2/${file.task_key}/${file.hash}/${newName}`
+    // const ossKey = `easypicker2/${file.task_key}/${file.hash}/${file.name}`
+    // const newOssKey = `easypicker2/${file.task_key}/${file.hash}/${newName}`
+    // 特殊要求去掉hash
+    const ossKey = `easypicker2/${file.task_key}/${file.name}`
+    const newOssKey = `easypicker2/${file.task_key}/${newName}`
     const isOldExist = await judgeFileIsExist(ossKey)
     const isNewExist = await judgeFileIsExist(newOssKey)
     if (!isOldExist) {
