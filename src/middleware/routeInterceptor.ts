@@ -3,6 +3,7 @@ import { publicError } from '@/constants/errorMsg'
 import { addBehavior } from '@/db/logDb'
 import { USER_POWER } from '@/db/model/user'
 import { getUserInfo } from '@/utils/userUtil'
+import tokenUtil from '@/utils/tokenUtil'
 
 const systemWhiteList = ['/user/logout']
 
@@ -69,10 +70,19 @@ const interceptor: Middleware = async (req, res) => {
       res.failWithError(publicError.request.notLogin)
     }
 
+    // 未登录
     if (!loginUserInfo) {
       res.failWithError(publicError.request.notLogin)
     }
+    // 传递登录用户信息
     req.userInfo = loginUserInfo
+
+    // 异步Check，不阻塞逻辑
+    tokenUtil.checkOnlineUser(
+      loginUserInfo.account,
+      loginUserInfo,
+      req.headers.token as string
+    )
   }
 }
 export default interceptor

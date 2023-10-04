@@ -36,7 +36,7 @@ export default class UserController {
   async register(@ReqBody() body: any) {
     try {
       const user = await this.userService.register(body)
-      const token = this.tokenService.createTokenByUser(user)
+      const token = await this.tokenService.createTokenByUser(user)
       return {
         token
       }
@@ -66,7 +66,7 @@ export default class UserController {
         u.account = account
         u.power = USER_POWER.SYSTEM
         return {
-          token: this.tokenService.createTokenByUser(u),
+          token: await this.tokenService.createTokenByUser(u),
           system: true
         }
       }
@@ -75,7 +75,7 @@ export default class UserController {
 
     try {
       const user = await this.userService.login(account, pwd)
-      const token = this.tokenService.createTokenByUser(user)
+      const token = await this.tokenService.createTokenByUser(user)
       return {
         token
       }
