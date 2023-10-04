@@ -233,14 +233,19 @@ router.put('password', async (req, res) => {
 /**
  * 判断是否超级管理员
  */
-router.get('power/super', async (req, res) => {
-  const user = await getUserInfo(req)
-  res.success({
-    power: user?.power === USER_POWER.SUPER,
-    name: user?.account,
-    system: user?.power === USER_POWER.SYSTEM
-  })
-})
+router.get(
+  'power/super',
+  async (req, res) => {
+    const user = await getUserInfo(req)
+    tokenUtil.refreshToken(req.headers.token as string)
+    res.success({
+      power: user?.power === USER_POWER.SUPER,
+      name: user?.account,
+      system: user?.power === USER_POWER.SYSTEM
+    })
+  },
+  { needLogin: true }
+)
 
 /**
  * 判断是否登录
