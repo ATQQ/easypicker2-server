@@ -4,6 +4,8 @@ import { addBehavior } from '@/db/logDb'
 import { USER_POWER } from '@/db/model/user'
 import { getUserInfo } from '@/utils/userUtil'
 
+const systemWhiteList = ['/user/logout']
+
 const interceptor: Middleware = async (req, res) => {
   const { meta } = req.route
   if (!meta || Object.keys(meta).length === 0) return
@@ -53,7 +55,9 @@ const interceptor: Middleware = async (req, res) => {
     // 系统账号只能操作指定的几个接口，不能操作用户接口
     if (
       loginUserInfo?.power === USER_POWER.SYSTEM &&
-      userPower !== USER_POWER.SYSTEM
+      userPower !== USER_POWER.SYSTEM &&
+      // 白名单接口不做校验
+      !systemWhiteList.includes(req.url)
     ) {
       addBehavior(req, {
         module: 'interceptor',
