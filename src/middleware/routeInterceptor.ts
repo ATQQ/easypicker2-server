@@ -64,6 +64,11 @@ const interceptor: Middleware = async (req, res) => {
       })
       res.failWithError(publicError.request.notLogin)
     }
+
+    if (!loginUserInfo) {
+      res.failWithError(publicError.request.notLogin)
+    }
+    req.userInfo = loginUserInfo
   }
 }
 export default interceptor

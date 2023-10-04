@@ -1,5 +1,5 @@
 import 'flash-wolves'
-import { USER_POWER } from './db/model/user'
+import type { USER_POWER, User } from './db/model/user'
 
 declare module 'flash-wolves' {
   interface RouteMeta {
@@ -9,5 +9,9 @@ declare module 'flash-wolves' {
     needLogin?: boolean
     // 跨域支持
     CORS?: boolean
+  }
+
+  interface FWRequest {
+    userInfo?: User
   }
 }

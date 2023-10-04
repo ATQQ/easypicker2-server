@@ -22,16 +22,25 @@ export class User {
 
   @Column('timestamp', {
     default: () => 'CURRENT_TIMESTAMP',
-    comment: '注册时间'
+    comment: '注册时间',
+    name: 'join_time'
   })
   joinTime: Date
 
-  @Column('timestamp', { nullable: true, comment: '最后登录时间' })
+  @Column('timestamp', {
+    nullable: true,
+    comment: '最后登录时间',
+    name: 'login_time'
+  })
   loginTime: Date
 
-  @Column('int', { default: 1, comment: '登录次数' })
+  @Column('int', { default: 1, comment: '登录次数', name: 'login_count' })
   loginCount: number
 
-  @Column('timestamp', { nullable: true, comment: '解封时间' })
+  @Column('timestamp', {
+    nullable: true,
+    comment: '解封时间',
+    name: 'open_time'
+  })
   openTime: Date
 }
