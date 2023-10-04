@@ -21,7 +21,7 @@ export class User {
   status: number
 
   @Column('timestamp', {
-    default: () => 'CURRENT_TIMESTAMP',
+    default: 'CURRENT_TIMESTAMP',
     comment: '注册时间',
     name: 'join_time'
   })

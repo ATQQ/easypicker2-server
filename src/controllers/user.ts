@@ -1,6 +1,9 @@
 import {
+  Context,
   FWRequest,
   Get,
+  Inject,
+  InjectCtx,
   Post,
   ReqBody,
   Response,
@@ -11,126 +14,41 @@ import { UserError } from '@/constants/errorMsg'
 import { addBehavior } from '@/db/logDb'
 import { USER_POWER, USER_STATUS } from '@/db/model/user'
 import type { User } from '@/db/model/user'
-import { expiredRedisKey, getRedisVal } from '@/db/redisDb'
-import {
-  insertUser,
-  selectUserByAccount,
-  selectUserByPhone,
-  updateUser
-} from '@/db/userDb'
-import { rAccount, rMobilePhone, rPassword } from '@/utils/regExp'
+import { selectUserByAccount, selectUserByPhone, updateUser } from '@/db/userDb'
+import { rMobilePhone, rPassword } from '@/utils/regExp'
 import { encryption, formatDate } from '@/utils/stringUtil'
 import tokenUtil from '@/utils/tokenUtil'
 import LocalUserDB from '@/utils/user-local-db'
 import { ReqUserInfo } from '@/decorator'
+import UserService from '@/service/userService'
+import BehaviorService from '@/service/behaviorService'
+import { wrapperCatchError } from '@/utils/context'
+import TokenService from '@/service/tokenService'
 
 @RouterController('user')
 export default class UserController {
+  @Inject(UserService)
+  private userService: UserService
+
+  @Inject(BehaviorService)
+  private behaviorService: BehaviorService
+
+  @Inject(TokenService)
+  private tokenService: TokenService
+
+  @InjectCtx()
+  private Ctx: Context
+
   @Post('register')
-  async register(@ReqBody() body: any, req: FWRequest) {
-    const { account, pwd, bindPhone, phone, code } = body
-
-    if (!rAccount.test(account)) {
-      addBehavior(req, {
-        module: 'user',
-        msg: `新用户注册 账号:${account} 格式错误`,
-        data: {
-          account
-        }
-      })
-      return Response.failWithError(UserError.account.fault)
-    }
-    if (!rPassword.test(pwd)) {
-      addBehavior(req, {
-        module: 'user',
-        msg: `账号:${account} 密码格式不正确`,
-        data: {
-          account
-        }
-      })
-      return Response.failWithError(UserError.pwd.fault)
-    }
-    // 检查账号是否存在
-    let [user] = await selectUserByAccount(account)
-    // 账号是手机号格式，那么该手机号不能已经是被注册的
-    if (rMobilePhone.test(account) && !user) {
-      ;[user] = await selectUserByPhone(account)
-    }
-    // 存在返回错误
-    if (user) {
-      addBehavior(req, {
-        module: 'user',
-        msg: `新用户注册 账号:${account} 已存在`,
-        data: {
-          account
-        }
-      })
-      return Response.failWithError(UserError.account.exist)
-    }
-
-    // 绑定手机
-    if (bindPhone) {
-      if (!rMobilePhone.test(phone)) {
-        addBehavior(req, {
-          module: 'user',
-          msg: `新用户注册 手机号:${phone} 格式错误`,
-          data: {
-            phone
-          }
-        })
-        return Response.failWithError(UserError.mobile.fault)
+  async register(@ReqBody() body: any) {
+    try {
+      const user = await this.userService.register(body)
+      const token = this.tokenService.createTokenByUser(user)
+      return {
+        token
       }
-      const rightCode = await getRedisVal(`code-${phone}`)
-      if (!code || code !== rightCode) {
-        addBehavior(req, {
-          module: 'user',
-          msg: `新用户注册 验证码错误:${code}`,
-          data: {
-            code,
-            rightCode
-          }
-        })
-        return Response.failWithError(UserError.code.fault)
-      }
-      // 检查手机号是否存在
-      ;[user] = await selectUserByPhone(phone)
-      // 检查该手机号是否出现在账号中
-      if (!user) {
-        ;[user] = await selectUserByAccount(phone)
-      }
-      // 存在返回错误
-      if (user) {
-        addBehavior(req, {
-          module: 'user',
-          msg: '新用户注册 手机号已存在'
-        })
-        return Response.failWithError(UserError.mobile.exist)
-      }
-      // 过期验证码
-      expiredRedisKey(`code-${phone}`)
-    }
-
-    addBehavior(req, {
-      module: 'user',
-      msg: `新用户注册 账号:${account} 绑定手机:${
-        bindPhone ? '是' : '否'
-      } 注册成功`,
-      data: {
-        account,
-        bindPhone
-      }
-    })
-    // 不存在则加入
-    await insertUser({
-      password: encryption(pwd),
-      account,
-      loginCount: 0,
-      ...(bindPhone ? { phone } : {})
-    })
-    const [u] = await selectUserByAccount(account)
-    const token = tokenUtil.createToken(u)
-    return {
-      token
+    } catch (error) {
+      return wrapperCatchError(error)
     }
   }
 

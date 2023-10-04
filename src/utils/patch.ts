@@ -1,3 +1,4 @@
+import { appendFile } from 'fs/promises'
 import type { Category } from '@/db/model/category'
 import type { File } from '@/db/model/file'
 import type { TaskInfo } from '@/db/model/taskInfo'
@@ -224,7 +225,9 @@ export function initUserConfig() {
  * 从本地配置文件 user-config 取出数据库与第三方服务所需配置
  */
 export function readyServerDepService() {
+  // TODO: 使用上有缺陷，需要重新设计
   return Promise.all([
+    initTokenUtil(),
     // 1. MySQL
     initTypeORM(),
     refreshPool(),
@@ -238,4 +241,13 @@ export function readyServerDepService() {
 
   // 大多数情况下不需要额外配置
   // 3. redis
+}
+
+export function initTokenUtil() {
+  if (!process.env.TOKEN_PREFIX) {
+    // 生成一个随机的前缀
+    const prefix = Math.random().toString(36).slice(2, 8)
+    process.env.TOKEN_PREFIX = `ep${prefix}`
+    appendFile('.env', `\nTOKEN_PREFIX=${process.env.TOKEN_PREFIX}`)
+  }
 }

@@ -40,7 +40,11 @@ app.listen(serverConfig.port, serverConfig.hostname, async () => {
   // 存储一些配置
   await LocalUserDB.initUserConfig()
   await initUserConfig()
-  await readyServerDepService()
+  try {
+    await readyServerDepService()
+  } catch (err) {
+    console.log('❌ readyServerDepService', err?.message)
+  }
   try {
     await patchTable()
     console.log('😄😄 mysql patch success')

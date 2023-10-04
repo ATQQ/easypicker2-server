@@ -23,7 +23,7 @@ class TokenUtil {
     if (!token) {
       return null
     }
-    const v = await getRedisVal(token)
+    const v = await getRedisVal(process.env.TOKEN_PREFIX + token)
     if (v) {
       return JSON.parse(v)
     }

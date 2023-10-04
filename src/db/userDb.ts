@@ -1,4 +1,6 @@
 import { OkPacket } from 'mysql'
+import { Provide } from 'flash-wolves'
+import { FindOneOptions } from 'typeorm'
 import { query } from '@/lib/dbConnect/mysql'
 import {
   insertTableByModel,
@@ -6,6 +8,8 @@ import {
   updateTableByModel
 } from '@/utils/sqlUtil'
 import { User, USER_STATUS } from './model/user'
+import { AppDataSource } from './index'
+import { User as UserEntity } from './entity'
 
 export function selectUserByAccount(account: string): Promise<User[]> {
   const { sql, params } = selectTableByModel('user', {
@@ -54,4 +58,19 @@ export function selectAllUser(columns: string[]): Promise<User[]> {
     order: 'order by id desc'
   })
   return query<User[]>(sql, ...params)
+}
+
+@Provide()
+export class UserRepository {
+  private userRepository = AppDataSource.getRepository(UserEntity)
+
+  findOneUser(where: FindOneOptions<UserEntity>['where']) {
+    return this.userRepository.findOne({
+      where
+    })
+  }
+
+  insertUser(options: UserEntity) {
+    return this.userRepository.save(options)
+  }
 }
