@@ -26,6 +26,7 @@ import { getUserInfo } from '@/utils/userUtil'
 import { selectTaskInfo } from '@/db/taskInfoDb'
 import { addDownloadAction } from '@/db/actionDb'
 import { ActionType, DownloadStatus } from '@/db/model/action'
+import fileService from '@/service/file'
 
 const router = new Router('file')
 
@@ -98,6 +99,28 @@ router.get(
     })
     res.success({
       files
+    })
+  },
+  {
+    needLogin: true
+  }
+)
+
+/**
+ * 获取文件列表(带下载链接)
+ */
+router.get(
+  'list/withUrl',
+  async (req, res) => {
+    const { id: userId } = await getUserInfo(req)
+    const files = await selectFiles({
+      userId
+    })
+    res.success({
+      files: files.map((v) => ({
+        ...v,
+        download: createDownloadUrl(fileService.getOssKey(v))
+      }))
     })
   },
   {
