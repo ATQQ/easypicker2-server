@@ -4,6 +4,7 @@ import {
   Inject,
   InjectCtx,
   Post,
+  Put,
   ReqBody,
   Response,
   RouterController
@@ -91,5 +92,48 @@ export default class UserController {
       account
     })
     this.tokenService.expiredToken(this.Ctx.req.headers.token as string)
+  }
+
+  @Post('login/code')
+  async loginByCode(@ReqBody() body) {
+    try {
+      const { code, phone } = body
+      const user = await this.userService.loginByCode(phone, code)
+      const token = await this.tokenService.createTokenByUser(user)
+      return {
+        token
+      }
+    } catch (error) {
+      return wrapperCatchError(error)
+    }
+  }
+
+  @Put('password')
+  async updatePassword(@ReqBody() body) {
+    try {
+      const user = await this.userService.updatePassword(body)
+      const token = await this.tokenService.createTokenByUser(user)
+      return {
+        token
+      }
+    } catch (error) {
+      return wrapperCatchError(error)
+    }
+  }
+
+  @Get('power/super', { needLogin: true })
+  async isSuperPower() {
+    const { power, account } = this.Ctx.req.userInfo
+    this.tokenService.refreshToken(this.Ctx.req.headers.token as string)
+    return {
+      power: power === USER_POWER.SUPER,
+      name: account,
+      system: power === USER_POWER.SYSTEM
+    }
+  }
+
+  @Get('login', { needLogin: true })
+  async isLogin() {
+    return !!this.Ctx.req.userInfo
   }
 }

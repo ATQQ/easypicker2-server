@@ -3,11 +3,12 @@ import { Inject, Provide } from 'flash-wolves'
 import { UserError } from '@/constants/errorMsg'
 import { UserRepository } from '@/db/userDb'
 import { rAccount, rMobilePhone, rPassword } from '@/utils/regExp'
-import { encryption, formatDate } from '@/utils/stringUtil'
+import { encryption, formatDate, getUniqueKey } from '@/utils/stringUtil'
 import { User } from '@/db/entity'
 import BehaviorService from './behaviorService'
 import TokenService from './tokenService'
 import { USER_STATUS } from '@/db/model/user'
+import { randomNumStr } from '@/utils/randUtil'
 
 @Provide()
 export default class UserService {
@@ -151,6 +152,100 @@ export default class UserService {
 
       throw UserError.pwd.fault
     }
+    this.checkUserStatus(user)
+    this.behaviorService.add('user', `用户登录 账号:${account} 登录成功`, {
+      account
+    })
+    return this.userRepository.updateUser(user)
+  }
+
+  async loginByCode(phone: string, code: string) {
+    const logPhone = phone?.slice(-4)
+    const v = await this.tokenService.getVerifyCode(phone)
+    if (code !== v) {
+      this.behaviorService.add('user', `验证码登录 验证码错误:${code}`, {
+        code,
+        rightCode: v
+      })
+      throw UserError.code.fault
+    }
+    let user = await this.userRepository.findOneUser({ phone })
+
+    if (!user) {
+      this.behaviorService.add('user', `验证码登录 手机号:${logPhone} 不存在`, {
+        phone: logPhone
+      })
+
+      user = new User()
+      user.phone = phone
+      // 随机生成一个谁也不知的密码,用户后续只能通过找回密码重置
+      user.password = encryption(randomNumStr(6) + getUniqueKey().slice(6))
+      // 默认账号就为手机号
+      user.account = phone
+      user.loginCount = 0
+      // 不存在则直接创建
+      user = await this.userRepository.insertUser(user)
+    }
+
+    this.checkUserStatus(user)
+    this.behaviorService.add('user', `验证码登录 手机号:${logPhone} 登录成功`, {
+      phone: logPhone
+    })
+    this.tokenService.expiredVerifyCode(phone)
+    return this.userRepository.updateUser(user)
+  }
+
+  async updatePassword(payload) {
+    const { code, phone, pwd } = payload
+
+    const logPhone = phone?.slice(-4)
+    const v = await this.tokenService.getVerifyCode(phone)
+    if (code !== v) {
+      this.behaviorService.add(
+        'user',
+        `重置密码 手机号:${logPhone} 验证码不正确: ${code}`,
+        {
+          phone: logPhone,
+          code,
+          rightCode: v
+        }
+      )
+      throw UserError.code.fault
+    }
+    const user = await this.userRepository.findOneUser({ phone })
+
+    if (!user) {
+      this.behaviorService.add('user', `重置密码 手机号:${logPhone} 不存在`, {
+        phone: logPhone
+      })
+      throw UserError.mobile.noExist
+    }
+    if (!rPassword.test(pwd)) {
+      this.behaviorService.add(
+        'user',
+        `重置密码 手机号:${logPhone} 密码格式不正确`,
+        {
+          phone: logPhone
+        }
+      )
+      throw UserError.pwd.fault
+    }
+    user.password = encryption(pwd)
+    this.tokenService.expiredVerifyCode(phone)
+    this.behaviorService.add('user', `重置密码 手机号:${logPhone} 重置成功`, {
+      phone: logPhone
+    })
+
+    this.checkUserStatus(user)
+    return this.userRepository.updateUser(user)
+  }
+
+  /**
+   * 登录前用户状态检查
+   */
+  checkUserStatus(user: User) {
+    const { account } = user
+    // 权限校验
     if (user.status === USER_STATUS.BAN) {
       this.behaviorService.add(
         'user',
@@ -187,11 +282,8 @@ export default class UserService {
       user.openTime = null
     }
 
+    // 校验通过，将会登录
     user.loginCount += 1
     user.loginTime = new Date()
-    this.behaviorService.add('user', `用户登录 账号:${account} 登录成功`, {
-      account
-    })
-    return this.userRepository.updateUser(user)
   }
 }

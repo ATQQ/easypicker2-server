@@ -50,7 +50,7 @@ export default class PublicController {
       new Date().toLocaleString(),
       `获取验证码 手机尾号:${logPhone}  验证码:${code} 成功`
     )
-    setRedisValue(`code-${phone}`, code, 120)
+    setRedisValue(`${process.env.TOKEN_PREFIX}-code-${phone}`, code, 120)
   }
 
   @Get('report/pv', {
