@@ -13,10 +13,8 @@ import {
 import { UserError } from '@/constants/errorMsg'
 import { USER_POWER } from '@/db/model/user'
 import LocalUserDB from '@/utils/user-local-db'
-import UserService from '@/service/userService'
-import BehaviorService from '@/service/behaviorService'
+import { BehaviorService, TokenService, UserService } from '@/service'
 import { wrapperCatchError } from '@/utils/context'
-import TokenService from '@/service/tokenService'
 import { User } from '@/db/entity'
 
 @RouterController('user')

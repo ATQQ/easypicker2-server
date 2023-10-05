@@ -8,7 +8,7 @@ import {
 } from 'flash-wolves'
 import { addBehavior } from '@/db/logDb'
 import { Task } from '@/db/model/task'
-import TaskService from '@/service/taskService'
+import { TaskService } from '@/service'
 
 @RouterController('task')
 export default class TaskController {

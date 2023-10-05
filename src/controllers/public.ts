@@ -5,52 +5,34 @@ import {
   ReqQuery,
   Response,
   RouterController,
-  ReqBody
+  ReqBody,
+  Inject
 } from 'flash-wolves'
 
 import { rMobilePhone } from '@/utils/regExp'
 import { UserError } from '@/constants/errorMsg'
-import { randomNumStr } from '@/utils/randUtil'
-import { setRedisValue } from '@/db/redisDb'
-import { sendMessage } from '@/utils/tencent'
 import { addBehavior, addPvLog } from '@/db/logDb'
 import { selectUserByAccount, selectUserByPhone } from '@/db/userDb'
 import { createDownloadUrl } from '@/utils/qiniuUtil'
 import { qiniuConfig } from '@/config'
+import { PublicService, TokenService } from '@/service'
+import { wrapperCatchError } from '@/utils/context'
 
 @RouterController('public')
 export default class PublicController {
+  @Inject(PublicService)
+  private publicService: PublicService
+
+  @Inject(TokenService)
+  private tokenService: TokenService
+
   @Get('code')
-  getVerCode(@ReqQuery('phone') phone: string, req: FWRequest) {
-    // 手机号不正确,直接返回
-    if (!rMobilePhone.test(phone)) {
-      addBehavior(req, {
-        module: 'public',
-        msg: `获取验证码 手机号:${phone} 格式不正确`,
-        data: {
-          phone
-        }
-      })
-      return Response.failWithError(UserError.mobile.fault)
+  async getVerCode(@ReqQuery('phone') phone: string) {
+    try {
+      await this.publicService.getVerifyCode(phone)
+    } catch (error) {
+      return wrapperCatchError(error)
     }
-    const code = randomNumStr(4)
-    const logPhone = phone.slice(-4)
-    addBehavior(req, {
-      module: 'public',
-      msg: `获取验证码 手机尾号:${logPhone}  验证码:${code} 成功`,
-      data: {
-        phone: logPhone,
-        code
-      }
-    })
-    if (process.env.NODE_ENV !== 'development') {
-      sendMessage(phone, code, 2)
-    }
-    console.log(
-      new Date().toLocaleString(),
-      `获取验证码 手机尾号:${logPhone}  验证码:${code} 成功`
-    )
-    setRedisValue(`${process.env.TOKEN_PREFIX}-code-${phone}`, code, 120)
   }
 
   @Get('report/pv', {

@@ -1,4 +1,4 @@
-import TokenService from '@/service/tokenService'
+import { TokenService } from '@/service'
 /**
  * Token(身份令牌)工具类
  */
