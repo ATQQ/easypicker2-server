@@ -1,6 +1,6 @@
 import { Context, InjectCtx, Provide } from 'flash-wolves'
 import { LogBehaviorData } from '@/db/model/log'
-import { addBehavior } from '@/db/logDb'
+import { addBehavior, addPvLog } from '@/db/logDb'
 
 @Provide()
 export default class BehaviorService {
@@ -13,5 +13,9 @@ export default class BehaviorService {
       msg,
       data
     })
+  }
+
+  addPV(path: string) {
+    return addPvLog(this.Ctx.req, path)
   }
 }
