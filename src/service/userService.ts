@@ -40,10 +40,10 @@ export default class UserService {
       throw UserError.pwd.fault
     }
     // 检查账号是否存在
-    let user = await this.userRepository.findOneUser({ account })
+    let user = await this.userRepository.findOne({ account })
     // 账号是手机号格式，那么该手机号不能已经是被注册的
     if (rMobilePhone.test(account) && !user) {
-      user = await this.userRepository.findOneUser({ phone: account })
+      user = await this.userRepository.findOne({ phone: account })
     }
     // 存在返回错误
     if (user) {
@@ -74,10 +74,10 @@ export default class UserService {
         throw UserError.code.fault
       }
       // 检查手机号是否存在
-      user = await this.userRepository.findOneUser({ phone })
+      user = await this.userRepository.findOne({ phone })
       // 检查该手机号是否出现在账号中
       if (!user) {
-        user = await this.userRepository.findOneUser({ account: phone })
+        user = await this.userRepository.findOne({ account: phone })
       }
       // 存在返回错误
       if (user) {
@@ -104,7 +104,7 @@ export default class UserService {
       u.phone = phone
     }
 
-    return this.userRepository.insertUser(u)
+    return this.userRepository.insert(u)
   }
 
   async login(account: string, pwd: string) {
@@ -124,7 +124,7 @@ export default class UserService {
     // 规避注册时逻辑导致的问题
 
     // 先当做账号处理
-    let user = await this.userRepository.findOneUser({ account })
+    let user = await this.userRepository.findOne({ account })
     // 不存在&&不是手机号
     if (!user && !isPhone) {
       this.behaviorService.add('user', `用户登录 账号:${account} 不存在`, {
@@ -135,7 +135,7 @@ export default class UserService {
 
     // 不存在&&是手机号
     if (!user && isPhone) {
-      user = await this.userRepository.findOneUser({ phone: account })
+      user = await this.userRepository.findOne({ phone: account })
     }
     if (!user) {
       this.behaviorService.add('user', `用户登录 账号:${account} 不存在`, {
@@ -155,7 +155,7 @@ export default class UserService {
     this.behaviorService.add('user', `用户登录 账号:${account} 登录成功`, {
       account
     })
-    return this.userRepository.updateUser(user)
+    return this.userRepository.update(user)
   }
 
   async loginByCode(phone: string, code: string) {
@@ -168,7 +168,7 @@ export default class UserService {
       })
       throw UserError.code.fault
     }
-    let user = await this.userRepository.findOneUser({ phone })
+    let user = await this.userRepository.findOne({ phone })
 
     if (!user) {
       this.behaviorService.add('user', `验证码登录 手机号:${logPhone} 不存在`, {
@@ -183,7 +183,7 @@ export default class UserService {
       user.account = phone
       user.loginCount = 0
       // 不存在则直接创建
-      user = await this.userRepository.insertUser(user)
+      user = await this.userRepository.insert(user)
     }
 
     this.checkUserStatus(user)
@@ -191,7 +191,7 @@ export default class UserService {
       phone: logPhone
     })
     this.tokenService.expiredVerifyCode(phone)
-    return this.userRepository.updateUser(user)
+    return this.userRepository.update(user)
   }
 
   async updatePassword(payload) {
@@ -211,7 +211,7 @@ export default class UserService {
       )
       throw UserError.code.fault
     }
-    const user = await this.userRepository.findOneUser({ phone })
+    const user = await this.userRepository.findOne({ phone })
 
     if (!user) {
       this.behaviorService.add('user', `重置密码 手机号:${logPhone} 不存在`, {
@@ -236,7 +236,7 @@ export default class UserService {
     })
 
     this.checkUserStatus(user)
-    return this.userRepository.updateUser(user)
+    return this.userRepository.update(user)
   }
 
   /**

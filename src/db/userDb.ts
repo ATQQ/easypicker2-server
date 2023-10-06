@@ -8,7 +8,7 @@ import {
   updateTableByModel
 } from '@/utils/sqlUtil'
 import { User, USER_STATUS } from './model/user'
-import { AppDataSource } from './index'
+import { AppDataSource, BaseRepository } from './index'
 import { User as UserEntity } from './entity'
 
 export function selectUserByAccount(account: string): Promise<User[]> {
@@ -61,20 +61,8 @@ export function selectAllUser(columns: string[]): Promise<User[]> {
 }
 
 @Provide()
-export class UserRepository {
-  private userRepository = AppDataSource.getRepository(UserEntity)
+export class UserRepository extends BaseRepository<UserEntity> {
+  protected repository = AppDataSource.getRepository(UserEntity)
 
-  findOneUser(where: FindOneOptions<UserEntity>['where']) {
-    return this.userRepository.findOne({
-      where
-    })
-  }
-
-  insertUser(options: UserEntity) {
-    return this.userRepository.save(options)
-  }
-
-  updateUser(options: UserEntity) {
-    return this.userRepository.save(options)
-  }
+  protected entityName = UserEntity.name
 }

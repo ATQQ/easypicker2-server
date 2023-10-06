@@ -1,4 +1,6 @@
 import { OkPacket } from 'mysql'
+import { Provide } from 'flash-wolves'
+import { FindOneOptions } from 'typeorm'
 import { query } from '@/lib/dbConnect/mysql'
 import {
   insertTableByModel,
@@ -8,6 +10,8 @@ import {
 import { getUniqueKey } from '@/utils/stringUtil'
 import { BOOLEAN } from './model/public'
 import { TaskInfo } from './model/taskInfo'
+import { TaskInfo as TaskInfoEntity } from './entity'
+import { AppDataSource, BaseRepository } from '.'
 
 export function selectTaskInfo(
   options: V2Array<TaskInfo>,
@@ -38,4 +42,13 @@ export function insertTaskInfo(taskInfo: TaskInfo) {
 export function updateTaskInfo(taskInfo: TaskInfo, q: TaskInfo) {
   const { sql, params } = updateTableByModel('task_info', taskInfo, q)
   return query<OkPacket>(sql, ...params)
+}
+
+@Provide()
+export class TaskInfoRepository extends BaseRepository<TaskInfoEntity> {
+  protected repository = AppDataSource.getRepository(TaskInfoEntity)
+
+  protected entityName = TaskInfoEntity.name
+
+  // 这里存放独有方法
 }
