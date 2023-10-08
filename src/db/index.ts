@@ -1,4 +1,5 @@
 import { DataSource, FindOneOptions, Repository } from 'typeorm'
+import type { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
 import { entities } from './entity'
 import LocalUserDB from '@/utils/user-local-db'
 
@@ -53,5 +54,17 @@ export class BaseRepository<T> {
 
   update(options: T) {
     return this.repository.save(options)
+  }
+
+  updateSpecifyFields(
+    where: FindOneOptions<T>['where'],
+    value: QueryDeepPartialEntity<T>
+  ) {
+    return this.repository
+      .createQueryBuilder(this.entityName)
+      .update()
+      .set(value)
+      .where(where)
+      .execute()
   }
 }
