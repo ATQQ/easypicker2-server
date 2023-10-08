@@ -31,8 +31,6 @@ export default class TaskInfoController {
     @ReqParams('key') key: string,
     req: FWRequest
   ) {
-    // TODO：未校验用户权限，存在水平越权漏洞，先观察一段时间看看(记录可回溯)
     return this.taskInfoService.delTipImage({ uid, name, key })
-    // deleteObjByKey(getTipImageKey(key, name, uid), req)
   }
 }

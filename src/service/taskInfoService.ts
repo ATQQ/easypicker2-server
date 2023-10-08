@@ -2,8 +2,7 @@ import { Context, Inject, InjectCtx, Provide } from 'flash-wolves'
 import { In } from 'typeorm'
 import { TaskInfoRepository } from '@/db/taskInfoDb'
 import { TaskRepository } from '@/db/taskDb'
-// TODO：这里的依赖注入有问题，需要优化
-import QiniuService from '@/service/qiniuService'
+import { BehaviorService, QiniuService } from './index'
 
 @Provide()
 export default class TaskInfoService {
@@ -18,6 +17,9 @@ export default class TaskInfoService {
 
   @Inject(QiniuService)
   private qiniuService: QiniuService
+
+  @Inject(BehaviorService)
+  private behaviorService: BehaviorService
 
   async getUseFullTemplate(taskKey: string) {
     const user = this.ctx.req.userInfo
@@ -51,9 +53,17 @@ export default class TaskInfoService {
     return data
   }
 
-  async delTipImage(payload: { uid: number; name: string; key: string }) {
+  delTipImage(payload: { uid: number; name: string; key: string }) {
     const { uid, name, key } = payload
     const tipImageKey = this.qiniuService.getTipImageKey(key, name, uid)
-    console.log(tipImageKey)
+    this.behaviorService.add(
+      'taskInfo',
+      `${this.ctx.req.userInfo.account} 删除提示图片: ${tipImageKey}`,
+      {
+        tipImageKey
+      }
+    )
+    // TODO：未校验用户权限，存在水平越权漏洞，先观察一段时间看看(记录可回溯)
+    this.qiniuService.deleteObjByKey(tipImageKey)
   }
 }
