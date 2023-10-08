@@ -1,6 +1,5 @@
 import { OkPacket } from 'mysql'
 import { Provide } from 'flash-wolves'
-import { FindOneOptions } from 'typeorm'
 import { query } from '@/lib/dbConnect/mysql'
 import {
   deleteTableByModel,

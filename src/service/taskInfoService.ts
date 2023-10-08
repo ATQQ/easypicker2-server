@@ -4,6 +4,8 @@ import { TaskInfoRepository } from '@/db/taskInfoDb'
 import { TaskRepository } from '@/db/taskDb'
 import { BehaviorService, QiniuService } from './index'
 import { getUniqueKey } from '@/utils/stringUtil'
+import { TaskInfo } from '@/db/entity'
+import { BOOLEAN } from '@/db/model/public'
 
 @Provide()
 export default class TaskInfoService {
@@ -170,5 +172,20 @@ export default class TaskInfoService {
         )
       }
     })
+  }
+
+  createTaskInfo(taskInfo: TaskInfo) {
+    const data: Partial<TaskInfo> = {
+      limitPeople: BOOLEAN.FALSE,
+      template: '',
+      rewrite: BOOLEAN.FALSE,
+      format: '',
+      info: JSON.stringify(['姓名']),
+      shareKey: getUniqueKey(),
+      ddl: null
+    }
+    Object.assign(taskInfo, data)
+
+    return this.taskInfoRepository.insert(taskInfo)
   }
 }

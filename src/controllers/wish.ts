@@ -19,7 +19,7 @@ import { addAction, findAction, findActionCount } from '@/db/actionDb'
 import { ActionType } from '@/db/model/action'
 
 const adminPower = { needLogin: true, userPower: USER_POWER.SUPER }
-// TODO：mongoDB支持
+// TODO：mongoDB支持 typeorm
 @RouterController('wish')
 export default class WishController {
   /**

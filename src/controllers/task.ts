@@ -6,11 +6,13 @@ import {
   ReqBody,
   Inject
 } from 'flash-wolves'
-import { addBehavior } from '@/db/logDb'
-import { Task } from '@/db/model/task'
-import { TaskService } from '@/service'
+import { BehaviorService, TaskService } from '@/service'
+import { Task } from '@/db/entity'
 
-@RouterController('task')
+const needLogin = {
+  needLogin: true
+}
+@RouterController('task', needLogin)
 export default class TaskController {
   @InjectCtx()
   private Ctx: Context
@@ -18,28 +20,29 @@ export default class TaskController {
   @Inject(TaskService)
   private taskService: TaskService
 
+  @Inject(BehaviorService)
+  private behaviorService: BehaviorService
+
   /**
    * 创建任务
    */
-  @Post('create', {
-    needLogin: true
-  })
+  @Post('create')
   async createTask(@ReqBody() payload) {
     const { name, category } = payload
     const { id, account: logAccount } = this.Ctx.req.userInfo
-    const options: Task = {
-      name,
-      categoryKey: category || '',
-      userId: id
-    }
-    await this.taskService.createTask(options)
-    addBehavior(this.Ctx.req, {
-      module: 'task',
-      msg: `创建任务 用户:${logAccount} 任务:${name} 成功`,
-      data: {
+    const task = new Task()
+    task.name = name
+    task.categoryKey = category || ''
+    task.userId = id
+
+    await this.taskService.createTask(task)
+    this.behaviorService.add(
+      'task',
+      `创建任务 用户:${logAccount} 任务:${name} 成功`,
+      {
         account: logAccount,
         name
       }
-    })
+    )
   }
 }
