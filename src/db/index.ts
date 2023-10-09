@@ -1,4 +1,9 @@
-import { DataSource, FindOneOptions, Repository } from 'typeorm'
+import {
+  DataSource,
+  FindOneOptions,
+  FindOptionsOrder,
+  Repository
+} from 'typeorm'
 import type { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
 import { entities } from './entity'
 import LocalUserDB from '@/utils/user-local-db'
@@ -46,6 +51,18 @@ export class BaseRepository<T> {
       .select(columns.map((v) => `${this.entityName}.${String(v)}`))
       .where(where)
       .getMany()
+  }
+
+  findWithLimitCount(
+    where: FindOneOptions<T>['where'],
+    limit: number,
+    order?: FindOptionsOrder<T>
+  ) {
+    return this.repository.find({
+      where,
+      take: limit,
+      order
+    })
   }
 
   insert(options: T) {

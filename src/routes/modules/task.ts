@@ -1,61 +1,12 @@
 import { Router } from 'flash-wolves'
-import { selectFilesLimitCount } from '@/db/fileDb'
-import { addBehavior, getClientIp } from '@/db/logDb'
+import { addBehavior } from '@/db/logDb'
 import { Task } from '@/db/model/task'
-import { deleteTask, insertTask, selectTasks, updateTask } from '@/db/taskDb'
+import { selectTasks, updateTask } from '@/db/taskDb'
 
 import { getUserInfo } from '@/utils/userUtil'
 import { taskError } from '@/constants/errorMsg'
 
 const router = new Router('task')
-
-/**
- * 获取任务列表
- */
-router.get(
-  '',
-  async (req, res) => {
-    const { id, account: logAccount } = await getUserInfo(req)
-    const data = await selectTasks({
-      userId: id,
-      del: 0
-    })
-
-    const tasks = data.map((t) => {
-      const { name, category_key: category, k: key } = t
-      return {
-        name,
-        category,
-        key,
-        recentLog: []
-      }
-    })
-    const recentSubmitLogCount = 4
-    for (const t of tasks) {
-      const files = await selectFilesLimitCount(
-        {
-          taskKey: t.key
-        },
-        recentSubmitLogCount
-      )
-      t.recentLog = files.map((v) => ({ filename: v.name, date: v.date }))
-    }
-
-    addBehavior(req, {
-      module: 'task',
-      msg: `获取任务列表 用户:${logAccount}`,
-      data: {
-        account: logAccount
-      }
-    })
-    res.success({
-      tasks
-    })
-  },
-  {
-    needLogin: true
-  }
-)
 
 /**
  * 获取任务详细信息(名称/分类)

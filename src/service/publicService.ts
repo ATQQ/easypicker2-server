@@ -1,10 +1,9 @@
 import { Context, Inject, InjectCtx, Provide, Response } from 'flash-wolves'
-import BehaviorService from './behaviorService'
 import { rMobilePhone } from '@/utils/regExp'
 import { UserError } from '@/constants/errorMsg'
 import { randomNumStr } from '@/utils/randUtil'
 import { sendMessage } from '@/utils/tencent'
-import TokenService from './tokenService'
+import { TokenService, BehaviorService } from '@/service'
 import { UserRepository } from '@/db/userDb'
 import { createDownloadUrl } from '@/utils/qiniuUtil'
 import { qiniuConfig } from '@/config'
@@ -78,10 +77,10 @@ export default class PublicService {
 
       return Response.failWithError(UserError.mobile.fault)
     }
-    let user = await this.userRepository.findOneUser({ phone })
+    let user = await this.userRepository.findOne({ phone })
 
     if (!user) {
-      user = await this.userRepository.findOneUser({ account: phone })
+      user = await this.userRepository.findOne({ account: phone })
     }
     if (user) {
       this.behaviorService.add(

@@ -1,11 +1,20 @@
 import QiniuService from './qiniuService'
 import TaskInfoService from './taskInfoService'
+import BehaviorService from './behaviorService'
+import TokenService from './tokenService'
+import UserService from './userService'
+import TaskService from './taskService'
+import PublicService from './publicService'
+import FileService from './fileService'
 
-export { default as BehaviorService } from './behaviorService'
-export { default as TokenService } from './tokenService'
-export { default as UserService } from './userService'
-export { default as TaskService } from './taskService'
-export { default as PublicService } from './publicService'
-
-// TODO: 编译问题，暂时这样解决
-export { QiniuService, TaskInfoService }
+// TODO: 编译问题
+export {
+  QiniuService,
+  TaskInfoService,
+  BehaviorService,
+  UserService,
+  TaskService,
+  TokenService,
+  PublicService,
+  FileService
+}

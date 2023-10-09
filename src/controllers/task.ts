@@ -4,7 +4,8 @@ import {
   Context,
   InjectCtx,
   ReqBody,
-  Inject
+  Inject,
+  Get
 } from 'flash-wolves'
 import { BehaviorService, TaskService } from '@/service'
 import { Task } from '@/db/entity'
@@ -44,5 +45,11 @@ export default class TaskController {
         name
       }
     )
+  }
+
+  @Get('')
+  async getTasks() {
+    const { id, account } = this.Ctx.req.userInfo
+    return this.taskService.getTasks(id, account)
   }
 }
