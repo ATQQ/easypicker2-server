@@ -6,6 +6,7 @@ import UserService from './userService'
 import TaskService from './taskService'
 import PublicService from './publicService'
 import FileService from './fileService'
+import CategoryService from './categoryService'
 
 // TODO: 编译问题
 export {
@@ -16,5 +17,6 @@ export {
   TaskService,
   TokenService,
   PublicService,
-  FileService
+  FileService,
+  CategoryService
 }

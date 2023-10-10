@@ -42,6 +42,12 @@ export class BaseRepository<T> {
     })
   }
 
+  findMany(where: FindOneOptions<T>['where']) {
+    return this.repository.find({
+      where
+    })
+  }
+
   findWithSpecifyColumn(
     where: FindOneOptions<T>['where'],
     columns: (keyof T)[]

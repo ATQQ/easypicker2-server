@@ -12,11 +12,10 @@ export class Category {
   userId: number
 
   @Column('varchar', {
-    name: 'category_key',
     length: 128,
     comment: '分类唯一标识'
   })
-  categoryKey: string
+  k: string
 
   @Column('tinyint', { default: 0 })
   del: number

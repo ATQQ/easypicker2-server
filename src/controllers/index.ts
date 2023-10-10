@@ -9,6 +9,7 @@ import User from './user'
 import ConfigService from './config'
 import Action from './action'
 import Task from './task'
+import Category from './category'
 
 export default [
   Wish,
@@ -21,5 +22,6 @@ export default [
   User,
   ConfigService,
   Action,
-  Task
+  Task,
+  Category
 ]
