@@ -5,7 +5,7 @@
   "description": "",
   "main": "src/index.ts",
   "scripts": {
-    "dev": "cross-env NODE_ENV=development run-p build:watch dev:server",
+    "dev": "cross-env NODE_ENV=development FW_LOGGING=true run-p build:watch dev:server",
     "dev:server": "nodemon dist/index.js --ignore 'upload/*' --ignore user-config.json",
     "build:watch": "tsup --watch",
     "start:ts": "esno ./src/index.ts",

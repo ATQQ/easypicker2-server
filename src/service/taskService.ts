@@ -2,10 +2,9 @@ import { Context, Inject, InjectCtx, Provide } from 'flash-wolves'
 import { TaskRepository } from '@/db/taskDb'
 import { Task, TaskInfo } from '@/db/entity'
 import { getUniqueKey } from '@/utils/stringUtil'
-import { BehaviorService, FileService, TaskInfoService } from '@/service'
+import { BehaviorService, TaskInfoService } from '@/service'
 import { BOOLEAN } from '@/db/model/public'
-
-console.log(FileService)
+import FileService from './fileService'
 
 @Provide()
 export default class TaskService {
@@ -68,6 +67,6 @@ export default class TaskService {
       account
     })
 
-    return tasks
+    return { tasks }
   }
 }
