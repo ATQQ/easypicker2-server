@@ -5,10 +5,15 @@ import {
   InjectCtx,
   ReqBody,
   Inject,
-  Get
+  Get,
+  ReqParams,
+  Delete,
+  Put
 } from 'flash-wolves'
+import { updateTask } from '@/db/taskDb'
 import { BehaviorService, TaskService } from '@/service'
 import { Task } from '@/db/entity'
+import { wrapperCatchError } from '@/utils/context'
 
 const needLogin = {
   needLogin: true
@@ -51,5 +56,24 @@ export default class TaskController {
   async getTasks() {
     const { id, account } = this.Ctx.req.userInfo
     return this.taskService.getTasks(id, account)
+  }
+
+  @Get('/:key', { needLogin: false })
+  getTaskByKey(@ReqParams('key') key: string) {
+    try {
+      return this.taskService.getTaskByKey(key)
+    } catch (error) {
+      return wrapperCatchError(error)
+    }
+  }
+
+  @Delete('/:key')
+  delTask(@ReqParams('key') key: string) {
+    return this.taskService.delTask(key)
+  }
+
+  @Put('/:key')
+  updateTask(@ReqParams('key') key: string, @ReqBody() payload) {
+    return this.taskService.updateTask(key, payload)
   }
 }

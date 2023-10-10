@@ -5,6 +5,7 @@ import { getUniqueKey } from '@/utils/stringUtil'
 import { BehaviorService, TaskInfoService } from '@/service'
 import { BOOLEAN } from '@/db/model/public'
 import FileService from './fileService'
+import { taskError } from '@/constants/errorMsg'
 
 @Provide()
 export default class TaskService {
@@ -68,5 +69,87 @@ export default class TaskService {
     })
 
     return { tasks }
+  }
+
+  async getTaskByKey(key: string) {
+    const task = await this.taskRepository.findOne({
+      k: key,
+      del: BOOLEAN.FALSE
+    })
+
+    if (!task) {
+      this.behaviorService.add('task', '获取任务详细信息, 任务不存在', {
+        key
+      })
+      throw taskError.noExist
+    }
+    this.behaviorService.add('task', `获取任务详细信息, ${task.name}`, {
+      name: task.name
+    })
+    return {
+      name: task.name,
+      category: task.categoryKey
+    }
+  }
+
+  async delTask(key: string) {
+    const { id, account: logAccount } = this.Ctx.req.userInfo
+    const task = await this.taskRepository.findOne({
+      userId: id,
+      k: key,
+      del: BOOLEAN.FALSE
+    })
+
+    if (task) {
+      // 首次删除，移动至回收站
+      if (task.categoryKey !== 'trash') {
+        task.categoryKey = 'trash'
+      } else {
+        // 二次删除，真滴移除（软删）
+        task.del = BOOLEAN.TRUE
+      }
+      await this.taskRepository.update(task)
+    }
+
+    // 不删除该任务下已经提交的文件
+    const logTaskName = task?.name
+    this.behaviorService.add(
+      'task',
+      `删除指定任务 用户:${logAccount} 任务名:${logTaskName}`,
+      {
+        account: logAccount,
+        name: logTaskName
+      }
+    )
+  }
+
+  async updateTask(key: string, payload: { name?: string; category?: string }) {
+    const { name, category } = payload
+    const { id, account: logAccount } = this.Ctx.req.userInfo
+
+    const task = await this.taskRepository.findOne({
+      userId: id,
+      k: key
+    })
+    if (task) {
+      if (name) {
+        task.name = name
+      }
+      if (category !== undefined) {
+        task.categoryKey = category
+      }
+      if (name || category !== undefined) {
+        await this.taskRepository.update(task)
+      }
+    }
+    this.behaviorService.add(
+      'task',
+      `更新任务分类/名称 用户:${logAccount} 原:${task.name} 新:${task.name}`,
+      {
+        account: logAccount,
+        oldName: task.name,
+        newName: task.name
+      }
+    )
   }
 }
