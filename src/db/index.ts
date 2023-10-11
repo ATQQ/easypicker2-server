@@ -2,6 +2,7 @@ import {
   DataSource,
   FindOneOptions,
   FindOptionsOrder,
+  FindOptionsWhere,
   Repository
 } from 'typeorm'
 import type { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
@@ -89,5 +90,9 @@ export class BaseRepository<T> {
       .set(value)
       .where(where)
       .execute()
+  }
+
+  delete(options: FindOptionsWhere<T>) {
+    return this.repository.delete(options)
   }
 }

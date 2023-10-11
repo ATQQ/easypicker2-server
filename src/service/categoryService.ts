@@ -4,6 +4,7 @@ import BehaviorService from './behaviorService'
 import { CategoryError } from '@/constants/errorMsg'
 import { Category } from '@/db/entity'
 import { getUniqueKey } from '@/utils/stringUtil'
+import { TaskRepository } from '@/db/taskDb'
 
 @Provide()
 export default class CategoryService {
@@ -12,6 +13,9 @@ export default class CategoryService {
 
   @Inject(CategoryRepository)
   private categoryRepository: CategoryRepository
+
+  @Inject(TaskRepository)
+  private taskRepository: TaskRepository
 
   @Inject(BehaviorService)
   private behaviorService: BehaviorService
@@ -48,5 +52,53 @@ export default class CategoryService {
     category.name = name
     category.k = getUniqueKey()
     await this.categoryRepository.insert(category)
+  }
+
+  async getList() {
+    const { id: userId, account: logAccount } = this.ctx.req.userInfo
+    this.behaviorService.add('category', `获取分类列表 用户:${logAccount}`, {
+      account: logAccount
+    })
+
+    const categories = await this.categoryRepository.findMany({
+      userId
+    })
+    categories.forEach((v) => {
+      delete v.userId
+    })
+    return {
+      categories
+    }
+  }
+
+  async deleteCategory(key: string) {
+    const { id: userId, account: logAccount } = this.ctx.req.userInfo
+    const c = await this.categoryRepository.findOne({
+      userId,
+      k: key
+    })
+    if (c) {
+      await this.categoryRepository.delete({
+        id: c.id
+      })
+      // 删掉的分类下的所有任务变为默认分类
+      await this.taskRepository.updateSpecifyFields(
+        {
+          categoryKey: key
+        },
+        {
+          categoryKey: 'default'
+        }
+      )
+      // 记录日志
+      this.behaviorService.add(
+        'category',
+        `删除指定分类 用户:${logAccount} 名称:${c.name}`,
+        {
+          account: logAccount,
+          name: c.name
+        }
+      )
+    }
   }
 }

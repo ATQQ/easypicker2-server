@@ -1,9 +1,12 @@
 import {
   Context,
+  Delete,
+  Get,
   Inject,
   InjectCtx,
   Post,
   ReqBody,
+  ReqParams,
   RouterController
 } from 'flash-wolves'
 import { CategoryService } from '@/service'
@@ -17,12 +20,22 @@ export default class CategoryController {
   @Inject(CategoryService)
   private categoryService: CategoryService
 
-  @Post('create')
-  createCategory(@ReqBody('name') name: string) {
+  @Post('/create')
+  async createCategory(@ReqBody('name') name: string) {
     try {
-      return this.categoryService.createCategory(name)
+      await this.categoryService.createCategory(name)
     } catch (error) {
       return wrapperCatchError(error)
     }
+  }
+
+  @Get('')
+  getList() {
+    return this.categoryService.getList()
+  }
+
+  @Delete('/:key')
+  deleteCategory(@ReqParams('key') key: string) {
+    return this.categoryService.deleteCategory(key)
   }
 }

@@ -59,9 +59,10 @@ export default class TaskController {
   }
 
   @Get('/:key', { needLogin: false })
-  getTaskByKey(@ReqParams('key') key: string) {
+  async getTaskByKey(@ReqParams('key') key: string) {
     try {
-      return this.taskService.getTaskByKey(key)
+      const data = await this.taskService.getTaskByKey(key)
+      return data
     } catch (error) {
       return wrapperCatchError(error)
     }
