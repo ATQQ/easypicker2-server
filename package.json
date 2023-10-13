@@ -23,7 +23,7 @@
     "@swc/core": "^1.3.68",
     "cross-env": "^7.0.3",
     "dayjs": "^1.11.7",
-    "flash-wolves": "^0.4.0",
+    "flash-wolves": "^0.4.1",
     "formidable": "^2.0.1",
     "mongodb": "^3.7.3",
     "mysql": "^2.18.1",

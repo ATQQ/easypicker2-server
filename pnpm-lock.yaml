@@ -15,8 +15,8 @@ dependencies:
     specifier: ^1.11.7
     version: 1.11.7
   flash-wolves:
-    specifier: ^0.4.0
-    version: 0.4.0
+    specifier: ^0.4.1
+    version: 0.4.1
   formidable:
     specifier: ^2.0.1
     version: 2.0.1
@@ -1137,6 +1137,11 @@ packages:
 
   /color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
+
+  /colors@1.4.0:
+    resolution: {integrity: sha512-a+UqTh4kgZg/SlGvfbzDHpgRu7AAQOmmqRHJnxhRZICKFUT91brVhNNt58CMWU9PsBbv3PDCZUHbVxuDiH2mtA==}
+    engines: {node: '>=0.1.90'}
+    dev: false
 
   /combined-stream@1.0.8:
     resolution: {integrity: sha512-FQN4MRfuJeHf7cBbBMJFXhKSDq+2kAArBlmRBvcvFE5BB1HZKXtSFASDhdlz9zOYwxh8lDdnvmMOe/+5cdoEdg==}
@@ -2307,9 +2312,10 @@ packages:
       locate-path: 2.0.0
     dev: true
 
-  /flash-wolves@0.4.0:
-    resolution: {integrity: sha512-jdxIFYMnMAJkeBlSbIzVitPOhoA6glSGuGwSENS/Oum/UCTUisxr+zEoV8ZEH+7zM/4NjcOMdjKG4xa5fCCBkQ==}
+  /flash-wolves@0.4.1:
+    resolution: {integrity: sha512-kFZ9ZW2dWuXNBK/TWWtvDvsZ4hZbvrdiVez84q83fDVjzzLzgl1I0Cy4S3dcYKH5lCcyUYHb5GS3keF13AGurA==}
     dependencies:
+      colors: 1.4.0
       dotenv: 16.3.1
       portfinder: 1.0.28
     transitivePeerDependencies:
