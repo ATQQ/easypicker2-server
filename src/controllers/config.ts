@@ -103,7 +103,11 @@ export default class UserController {
       }
     )
     if (data.type === 'mysql') {
-      await initTypeORM()
+      try {
+        await initTypeORM()
+      } catch (error) {
+        // empty
+      }
       await refreshPool()
     }
     if (data.type === 'qiniu') {

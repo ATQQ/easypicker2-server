@@ -5,7 +5,7 @@ import { USER_POWER } from '@/db/model/user'
 import { getUserInfo } from '@/utils/userUtil'
 import tokenUtil from '@/utils/tokenUtil'
 
-const systemWhiteList = ['/user/logout']
+const systemWhiteList = ['/user/logout', '/user/power/super']
 
 const interceptor: Middleware = async (req, res) => {
   const { meta } = req.route
@@ -68,21 +68,25 @@ const interceptor: Middleware = async (req, res) => {
         }
       })
       res.failWithError(publicError.request.notLogin)
+      return
     }
 
     // 未登录
     if (!loginUserInfo) {
       res.failWithError(publicError.request.notLogin)
+      return
     }
     // 传递登录用户信息
     req.userInfo = loginUserInfo
 
-    // 异步Check，不阻塞逻辑
-    tokenUtil.checkOnlineUser(
-      loginUserInfo.account,
-      loginUserInfo,
-      req.headers.token as string
-    )
+    if (loginUserInfo?.power !== USER_POWER.SYSTEM) {
+      // 异步Check，不阻塞逻辑
+      tokenUtil.checkOnlineUser(
+        loginUserInfo.account,
+        loginUserInfo,
+        req.headers.token as string
+      )
+    }
   }
 }
 export default interceptor
