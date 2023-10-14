@@ -247,7 +247,7 @@ export function initTokenUtil() {
   if (!process.env.TOKEN_PREFIX) {
     // 生成一个随机的前缀
     const prefix = Math.random().toString(36).slice(2, 8)
-    process.env.TOKEN_PREFIX = `ep${prefix}`
+    process.env.TOKEN_PREFIX = `ep-token-${prefix}`
     appendFile('.env.local', `\nTOKEN_PREFIX=${process.env.TOKEN_PREFIX}`)
   }
 }
