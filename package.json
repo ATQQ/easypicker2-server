@@ -14,7 +14,8 @@
     "test": "vitest",
     "deploy": "zx scripts/deploy/env-prod.mjs",
     "deploy:test": "zx scripts/deploy/env-test.mjs",
-    "build": "tsup"
+    "build": "tsup",
+    "upload:oss": "sh scripts/upload.sh"
   },
   "keywords": [],
   "author": "ATQQ",
