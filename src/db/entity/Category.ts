@@ -17,6 +17,6 @@ export class Category {
   })
   k: string
 
-  @Column('tinyint', { default: 0 })
-  del: number
+  // @Column('tinyint', { default: 0 })
+  // del: number
 }
