@@ -80,7 +80,7 @@ export default class WishController {
   }
 
   @Put('update/:id', adminPower)
-  async updateWish(@ReqParams('id') id: string, @ReqBody() body: Wish) {
+  async updateWishData(@ReqParams('id') id: string, @ReqBody() body: Wish) {
     const { title, des } = body
     await updateWish({ id }, { $set: { title, des } })
   }
