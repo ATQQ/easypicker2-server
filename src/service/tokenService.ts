@@ -35,6 +35,10 @@ export default class TokenService {
     expiredRedisKey(this.realToken(token))
   }
 
+  expiredRedisKey(key: string) {
+    expiredRedisKey(key)
+  }
+
   async getAllTokens(account: string): Promise<string[]> {
     const onlineTokenKey = this.onlineTokenKey(account)
     const str = await getRedisVal(onlineTokenKey)
@@ -125,4 +129,20 @@ export default class TokenService {
       )
     }
   }, 500)
+
+  async checkAllToken(onlineTokens: string[], account: string) {
+    // 检查当前账号所有token
+    const values = await Promise.all(
+      onlineTokens.map((token) => getRedisVal(token))
+    )
+    const newTokenList = onlineTokens.filter((_, idx) => {
+      return values[idx]
+    })
+    if (newTokenList.length !== onlineTokens.length) {
+      await setRedisValue(
+        this.onlineTokenKey(account),
+        JSON.stringify(newTokenList)
+      )
+    }
+  }
 }
