@@ -4,7 +4,11 @@ import {
   ReqBody,
   FWRequest,
   Put,
-  Response
+  Response,
+  Get,
+  InjectCtx,
+  Context,
+  Inject
 } from 'flash-wolves'
 import { addBehavior } from '@/db/logDb'
 import { selectFiles, updateFileInfo } from '@/db/fileDb'
@@ -18,6 +22,7 @@ import { qiniuConfig } from '@/config'
 import { fileError } from '@/constants/errorMsg'
 import type { User } from '@/db/model/user'
 import { ReqUserInfo } from '@/decorator'
+import { FileService } from '@/service'
 
 const power = {
   needLogin: true
@@ -25,6 +30,12 @@ const power = {
 
 @RouterController('file')
 export default class FileController {
+  @InjectCtx()
+  private ctx: Context
+
+  @Inject(FileService)
+  private fileService: FileService
+
   /**
    * 获取图片的预览图
    */
@@ -107,5 +118,22 @@ export default class FileController {
       module: 'file',
       msg: `重命名文件成功 用户:${user.account} 文件id:${id} 新文件名:${newName}`
     })
+  }
+
+  /**
+   * 获取文件列表(带下载链接)
+   */
+  @Get('/list/withUrl', power)
+  async listWithUrl() {
+    const { id: userId } = this.ctx.req.userInfo
+    const files = await selectFiles({
+      userId
+    })
+    return {
+      files: files.map((v) => ({
+        ...v,
+        download: createDownloadUrl(this.fileService.getOssKey(v))
+      }))
+    }
   }
 }
