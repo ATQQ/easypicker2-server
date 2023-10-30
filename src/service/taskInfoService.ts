@@ -84,7 +84,7 @@ export default class TaskInfoService {
       tip
     } = taskInfo || {}
     let { ddl } = taskInfo || {}
-    if (ddl) {
+    if (ddl && ddl?.getTime) {
       ddl = new Date(ddl.getTime() + 8 * 60 * 60 * 1000)
     }
     this.taskRepository
