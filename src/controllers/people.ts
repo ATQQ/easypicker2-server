@@ -6,17 +6,19 @@ import {
   FWRequest,
   Get,
   Put,
-  Response
+  InjectCtx,
+  Context,
+  Inject
 } from 'flash-wolves'
 import { selectTasks } from '@/db/taskDb'
 import { deletePeople, insertPeople, selectPeople } from '@/db/peopleDb'
 import { addBehavior, addErrorLog } from '@/db/logDb'
 import { getUserInfo } from '@/utils/userUtil'
 import { selectTaskInfo } from '@/db/taskInfoDb'
-import { peopleError } from '@/constants/errorMsg'
-import { People } from '@/db/model/people'
 import { ReqUserInfo } from '@/decorator'
 import type { User } from '@/db/model/user'
+import { BehaviorService, PeopleService } from '@/service'
+import { wrapperCatchError } from '@/utils/context'
 
 const power = {
   needLogin: true
@@ -24,43 +26,26 @@ const power = {
 
 @RouterController('people')
 export default class PeopleController {
+  @InjectCtx()
+  ctx: Context
+
+  @Inject(BehaviorService)
+  behaviorService: BehaviorService
+
+  @Inject(PeopleService)
+  peopleService: PeopleService
+
   @Post('/add/:key', power)
   async addPeople(
     // TODO:需要装饰器支持校验参数
     @ReqParams('key') key: string,
-    @ReqBody('name') name: string,
-    @ReqUserInfo() user: User,
-    req: FWRequest
+    @ReqBody('name') name: string
   ) {
-    const defaultData: People = { taskKey: key, userId: user.id }
-
-    const exist =
-      (
-        await selectPeople({
-          ...defaultData,
-          name
-        })
-      ).length > 0
-    addBehavior(req, {
-      module: 'people',
-      msg: `直接添加成员${exist ? '失败' : '成功'}: ${name}`,
-      data: {
-        name,
-        exist
-      }
-    })
-    if (exist) {
-      return Response.failWithError(peopleError.exist)
+    try {
+      await this.peopleService.addPeople(key, name)
+    } catch (error) {
+      return wrapperCatchError(error)
     }
-
-    await insertPeople(
-      [
-        {
-          name
-        }
-      ],
-      defaultData
-    )
   }
 
   /**

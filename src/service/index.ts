@@ -8,6 +8,7 @@ import PublicService from './publicService'
 import FileService from './fileService'
 import CategoryService from './categoryService'
 import SuperUserService from './superUserService'
+import PeopleService from './peopleService'
 
 // TODO: 编译问题
 export {
@@ -20,5 +21,6 @@ export {
   PublicService,
   FileService,
   CategoryService,
-  SuperUserService
+  SuperUserService,
+  PeopleService
 }

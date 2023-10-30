@@ -1,4 +1,5 @@
 import { OkPacket } from 'mysql'
+import { Provide } from 'flash-wolves'
 import { query } from '@/lib/dbConnect/mysql'
 import {
   deleteTableByModel,
@@ -7,6 +8,8 @@ import {
   updateTableByModel
 } from '@/utils/sqlUtil'
 import { People } from './model/people'
+import { People as PeopleEntity } from './entity'
+import { BaseRepository, AppDataSource } from '.'
 
 export function selectPeople(
   options: V2Array<People>,
@@ -36,4 +39,11 @@ export function deletePeople(people: V2Array<People>) {
 export function updatePeople(people: People, q: People) {
   const { sql, params } = updateTableByModel('people', people, q)
   return query<OkPacket>(sql, ...params)
+}
+
+@Provide()
+export class PeopleRepository extends BaseRepository<PeopleEntity> {
+  protected repository = AppDataSource.getRepository(PeopleEntity)
+
+  protected entityName = PeopleEntity.name
 }
