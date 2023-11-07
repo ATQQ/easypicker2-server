@@ -81,7 +81,8 @@ export default class TaskInfoService {
       info,
       shareKey: share,
       limitPeople: people,
-      tip
+      tip,
+      bindField
     } = taskInfo || {}
     let { ddl } = taskInfo || {}
     if (ddl && ddl?.getTime) {
@@ -112,12 +113,14 @@ export default class TaskInfoService {
       share,
       ddl,
       people,
-      tip
+      tip,
+      bindField
     }
   }
 
   async updateTaskInfo(payload, key: string) {
-    const { template, rewrite, format, info, ddl, people, tip } = payload
+    const { template, rewrite, format, info, ddl, people, tip, bindField } =
+      payload
     let { share } = payload
     const { id: userId, account: logAccount } = this.ctx.req.userInfo
 
@@ -136,9 +139,12 @@ export default class TaskInfoService {
       ddl,
       shareKey: share,
       limitPeople: people,
-      tip
+      tip,
+      bindField
     }
-
+    if (bindField === '') {
+      options.bindField = undefined
+    }
     await this.taskInfoRepository.updateSpecifyFields(
       {
         taskKey: key,
@@ -156,7 +162,8 @@ export default class TaskInfoService {
         info: '设置提交必填信息',
         ddl: '设置截止日期',
         limitPeople: '限制提交人员',
-        tip: '批注信息'
+        tip: '批注信息',
+        bindField: '设置绑定字段'
       }
 
       if (task) {
