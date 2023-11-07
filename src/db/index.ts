@@ -80,6 +80,10 @@ export class BaseRepository<T> {
     return this.repository.save(options)
   }
 
+  insertMany(options: T[]) {
+    return this.repository.save(options)
+  }
+
   updateSpecifyFields(
     where: FindOneOptions<T>['where'],
     value: QueryDeepPartialEntity<T>
