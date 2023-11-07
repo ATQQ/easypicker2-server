@@ -160,6 +160,13 @@ export async function patchTable() {
     fieldName: 'tip',
     fieldType: 'text'
   })
+
+  await addTableField('task_info', {
+    fieldName: 'bind_field',
+    fieldType: 'varchar(255)',
+    defaultValue: "'姓名'",
+    comment: '绑定表单字段'
+  })
 }
 
 function getRandomUser() {

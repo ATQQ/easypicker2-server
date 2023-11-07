@@ -48,6 +48,14 @@ export class TaskInfo {
   })
   limitPeople: number
 
+  @Column('varchar', {
+    name: 'bind_field',
+    length: 255,
+    comment: '绑定表单项',
+    default: '姓名'
+  })
+  bindField: string
+
   @Column('text', { nullable: true })
   tip: string
 }
