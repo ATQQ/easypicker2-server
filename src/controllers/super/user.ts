@@ -3,6 +3,7 @@ import {
   Delete,
   FWRequest,
   Get,
+  Inject,
   Post,
   Put,
   ReqBody,
@@ -11,7 +12,8 @@ import {
 } from 'flash-wolves'
 import dayjs from 'dayjs'
 import SuperService from '@/service/super'
-import { User, USER_POWER, USER_STATUS } from '@/db/model/user'
+import { USER_POWER, USER_STATUS } from '@/db/model/user'
+import type { User } from '@/db/model/user'
 import {
   selectAllUser,
   selectUserByAccount,
@@ -30,6 +32,7 @@ import { batchDeleteFiles, getOSSFiles } from '@/utils/qiniuUtil'
 import { MessageType } from '@/db/model/message'
 import MessageService from '@/service/message'
 import { ReqUserInfo } from '@/decorator'
+import { SuperUserService, TokenService } from '@/service'
 
 const power = {
   userPower: USER_POWER.SUPER,
@@ -38,6 +41,12 @@ const power = {
 
 @RouterController('super/user', power)
 export default class SuperUserController {
+  @Inject(TokenService)
+  private tokenService: TokenService
+
+  @Inject(SuperUserService)
+  private superUserService: SuperUserService
+
   @Post('message')
   async sendMessage(
     @ReqBody('type')
@@ -57,6 +66,11 @@ export default class SuperUserController {
     } else if (type === MessageType.GLOBAL_PUSH) {
       MessageService.sendGlobalMessage(user.id, text)
     }
+  }
+
+  @Delete('logout')
+  async logout(@ReqBody('account') account: string) {
+    return this.superUserService.logout(account)
   }
 
   @Get('message', {
@@ -159,12 +173,17 @@ export default class SuperUserController {
         return pre + fsize
       }, 0)
 
+      const userTokens = await this.tokenService.getAllTokens(user.account)
+      if (!userTokens.length) {
+        this.tokenService.checkAllToken(userTokens, user.account)
+      }
       Object.assign(user, {
         fileCount: fileInfo.length,
         resources: formatSize(fileSize),
         monthAgoSize: formatSize(AMonthAgoSize),
         quarterAgoSize: formatSize(AQuarterAgoSize),
-        halfYearSize: formatSize(AHalfYearAgoSize)
+        halfYearSize: formatSize(AHalfYearAgoSize),
+        onlineCount: userTokens.length
       })
     }
     return {

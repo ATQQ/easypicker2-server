@@ -3,6 +3,9 @@ import { publicError } from '@/constants/errorMsg'
 import { addBehavior } from '@/db/logDb'
 import { USER_POWER } from '@/db/model/user'
 import { getUserInfo } from '@/utils/userUtil'
+import tokenUtil from '@/utils/tokenUtil'
+
+const systemWhiteList = ['/user/logout', '/user/power/super']
 
 const interceptor: Middleware = async (req, res) => {
   const { meta } = req.route
@@ -53,7 +56,9 @@ const interceptor: Middleware = async (req, res) => {
     // 系统账号只能操作指定的几个接口，不能操作用户接口
     if (
       loginUserInfo?.power === USER_POWER.SYSTEM &&
-      userPower !== USER_POWER.SYSTEM
+      userPower !== USER_POWER.SYSTEM &&
+      // 白名单接口不做校验
+      !systemWhiteList.includes(req.url)
     ) {
       addBehavior(req, {
         module: 'interceptor',
@@ -63,6 +68,24 @@ const interceptor: Middleware = async (req, res) => {
         }
       })
       res.failWithError(publicError.request.notLogin)
+      return
+    }
+
+    // 未登录
+    if (!loginUserInfo) {
+      res.failWithError(publicError.request.notLogin)
+      return
+    }
+    // 传递登录用户信息
+    req.userInfo = loginUserInfo
+
+    if (loginUserInfo?.power !== USER_POWER.SYSTEM) {
+      // 异步Check，不阻塞逻辑
+      tokenUtil.checkOnlineUser(
+        loginUserInfo.account,
+        loginUserInfo,
+        req.headers.token as string
+      )
     }
   }
 }

@@ -1,4 +1,5 @@
 import { OkPacket } from 'mysql'
+import { Provide } from 'flash-wolves'
 import { query } from '@/lib/dbConnect/mysql'
 import {
   deleteTableByModel,
@@ -9,6 +10,8 @@ import {
 import { getUniqueKey } from '@/utils/stringUtil'
 import { Task } from './model/task'
 import { insertTaskInfo } from './taskInfoDb'
+import { AppDataSource, BaseRepository } from '.'
+import { Task as TaskEntity } from './entity'
 
 export function insertTask(task: Task) {
   const data = { k: getUniqueKey(), ...task }
@@ -37,4 +40,11 @@ export function deleteTask(task: Task) {
 export function updateTask(task: Task, q: Task) {
   const { sql, params } = updateTableByModel('task', task, q)
   return query<OkPacket>(sql, ...params)
+}
+
+@Provide()
+export class TaskRepository extends BaseRepository<TaskEntity> {
+  protected repository = AppDataSource.getRepository(TaskEntity)
+
+  protected entityName = TaskEntity.name
 }

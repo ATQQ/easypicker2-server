@@ -1,3 +1,4 @@
+import { appendFile } from 'fs/promises'
 import type { Category } from '@/db/model/category'
 import type { File } from '@/db/model/file'
 import type { TaskInfo } from '@/db/model/taskInfo'
@@ -18,6 +19,7 @@ import { refreshQinNiuConfig } from './qiniuUtil'
 import { refreshTxConfig } from './tencent'
 import LocalUserDB from './user-local-db'
 import { refreshMongoDb } from '@/lib/dbConnect/mongodb'
+import { initTypeORM } from '@/db'
 
 type TableName = 'task_info' | 'category' | 'files' | 'task' | 'people' | 'user'
 type DBTables = {
@@ -158,6 +160,13 @@ export async function patchTable() {
     fieldName: 'tip',
     fieldType: 'text'
   })
+
+  await addTableField('task_info', {
+    fieldName: 'bind_field',
+    fieldType: 'varchar(255)',
+    defaultValue: "'姓名'",
+    comment: '绑定表单字段'
+  })
 }
 
 function getRandomUser() {
@@ -222,9 +231,12 @@ export function initUserConfig() {
 /**
  * 从本地配置文件 user-config 取出数据库与第三方服务所需配置
  */
-export async function readyServerDepService() {
-  await Promise.all([
+export function readyServerDepService() {
+  // TODO: 使用上有缺陷，需要重新设计
+  return Promise.all([
+    initTokenUtil(),
     // 1. MySQL
+    initTypeORM(),
     refreshPool(),
     // 2. qiniu
     refreshQinNiuConfig(),
@@ -236,4 +248,13 @@ export async function readyServerDepService() {
 
   // 大多数情况下不需要额外配置
   // 3. redis
+}
+
+export function initTokenUtil() {
+  if (!process.env.TOKEN_PREFIX) {
+    // 生成一个随机的前缀
+    const prefix = Math.random().toString(36).slice(2, 8)
+    process.env.TOKEN_PREFIX = `ep-token-${prefix}`
+    appendFile('.env.local', `\nTOKEN_PREFIX=${process.env.TOKEN_PREFIX}`)
+  }
 }

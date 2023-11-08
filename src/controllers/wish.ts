@@ -8,7 +8,8 @@ import {
   ReqParams,
   Response
 } from 'flash-wolves'
-import { Wish, WishStatus } from '@/db/model/wish'
+import { WishStatus } from '@/db/model/wish'
+import type { Wish } from '@/db/model/wish'
 import { addWishData, findWish, updateWish } from '@/db/wishDb'
 import { getObjectIdDate, getUniqueKey } from '@/utils/stringUtil'
 import { addBehavior } from '@/db/logDb'
@@ -18,6 +19,7 @@ import { addAction, findAction, findActionCount } from '@/db/actionDb'
 import { ActionType } from '@/db/model/action'
 
 const adminPower = { needLogin: true, userPower: USER_POWER.SUPER }
+// TODO：mongoDB支持 typeorm
 @RouterController('wish')
 export default class WishController {
   /**
@@ -78,7 +80,7 @@ export default class WishController {
   }
 
   @Put('update/:id', adminPower)
-  async updateWish(@ReqParams('id') id: string, @ReqBody() body: Wish) {
+  async updateWishData(@ReqParams('id') id: string, @ReqBody() body: Wish) {
     const { title, des } = body
     await updateWish({ id }, { $set: { title, des } })
   }

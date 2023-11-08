@@ -19,7 +19,7 @@ import {
   findLogWithTimeRange,
   findPvLogWithRange
 } from '@/db/logDb'
-import {
+import type {
   Log,
   LogBehaviorData,
   LogErrorData,

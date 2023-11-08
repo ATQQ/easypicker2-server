@@ -8,6 +8,8 @@ import SuperUser from './super/user'
 import User from './user'
 import ConfigService from './config'
 import Action from './action'
+import Task from './task'
+import Category from './category'
 
 export default [
   Wish,
@@ -19,5 +21,7 @@ export default [
   SuperUser,
   User,
   ConfigService,
-  Action
+  Action,
+  Task,
+  Category
 ]

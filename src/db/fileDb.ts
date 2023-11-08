@@ -1,4 +1,5 @@
 import { OkPacket } from 'mysql'
+import { Provide } from 'flash-wolves'
 import { query } from '@/lib/dbConnect/mysql'
 import {
   insertTableByModel,
@@ -6,6 +7,8 @@ import {
   updateTableByModel
 } from '@/utils/sqlUtil'
 import { File } from './model/file'
+import { AppDataSource, BaseRepository } from '.'
+import { Files } from './entity'
 
 export function insertFile(file: File) {
   const { sql, params } = insertTableByModel('files', file)
@@ -110,4 +113,13 @@ export function deleteFiles(files: File[]) {
     }
   })()
   return query<OkPacket>(sql, ...params)
+}
+
+@Provide()
+export class FileRepository extends BaseRepository<Files> {
+  protected repository = AppDataSource.getRepository(Files)
+
+  protected entityName = Files.name
+
+  // 这里存放独有方法
 }

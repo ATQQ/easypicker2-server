@@ -1,4 +1,5 @@
 import { OkPacket } from 'mysql'
+import { Provide } from 'flash-wolves'
 import { query } from '@/lib/dbConnect/mysql'
 import {
   deleteTableByModel,
@@ -7,6 +8,8 @@ import {
 } from '@/utils/sqlUtil'
 import { getUniqueKey } from '@/utils/stringUtil'
 import { Category } from './model/category'
+import { AppDataSource, BaseRepository } from '.'
+import { Category as CategoryEntity } from './entity'
 
 export function selectCategory(options: Category) {
   const { sql, params } = selectTableByModel('category', {
@@ -26,4 +29,11 @@ export function insertCategory(category: Category) {
 export function deleteCategory(category: Category) {
   const { sql, params } = deleteTableByModel('category', category)
   return query<OkPacket>(sql, ...params)
+}
+
+@Provide()
+export class CategoryRepository extends BaseRepository<CategoryEntity> {
+  protected repository = AppDataSource.getRepository(CategoryEntity)
+
+  protected entityName = CategoryEntity.name
 }

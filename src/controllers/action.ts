@@ -1,7 +1,7 @@
 import { RouterController, Post, ReqBody, FWRequest } from 'flash-wolves'
 import { FilterQuery } from 'mongodb'
 import path from 'path'
-import { User } from '@/db/model/user'
+import type { User } from '@/db/model/user'
 import { ReqUserInfo } from '@/decorator'
 import {
   findAction,

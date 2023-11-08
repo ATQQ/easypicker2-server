@@ -25,7 +25,7 @@ export function getConnection(): Promise<mysql.PoolConnection> {
     pool.getConnection((err, coon) => {
       if (err) {
         console.error('------ db connection error -------')
-        console.error(err)
+        console.error(err.message)
         rej(err)
         return
       }

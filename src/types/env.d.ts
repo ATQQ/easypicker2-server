@@ -142,5 +142,10 @@ declare namespace NodeJS {
      * 短信应用appid
      */
     TENCENT_MESSAGE_SmsSdkAppid: string
+
+    /**
+     * Token 盐值
+     */
+    TOKEN_PREFIX: string
   }
 }

@@ -1,3 +1,4 @@
+import 'reflect-metadata'
 import { App } from 'flash-wolves'
 
 // 配置文件
@@ -39,10 +40,14 @@ app.listen(serverConfig.port, serverConfig.hostname, async () => {
   // 存储一些配置
   await LocalUserDB.initUserConfig()
   await initUserConfig()
-  await readyServerDepService()
+  try {
+    await readyServerDepService()
+  } catch (err) {
+    console.log('❌ readyServerDepService', err?.message)
+  }
   try {
     await patchTable()
-    console.log('😄😄 mysql patch scrip run success')
+    console.log('😄😄 mysql patch success')
   } catch (err) {
     console.log('😭😭 mysql 还未正常配置，请检查数据库是否配置正确或版本不匹配')
   }
