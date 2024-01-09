@@ -104,6 +104,10 @@ async function modifyTableField<T extends TableName>(
   )[0]
 
   if (originType !== fieldType) {
+    // TODO：特殊处理（待观测优化）
+    if (fieldType === 'bigint' && originType.includes(fieldType)) {
+      return
+    }
     console.log(`修改字段 ${tableName}.${String(fieldName)}`)
     console.log(
       `ALTER TABLE ${tableName} MODIFY ${String(fieldName)} ${fieldType}`
@@ -159,6 +163,11 @@ export async function patchTable() {
   await modifyTableField('task_info', {
     fieldName: 'tip',
     fieldType: 'text'
+  })
+
+  await modifyTableField('files', {
+    fieldName: 'size',
+    fieldType: 'bigint'
   })
 
   await addTableField('task_info', {
