@@ -15,7 +15,8 @@
     "deploy": "zx scripts/deploy/env-prod.mjs",
     "deploy:test": "zx scripts/deploy/env-test.mjs",
     "build": "tsup",
-    "upload:oss": "pnpm build && q ep server -up"
+    "upload:oss": "pnpm build && q ep server -up",
+    "update:version": "npm version prerelease --preid=beta --no-git-tag-version"
   },
   "keywords": [],
   "author": "ATQQ",
