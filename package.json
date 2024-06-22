@@ -1,9 +1,18 @@
 {
-  "name": "ep-server",
+  "name": "@sugarat/easypicker2-server",
   "version": "2.6.1-beta.1",
-  "private": true,
-  "description": "",
-  "main": "src/index.ts",
+  "files": [
+    "package.json",
+    "dist",
+    ".env"
+  ],
+  "description": "EasyPicker（轻取）- 服务端",
+  "main": "dist/index.js",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ATQQ/easypicker2-server.git"
+  },
   "scripts": {
     "dev": "cross-env NODE_ENV=development FW_LOGGING=true run-p build:watch dev:server",
     "dev:server": "nodemon dist/index.js --ignore 'upload/*' --ignore user-config.json",
@@ -18,9 +27,7 @@
     "upload:oss": "pnpm build && q ep server -up",
     "update:version": "npm version prerelease --preid=beta --no-git-tag-version"
   },
-  "keywords": [],
   "author": "ATQQ",
-  "license": "ISC",
   "dependencies": {
     "@swc/core": "^1.3.68",
     "cross-env": "^7.0.3",
