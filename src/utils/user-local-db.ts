@@ -9,15 +9,21 @@ export default class LocalUserDB {
 
   static async initUserConfig() {
     if (!existsSync(JSONDbFile)) {
-      fs.promises.writeFile(JSONDbFile, '[]', 'utf-8')
+      await fs.promises.writeFile(JSONDbFile, '[]', 'utf-8')
       this.data = []
       return
     }
-    this.data = JSON.parse(await fs.promises.readFile(JSONDbFile, 'utf-8'))
+    try {
+      this.data = JSON.parse(await fs.promises.readFile(JSONDbFile, 'utf-8'))
+    } catch (error) {
+      this.data = []
+      console.log('❌ user-config.json 配置文件解析失败, 已重置为默认配置')
+      await fs.promises.writeFile(JSONDbFile, '[]', 'utf-8')
+    }
   }
 
-  private static updateCfg() {
-    fs.promises.writeFile(
+  static updateCfg() {
+    return fs.promises.writeFile(
       JSONDbFile,
       JSON.stringify(this.data, null, 2),
       'utf-8'
@@ -26,7 +32,6 @@ export default class LocalUserDB {
 
   static addUserConfigData(data: Partial<UserConfig>) {
     this.data.push(data)
-    this.updateCfg()
   }
 
   static findUserConfig(query: Partial<UserConfig>) {

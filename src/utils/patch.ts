@@ -188,7 +188,7 @@ function getRandomPassword() {
   return key.slice(10, 18)
 }
 
-export function initUserConfig() {
+export async function initUserConfig() {
   // 创建1个单独可配置服务的用户
   let userAccount = LocalUserDB.findUserConfig({
     type: 'server',
@@ -235,6 +235,9 @@ export function initUserConfig() {
   storeDbInfo('redis', redisConfig)
   storeDbInfo('qiniu', qiniuConfig)
   storeDbInfo('tx', txConfig)
+
+  // 更新配置
+  await LocalUserDB.updateCfg()
 }
 
 /**
