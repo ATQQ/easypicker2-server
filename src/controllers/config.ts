@@ -94,7 +94,7 @@ export default class UserController {
       }
       return v
     }
-    LocalUserDB.updateUserConfig(
+    await LocalUserDB.updateUserConfig(
       {
         type: data.type,
         key: data.key
@@ -121,5 +121,6 @@ export default class UserController {
     if (data.type === 'mongo') {
       await refreshMongoDb()
     }
+    await LocalUserDB.updateLocalEnv()
   }
 }

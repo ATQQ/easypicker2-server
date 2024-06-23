@@ -238,6 +238,8 @@ export async function initUserConfig() {
 
   // 更新配置
   await LocalUserDB.updateCfg()
+  // 写入本地环境变量文件
+  await LocalUserDB.updateLocalEnv()
 }
 
 /**

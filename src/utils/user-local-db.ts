@@ -1,11 +1,13 @@
 import fs, { existsSync } from 'fs'
 import path from 'path'
 import { UserConfig, UserConfigType } from '@/db/model/config'
+import { LocalEnvMap } from '@/constants'
 
 const JSONDbFile = path.join(process.cwd(), 'user-config.json')
+const localEnvFile = path.resolve(process.cwd(), '.env.local')
 
 export default class LocalUserDB {
-  private static data = []
+  private static data: UserConfig[] = []
 
   static async initUserConfig() {
     if (!existsSync(JSONDbFile)) {
@@ -22,6 +24,28 @@ export default class LocalUserDB {
     }
   }
 
+  static async updateLocalEnv() {
+    const localEnvFile = `${process.cwd()}/.env.local`
+    const isExist = fs.existsSync(localEnvFile)
+    let content = ''
+    if (isExist) {
+      content = await fs.promises.readFile(localEnvFile, 'utf-8')
+    }
+    this.data.forEach((item) => {
+      const { type, key, value } = item
+      const originEnvKey = LocalEnvMap?.[type]?.[key]
+      if (!originEnvKey) {
+        return
+      }
+      if (process.env[originEnvKey] !== `${value}`) {
+        content = content.replace(new RegExp(`${originEnvKey}=.*`), '')
+        content += `\n${originEnvKey}=${value}`
+      }
+    })
+    content = content.split('\n').filter(Boolean).join('\n')
+    await fs.promises.writeFile(localEnvFile, content, 'utf-8')
+  }
+
   static updateCfg() {
     return fs.promises.writeFile(
       JSONDbFile,
@@ -30,7 +54,7 @@ export default class LocalUserDB {
     )
   }
 
-  static addUserConfigData(data: Partial<UserConfig>) {
+  static addUserConfigData(data: UserConfig) {
     this.data.push(data)
   }
 
@@ -49,7 +73,7 @@ export default class LocalUserDB {
     )
     if (index > -1) {
       this.data[index] = { ...this.data[index], ...data }
-      this.updateCfg()
+      return this.updateCfg()
     }
   }
 
