@@ -16,6 +16,7 @@ import { wrapperCatchError } from '@/utils/context'
 import { UserRepository } from '@/db/userDb'
 import { calculateSize } from '@/utils/userUtil'
 import { USER_POWER } from '@/db/model/user'
+import { formatSize } from '@/utils/stringUtil'
 
 const needLogin = {
   needLogin: true
@@ -85,6 +86,12 @@ export default class TaskController {
       )
       const usage = await this.fileService.getFileUsage(user.id)
       const limitUpload = size < usage
+      if (limitUpload) {
+        this.behaviorService.add('user', `用户 ${user.account} 超出容量限制`, {
+          space: formatSize(size),
+          usage: formatSize(usage)
+        })
+      }
       // 判断是否限制上传
       return {
         ...data,

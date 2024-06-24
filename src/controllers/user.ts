@@ -25,6 +25,7 @@ import { User } from '@/db/entity'
 import { ActionType } from '@/db/model/action'
 import { calculateSize } from '@/utils/userUtil'
 import { UserRepository } from '@/db/userDb'
+import { formatSize } from '@/utils/stringUtil'
 
 @RouterController('user')
 export default class UserController {
@@ -174,6 +175,13 @@ export default class UserController {
         : user?.size) ?? 2
     )
     const usage = await this.fileService.getFileUsage(user.id)
+    const limitUpload = size < usage
+    if (limitUpload) {
+      this.behaviorService.add('user', `用户 ${user.account} 超出容量限制`, {
+        space: formatSize(size),
+        usage: formatSize(usage)
+      })
+    }
     return {
       size,
       usage
