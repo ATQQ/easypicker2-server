@@ -124,7 +124,7 @@ CREATE TABLE IF NOT EXISTS `user` (
   `login_time` timestamp NULL DEFAULT NULL COMMENT '最后登录时间',
   `login_count` int(11) NOT NULL DEFAULT '1' COMMENT '登陆次数',
   `open_time` timestamp NULL DEFAULT NULL COMMENT '解封时间',
-  `size` INT(11) NOT NULL DEFAULT '2' COMMENT '可支配空间上限'
+  `size` INT(11) NOT NULL DEFAULT '2' COMMENT '可支配空间上限GB'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='用户表';
 
 --

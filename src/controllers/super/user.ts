@@ -15,6 +15,7 @@ import SuperService from '@/service/super'
 import { USER_POWER, USER_STATUS } from '@/db/model/user'
 import type { User } from '@/db/model/user'
 import {
+  UserRepository,
   selectAllUser,
   selectUserByAccount,
   selectUserById,
@@ -32,7 +33,12 @@ import { batchDeleteFiles, getOSSFiles } from '@/utils/qiniuUtil'
 import { MessageType } from '@/db/model/message'
 import MessageService from '@/service/message'
 import { ReqUserInfo } from '@/decorator'
-import { SuperUserService, TokenService } from '@/service'
+import {
+  BehaviorService,
+  SuperUserService,
+  TokenService,
+  UserService
+} from '@/service'
 
 const power = {
   userPower: USER_POWER.SUPER,
@@ -46,6 +52,15 @@ export default class SuperUserController {
 
   @Inject(SuperUserService)
   private superUserService: SuperUserService
+
+  @Inject(BehaviorService)
+  private behaviorService: BehaviorService
+
+  @Inject(UserService)
+  private userService: UserService
+
+  @Inject(UserRepository)
+  private userRepository: UserRepository
 
   @Post('message')
   async sendMessage(
@@ -110,7 +125,8 @@ export default class SuperUserController {
       'join_time',
       'login_time',
       'login_count',
-      'open_time'
+      'open_time',
+      'size'
     ]
     // 用户数据
     const users = await selectAllUser(columns)
@@ -177,8 +193,17 @@ export default class SuperUserController {
       if (!userTokens.length) {
         this.tokenService.checkAllToken(userTokens, user.account)
       }
+
+      const limitSize = user.size * 1024 * 1024 * 1024
+      // TODO: 存储标志便于查询
+      // TODO：增加定时任务查询数据
+      const limitUpload = limitSize < fileSize
+      const percentage = Math.floor((fileSize / limitSize) * 100)
       Object.assign(user, {
         fileCount: fileInfo.length,
+        limitSize: formatSize(limitSize),
+        limitUpload,
+        percentage,
         resources: formatSize(fileSize),
         monthAgoSize: formatSize(AMonthAgoSize),
         quarterAgoSize: formatSize(AQuarterAgoSize),
@@ -346,5 +371,22 @@ export default class SuperUserController {
         id
       }
     )
+  }
+
+  @Put('size')
+  async changeSize(@ReqBody('id') id: number, @ReqBody('size') size: number) {
+    const user = await this.userRepository.findOne({
+      id
+    })
+    this.behaviorService.add(
+      'super',
+      `修改用户空间容量 ${user.account} ${user.size} => ${size}GB`,
+      {
+        oldSize: user.size,
+        newSize: size
+      }
+    )
+    user.size = size
+    await this.userRepository.update(user)
   }
 }

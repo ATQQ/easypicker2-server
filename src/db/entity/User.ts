@@ -43,4 +43,7 @@ export class User {
     name: 'open_time'
   })
   openTime: Date
+
+  @Column('int', { default: 2, comment: '可支配空间上限GB' })
+  size: number
 }
