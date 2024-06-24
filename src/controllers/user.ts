@@ -171,7 +171,7 @@ export default class UserController {
     const size = calculateSize(
       (user.power === USER_POWER.SUPER
         ? Math.max(1024, user?.size)
-        : user?.size) || 2
+        : user?.size) ?? 2
     )
     const usage = await this.fileService.getFileUsage(user.id)
     return {
