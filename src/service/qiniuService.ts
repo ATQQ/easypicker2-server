@@ -3,6 +3,8 @@ import qiniu from 'qiniu'
 import { getTipImageKey } from '@/utils/stringUtil'
 import BehaviorService from './behaviorService'
 import { qiniuConfig } from '@/config'
+import { File } from '@/db/model/file'
+import SuperService from '@/service/super'
 
 @Provide()
 export default class QiniuService {
@@ -13,6 +15,13 @@ export default class QiniuService {
   private behaviorService: BehaviorService
 
   private config = qiniuConfig
+
+  private filesMap = new Map<string, Qiniu.ItemInfo>()
+
+  /**
+   * 是否正在异步获取文件列表中
+   */
+  private flag = false
 
   get bucket() {
     return this.config.bucketName
@@ -99,5 +108,38 @@ export default class QiniuService {
         }
       }
     })
+  }
+
+  async getFilesMap(files: File[]) {
+    if (!this.flag || this.filesMap.size === 0) {
+      this.behaviorService.add('file', '查询OSS文件信息')
+      this.flag = true
+      const ossFiles = await SuperService.getOssFiles()
+
+      ossFiles.forEach((v) => {
+        this.filesMap.set(v.key, v)
+      })
+
+      // 兼容ep1网站数据
+      const oldPrefixList = new Set(
+        files
+          .filter((v) => v.category_key)
+          .map((v) => {
+            return v.category_key.split('/')[0]
+          })
+          .filter((v) => !v.includes('"'))
+          .filter((v) => !v.startsWith('easypicker2'))
+      )
+
+      for (const prefix of oldPrefixList) {
+        const ossSources = await SuperService.getOssFilesByPrefix(`${prefix}/`)
+        ossSources.forEach((v) => {
+          this.filesMap.set(v.key, v)
+        })
+      }
+
+      this.flag = false
+    }
+    return this.filesMap
   }
 }

@@ -14,10 +14,17 @@ import { findAction } from '@/db/actionDb'
 import { UserError } from '@/constants/errorMsg'
 import { USER_POWER } from '@/db/model/user'
 import LocalUserDB from '@/utils/user-local-db'
-import { BehaviorService, TokenService, UserService } from '@/service'
+import {
+  BehaviorService,
+  FileService,
+  TokenService,
+  UserService
+} from '@/service'
 import { wrapperCatchError } from '@/utils/context'
 import { User } from '@/db/entity'
 import { ActionType } from '@/db/model/action'
+import { calculateSize } from '@/utils/userUtil'
+import { UserRepository } from '@/db/userDb'
 
 @RouterController('user')
 export default class UserController {
@@ -29,6 +36,12 @@ export default class UserController {
 
   @Inject(TokenService)
   private tokenService: TokenService
+
+  @Inject(UserRepository)
+  private userRepository: UserRepository
+
+  @Inject(FileService)
+  private fileService: FileService
 
   @InjectCtx()
   private Ctx: Context
@@ -148,5 +161,22 @@ export default class UserController {
   @Get('login', { needLogin: true })
   async isLogin() {
     return !!this.Ctx.req.userInfo
+  }
+
+  @Get('usage', { needLogin: true })
+  async getUsage() {
+    const user = await this.userRepository.findOne({
+      id: this.Ctx.req.userInfo.id
+    })
+    const size = calculateSize(
+      (user.power === USER_POWER.SUPER
+        ? Math.max(1024, user?.size)
+        : user?.size) || 2
+    )
+    const usage = await this.fileService.getFileUsage(user.id)
+    return {
+      size,
+      usage
+    }
   }
 }

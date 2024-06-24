@@ -35,10 +35,12 @@ import MessageService from '@/service/message'
 import { ReqUserInfo } from '@/decorator'
 import {
   BehaviorService,
+  QiniuService,
   SuperUserService,
   TokenService,
   UserService
 } from '@/service'
+import { calculateSize } from '@/utils/userUtil'
 
 const power = {
   userPower: USER_POWER.SUPER,
@@ -61,6 +63,9 @@ export default class SuperUserController {
 
   @Inject(UserRepository)
   private userRepository: UserRepository
+
+  @Inject(QiniuService)
+  private qiniuService: QiniuService
 
   @Post('message')
   async sendMessage(
@@ -140,30 +145,31 @@ export default class SuperUserController {
       'date',
       'category_key'
     ])
-    // 云文件数据
-    const ossFiles = await SuperService.getOssFiles()
-    const filesMap = new Map<string, Qiniu.ItemInfo>()
-    ossFiles.forEach((v) => {
-      filesMap.set(v.key, v)
-    })
+    const filesMap = await this.qiniuService.getFilesMap(files)
+    // // 云文件数据
+    // const ossFiles = await SuperService.getOssFiles()
+    // const filesMap = new Map<string, Qiniu.ItemInfo>()
+    // ossFiles.forEach((v) => {
+    //   filesMap.set(v.key, v)
+    // })
 
-    // 兼容ep1网站数据
-    const oldPrefixList = new Set(
-      files
-        .filter((v) => v.category_key)
-        .map((v) => {
-          return v.category_key.split('/')[0]
-        })
-        .filter((v) => !v.includes('"'))
-        .filter((v) => !v.startsWith('easypicker2'))
-    )
+    // // 兼容ep1网站数据
+    // const oldPrefixList = new Set(
+    //   files
+    //     .filter((v) => v.category_key)
+    //     .map((v) => {
+    //       return v.category_key.split('/')[0]
+    //     })
+    //     .filter((v) => !v.includes('"'))
+    //     .filter((v) => !v.startsWith('easypicker2'))
+    // )
 
-    for (const prefix of oldPrefixList) {
-      const ossSources = await SuperService.getOssFilesByPrefix(`${prefix}/`)
-      ossSources.forEach((v) => {
-        filesMap.set(v.key, v)
-      })
-    }
+    // for (const prefix of oldPrefixList) {
+    //   const ossSources = await SuperService.getOssFilesByPrefix(`${prefix}/`)
+    //   ossSources.forEach((v) => {
+    //     filesMap.set(v.key, v)
+    //   })
+    // }
 
     // 遍历用户，获取文件数和占用空间数据
     for (const user of users) {
@@ -195,14 +201,14 @@ export default class SuperUserController {
         this.tokenService.checkAllToken(userTokens, user.account)
       }
 
-      const limitSize = user.size * 1024 * 1024 * 1024
+      const limitSize = calculateSize(user.size)
       // TODO: 存储标志便于查询
       // TODO：增加定时任务查询数据
       const limitUpload = limitSize < fileSize
       const percentage =
         user.power === USER_POWER.SUPER
           ? 0
-          : Math.floor((fileSize / limitSize) * 100)
+          : ((fileSize / limitSize) * 100).toFixed(2)
       Object.assign(user, {
         fileCount: fileInfo.length,
         limitSize:
