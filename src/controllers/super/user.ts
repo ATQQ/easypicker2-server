@@ -126,7 +126,8 @@ export default class SuperUserController {
       'login_time',
       'login_count',
       'open_time',
-      'size'
+      'size',
+      'power'
     ]
     // 用户数据
     const users = await selectAllUser(columns)
@@ -198,11 +199,15 @@ export default class SuperUserController {
       // TODO: 存储标志便于查询
       // TODO：增加定时任务查询数据
       const limitUpload = limitSize < fileSize
-      const percentage = Math.floor((fileSize / limitSize) * 100)
+      const percentage =
+        user.power === USER_POWER.SUPER
+          ? 0
+          : Math.floor((fileSize / limitSize) * 100)
       Object.assign(user, {
         fileCount: fileInfo.length,
-        limitSize: formatSize(limitSize),
-        limitUpload,
+        limitSize:
+          user.power === USER_POWER.SUPER ? '无限制' : formatSize(limitSize),
+        limitUpload: user.power === USER_POWER.SUPER ? false : limitUpload,
         percentage,
         resources: formatSize(fileSize),
         monthAgoSize: formatSize(AMonthAgoSize),
