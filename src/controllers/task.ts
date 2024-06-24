@@ -10,10 +10,12 @@ import {
   Delete,
   Put
 } from 'flash-wolves'
-import { updateTask } from '@/db/taskDb'
-import { BehaviorService, TaskService } from '@/service'
+import { BehaviorService, FileService, TaskService } from '@/service'
 import { Task } from '@/db/entity'
 import { wrapperCatchError } from '@/utils/context'
+import { UserRepository } from '@/db/userDb'
+import { calculateSize } from '@/utils/userUtil'
+import { USER_POWER } from '@/db/model/user'
 
 const needLogin = {
   needLogin: true
@@ -28,6 +30,12 @@ export default class TaskController {
 
   @Inject(BehaviorService)
   private behaviorService: BehaviorService
+
+  @Inject(UserRepository)
+  private userRepository: UserRepository
+
+  @Inject(FileService)
+  private fileService: FileService
 
   /**
    * 创建任务
@@ -62,7 +70,26 @@ export default class TaskController {
   async getTaskByKey(@ReqParams('key') key: string) {
     try {
       const data = await this.taskService.getTaskByKey(key)
-      return data
+      const user = await this.userRepository.findOne({
+        id: data.userId
+      })
+
+      // user.size = 0
+      // user.power = USER_POWER.NORMAL
+
+      // TODO：重复代码，可优化
+      const size = calculateSize(
+        (user.power === USER_POWER.SUPER
+          ? Math.max(1024, user?.size)
+          : user?.size) ?? 2
+      )
+      const usage = await this.fileService.getFileUsage(user.id)
+      const limitUpload = size < usage
+      // 判断是否限制上传
+      return {
+        ...data,
+        limitUpload
+      }
     } catch (error) {
       return wrapperCatchError(error)
     }

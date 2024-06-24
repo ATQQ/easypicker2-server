@@ -86,9 +86,11 @@ export default class TaskService {
     this.behaviorService.add('task', `获取任务详细信息, ${task.name}`, {
       name: task.name
     })
+
     return {
       name: task.name,
-      category: task.categoryKey
+      category: task.categoryKey,
+      userId: task.userId
     }
   }
 
