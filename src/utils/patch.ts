@@ -176,6 +176,13 @@ export async function patchTable() {
     defaultValue: "'姓名'",
     comment: '绑定表单字段'
   })
+
+  await addTableField('user', {
+    fieldName: 'size',
+    fieldType: 'int',
+    defaultValue: 2,
+    comment: '可支配空间上限'
+  })
 }
 
 function getRandomUser() {

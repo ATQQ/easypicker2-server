@@ -55,4 +55,8 @@ export interface User {
   openTime?: Date
   login_count?: number
   loginCount?: number
+  /**
+   * 可使用存储空间（单位：GB）
+   */
+  size?: number
 }
