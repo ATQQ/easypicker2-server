@@ -391,7 +391,10 @@ export default class OverviewController {
 
   @Get('route/disabled')
   async checkDisabledRoute(@ReqQuery('route') route: string) {
-    const actions = await findAction({
+    const actions = await findAction<{
+      route: string
+      status: boolean
+    }>({
       type: ActionType.DisabledRoute
     })
     const action = actions.find((v) => v.data.route === route)

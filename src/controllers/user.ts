@@ -9,6 +9,7 @@ import {
   Response,
   RouterController
 } from 'flash-wolves'
+import { findAction } from '@/db/actionDb'
 
 import { UserError } from '@/constants/errorMsg'
 import { USER_POWER } from '@/db/model/user'
@@ -16,6 +17,7 @@ import LocalUserDB from '@/utils/user-local-db'
 import { BehaviorService, TokenService, UserService } from '@/service'
 import { wrapperCatchError } from '@/utils/context'
 import { User } from '@/db/entity'
+import { ActionType } from '@/db/model/action'
 
 @RouterController('user')
 export default class UserController {
@@ -34,6 +36,19 @@ export default class UserController {
   @Post('register')
   async register(@ReqBody() body: any) {
     try {
+      // 判断路由是否禁用
+      const [action] = await findAction<{
+        status: boolean
+      }>({
+        type: ActionType.DisabledRoute,
+        'data.route': '/register'
+      })
+      if (action?.data?.status) {
+        this.behaviorService.add('user', `禁止注册 ${body?.account}`, {
+          account: body?.account
+        })
+        throw UserError.system.ban
+      }
       const user = await this.userService.register(body)
       const token = await this.tokenService.createTokenByUser(user)
       return {

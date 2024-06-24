@@ -18,6 +18,9 @@ export const UserError = {
   },
   pwd: {
     fault: codeMsg(1004, 'error pwd')
+  },
+  system: {
+    ban: codeMsg(1011, 'The system prohibits new user registration')
   }
 }
 
