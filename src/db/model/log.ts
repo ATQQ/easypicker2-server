@@ -24,6 +24,8 @@ export interface LogRequestData {
   refer: string
   ip: string
   userId: number
+  endTime?: number
+  startTime?: number
 }
 
 // eslint-disable-next-line @typescript-eslint/no-namespace

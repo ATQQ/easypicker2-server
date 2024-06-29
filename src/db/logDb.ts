@@ -1,4 +1,4 @@
-import { FWRequest } from 'flash-wolves'
+import { FWRequest, FWResponse } from 'flash-wolves'
 import { FilterQuery, ObjectId } from 'mongodb'
 import { insertCollection, mongoDbQuery } from '@/lib/dbConnect/mongodb'
 import { getUniqueKey } from '@/utils/stringUtil'
@@ -24,7 +24,7 @@ function getLogData(type: LogType, data: LogData): Log {
 /**
  * 记录请求日志
  */
-export async function addRequestLog(req: FWRequest) {
+export async function addRequestLog(req: FWRequest, res: FWResponse) {
   const { query = {}, params = {}, method, url } = req
   let { body = {} } = req
   if ((method !== 'GET' && !body) || body instanceof Buffer) {
@@ -48,9 +48,13 @@ export async function addRequestLog(req: FWRequest) {
     userAgent,
     refer,
     ip,
-    userId
+    userId,
+    startTime: req.startTime,
+    endTime: Date.now()
   }
-  insertCollection('log', getLogData('request', data))
+  res.on('close', () => {
+    insertCollection('log', getLogData('request', data))
+  })
 }
 
 /**

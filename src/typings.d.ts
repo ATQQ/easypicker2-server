@@ -13,5 +13,6 @@ declare module 'flash-wolves' {
 
   interface FWRequest {
     userInfo?: User
+    startTime?: number
   }
 }

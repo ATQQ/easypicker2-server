@@ -5,6 +5,7 @@ export type UserConfigType =
   | 'qiniu'
   | 'server'
   | 'tx'
+  | 'global'
 export interface UserConfig {
   type: UserConfigType
   key: string

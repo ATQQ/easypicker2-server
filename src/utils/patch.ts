@@ -242,7 +242,9 @@ export async function initUserConfig() {
   storeDbInfo('redis', redisConfig)
   storeDbInfo('qiniu', qiniuConfig)
   storeDbInfo('tx', txConfig)
-
+  storeDbInfo('global', {
+    site: {}
+  })
   // 更新配置
   await LocalUserDB.updateCfg()
   // 写入本地环境变量文件

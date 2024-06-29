@@ -111,8 +111,9 @@ export default class QiniuService {
   }
 
   async getFilesMap(files: File[]) {
+    // TODO: this.filesMap 不生效
     if (!this.flag || this.filesMap.size === 0) {
-      this.behaviorService.add('file', '查询OSS文件信息')
+      const startTime = Date.now()
       this.flag = true
       const ossFiles = await SuperService.getOssFiles()
 
@@ -137,6 +138,10 @@ export default class QiniuService {
           this.filesMap.set(v.key, v)
         })
       }
+      const expireTime = Date.now() - startTime
+      this.behaviorService.add('file', `查询OSS文件信息 - ${expireTime}ms`, {
+        time: expireTime
+      })
 
       this.flag = false
     }
