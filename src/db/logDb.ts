@@ -50,7 +50,8 @@ export async function addRequestLog(req: FWRequest, res: FWResponse) {
     ip,
     userId,
     startTime: req.startTime,
-    endTime: Date.now()
+    endTime: Date.now(),
+    duration: Date.now() - req.startTime
   }
   res.on('close', () => {
     insertCollection('log', getLogData('request', data))

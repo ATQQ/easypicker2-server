@@ -51,13 +51,13 @@ export default class OverviewController {
       const date = new ObjectId(id).getTimestamp()
       if (type === 'request') {
         const d = data as LogRequestData
-        const duration = d.endTime - d.startTime
+
         return {
           id,
           date,
           type,
           ip: d.ip,
-          msg: `${d.method} ${d.url} ${duration ? `${duration}ms` : ''}`
+          msg: `${d.method} ${d.url} ${`${d.duration || 0}ms`}`
         }
       }
       if (type === 'behavior') {
