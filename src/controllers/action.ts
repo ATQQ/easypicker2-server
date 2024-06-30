@@ -65,6 +65,7 @@ export default class ActionController {
       // 检查是否过期
       if (action.data.status === DownloadStatus.SUCCESS) {
         const pass = Math.floor((now - +action.date) / oneHour)
+        console.log(action.data.expiredTime);
         if (action.data.expiredTime && now > action.data.expiredTime) {
           action.data.status = DownloadStatus.EXPIRED
           needUpdate = true
@@ -95,6 +96,7 @@ export default class ActionController {
             getQiniuFileUrlExpiredTime(time)
           )
           action.data.size = fileInfo.fsize
+          // TODO: bug
           action.data.expiredTime = time * 1000
           const filename = path.parse(fileInfo.key).name
           // 归档完成，常理上前端会触发下载，记录一下
