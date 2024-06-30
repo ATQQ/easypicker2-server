@@ -22,10 +22,11 @@ import {
   makeZipWithKeys
 } from '@/utils/qiniuUtil'
 import { getUniqueKey, isSameInfo, normalizeFileName } from '@/utils/stringUtil'
-import { getUserInfo } from '@/utils/userUtil'
+import { getQiniuFileUrlExpiredTime, getUserInfo } from '@/utils/userUtil'
 import { selectTaskInfo } from '@/db/taskInfoDb'
 import { addDownloadAction } from '@/db/actionDb'
 import { ActionType, DownloadStatus } from '@/db/model/action'
+import LocalUserDB from '@/utils/user-local-db'
 
 const router = new Router('file')
 
@@ -127,11 +128,13 @@ router.get('template', async (req, res) => {
     module: 'file',
     msg: `下载模板文件 文件:${template}`,
     data: {
-      template
+      template,
+      key
     }
   })
+  // TODO: 统计下载次数和流量
   res.success({
-    link: createDownloadUrl(k)
+    link: createDownloadUrl(k, getQiniuFileUrlExpiredTime(1))
   })
 })
 
@@ -196,7 +199,11 @@ router.get(
         size: file.size
       }
     })
-    const link = createDownloadUrl(k)
+    // 单个文件链接 x 分钟有效期，避免频繁重复下载
+    const time =
+      LocalUserDB.findUserConfig({ type: 'global', key: 'site' })[0]?.value
+        ?.downloadOneExpired || 1
+    const link = createDownloadUrl(k, getQiniuFileUrlExpiredTime(time))
     await addDownloadAction({
       userId,
       type: ActionType.Download,
@@ -206,7 +213,8 @@ router.get(
         status: DownloadStatus.SUCCESS,
         ids: [file.id],
         tip: file.name,
-        size: file.size
+        size: file.size,
+        expiredTime: time * 1000
       }
     })
     res.success({

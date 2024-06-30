@@ -273,7 +273,11 @@ export async function initUserConfig() {
     site: {
       maxInputLength: 20, // 最大输入长度
       openPraise: false, // 是否开启赞赏相关提示文案
-      formLength: 10 // 表单项数量
+      formLength: 10, // 表单项数量
+      // TODO: 提供重定向链接，用于下载资源地址记录
+      downloadOneExpired: 1, // 单个文件链接下载过期时间（min）
+      downloadCompressExpired: 60, // 归档文件下载过期时间（min）
+      compressSizeLimit: 10 // 压缩文件大小限制（GB）
     }
   })
   // 更新配置

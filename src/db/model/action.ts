@@ -61,6 +61,7 @@ export interface DownloadActionData {
   url?: string
   size?: number
   error?: string
+  expiredTime?: number // 链接过期时间
 }
 
 export type DownloadAction = Action<DownloadActionData>

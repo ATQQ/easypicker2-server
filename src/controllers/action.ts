@@ -22,6 +22,8 @@ import {
   getOSSFiles
 } from '@/utils/qiniuUtil'
 import { addBehavior } from '@/db/logDb'
+import LocalUserDB from '@/utils/user-local-db'
+import { getQiniuFileUrlExpiredTime } from '@/utils/userUtil'
 
 @RouterController('action', {
   needLogin: true
@@ -63,7 +65,10 @@ export default class ActionController {
       // 检查是否过期
       if (action.data.status === DownloadStatus.SUCCESS) {
         const pass = Math.floor((now - +action.date) / oneHour)
-        if (pass >= expiredHours) {
+        if (action.data.expiredTime && now > action.data.expiredTime) {
+          action.data.status = DownloadStatus.EXPIRED
+          needUpdate = true
+        } else if (pass >= expiredHours) {
           action.data.status = DownloadStatus.EXPIRED
           needUpdate = true
         }
@@ -80,8 +85,17 @@ export default class ActionController {
         if (data.code === 0) {
           const [fileInfo] = await getOSSFiles(data.key)
           action.data.status = DownloadStatus.SUCCESS
-          action.data.url = createDownloadUrl(data.key)
+          // 获取过期时间
+          const time =
+            LocalUserDB.findUserConfig({ type: 'global', key: 'site' })[0]
+              ?.value?.downloadCompressExpired || 60
+
+          action.data.url = createDownloadUrl(
+            data.key,
+            getQiniuFileUrlExpiredTime(time)
+          )
           action.data.size = fileInfo.fsize
+          action.data.expiredTime = time * 1000
           const filename = path.parse(fileInfo.key).name
           // 归档完成，常理上前端会触发下载，记录一下
           addBehavior(req, {
@@ -149,7 +163,16 @@ export default class ActionController {
         const data = await checkFopTaskStatus(action.data.archiveKey)
         if (data.code === 0) {
           action.data.status = DownloadStatus.SUCCESS
-          action.data.url = createDownloadUrl(data.key)
+          // 获取过期时间
+          const time =
+            LocalUserDB.findUserConfig({ type: 'global', key: 'site' })[0]
+              ?.value?.downloadCompressExpired || 60
+
+          action.data.url = createDownloadUrl(
+            data.key,
+            getQiniuFileUrlExpiredTime(time)
+          )
+          action.data.expiredTime = time * 1000
           needUpdate = true
         }
       }

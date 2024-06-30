@@ -15,3 +15,12 @@ export function calculateSize(size: number) {
   // 换算成GB
   return size * 1024 * 1024 * 1024
 }
+
+/**
+ * 获取qiniu云存储文件url的过期时间
+ * @param duration 有效时间（分钟）
+ * @returns 过期时间(秒)
+ */
+export function getQiniuFileUrlExpiredTime(duration: number) {
+  return Math.floor(Date.now() / 1000) + 60 * duration
+}
