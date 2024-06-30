@@ -9,7 +9,7 @@ export type UserConfigType =
 export interface UserConfig {
   type: UserConfigType
   key: string
-  value: string | string | boolean
+  value: string | string | boolean | Record<string, any>
   isSecret: boolean
   lastUpdate?: Date
   originData?: Record<string, any>

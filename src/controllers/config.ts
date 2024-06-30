@@ -1,4 +1,4 @@
-import { Get, Put, ReqBody, RouterController } from 'flash-wolves'
+import { Get, Put, ReqBody, ReqQuery, RouterController } from 'flash-wolves'
 import { USER_POWER } from '@/db/model/user'
 import { getRedisStatus } from '@/lib/dbConnect/redis'
 import { getMongoDBStatus, refreshMongoDb } from '@/lib/dbConnect/mongodb'
@@ -122,5 +122,28 @@ export default class UserController {
       await refreshMongoDb()
     }
     await LocalUserDB.updateLocalEnv()
+  }
+
+  @Get('global', { needLogin: false, userPower: null })
+  async getGlobalConfig(@ReqQuery('type') key = 'site') {
+    const globalConfig = LocalUserDB.findUserConfig({
+      type: 'global',
+      key
+    })
+    return globalConfig[0].value
+  }
+
+  @Put('global', { userPower: USER_POWER.SUPER })
+  async updateGlobalConfig(@ReqBody() data) {
+    const { key, value } = data
+    await LocalUserDB.updateUserConfig(
+      {
+        type: 'global',
+        key
+      },
+      {
+        value
+      }
+    )
   }
 }

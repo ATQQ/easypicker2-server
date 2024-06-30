@@ -225,17 +225,44 @@ export async function initUserConfig() {
   console.log('!!! 服务管理面板!!! ', '账号:', userAccount, '密码:', userPWD)
 
   const storeDbInfo = (type: UserConfigType, config: Record<string, any>) => {
-    const configList = LocalUserDB.findUserConfig({ type })
-    if (configList.length === 0) {
-      Object.keys(config).forEach((key) => {
+    const configList = LocalUserDB.findUserConfig({ type }) || []
+    Object.keys(config).forEach((key) => {
+      if (!configList.some((item) => item.key === key)) {
+        // 添加默认兜底配置
+        console.log(`[LocalUserDB] 添加默认配置 ${type}.${key}=${config[key]}`)
         LocalUserDB.addUserConfigData({
           type,
           key,
           value: config[key],
           isSecret: ['password', 'secretKey'].includes(key)
         })
-      })
-    }
+      }
+
+      if (config[key] instanceof Object) {
+        const oldConfig: any = configList.find(
+          (item) => item.key === key
+        )?.value
+        // 判断是否有新key不存在
+        if (Object.keys(config[key]).some((k) => !oldConfig?.[k])) {
+          const newValue = {
+            ...config[key],
+            ...oldConfig
+          }
+          console.log(
+            `[LocalUserDB] 更新配置 ${type}.${key}=${JSON.stringify(newValue)}`
+          )
+          LocalUserDB.updateUserConfig(
+            {
+              type,
+              key
+            },
+            {
+              value: newValue
+            }
+          )
+        }
+      }
+    })
   }
   storeDbInfo('mysql', mysqlConfig)
   storeDbInfo('mongo', mongodbConfig)
@@ -243,7 +270,11 @@ export async function initUserConfig() {
   storeDbInfo('qiniu', qiniuConfig)
   storeDbInfo('tx', txConfig)
   storeDbInfo('global', {
-    site: {}
+    site: {
+      maxInputLength: 20, // 最大输入长度
+      openPraise: false, // 是否开启赞赏相关提示文案
+      formLength: 10 // 表单项数量
+    }
   })
   // 更新配置
   await LocalUserDB.updateCfg()
