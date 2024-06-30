@@ -11,12 +11,10 @@ import {
   RouterController
 } from 'flash-wolves'
 import dayjs from 'dayjs'
-import SuperService from '@/service/super'
 import { USER_POWER, USER_STATUS } from '@/db/model/user'
 import type { User } from '@/db/model/user'
 import {
   UserRepository,
-  selectAllUser,
   selectUserByAccount,
   selectUserById,
   selectUserByPhone,
@@ -26,10 +24,10 @@ import { addBehavior } from '@/db/logDb'
 import { rMobilePhone, rPassword, rVerCode } from '@/utils/regExp'
 import { encryption, formatSize } from '@/utils/stringUtil'
 import { expiredRedisKey, getRedisVal } from '@/db/redisDb'
-import { selectFiles } from '@/db/fileDb'
+import { FileRepository, selectFiles } from '@/db/fileDb'
 import { UserError } from '@/constants/errorMsg'
 import FileService from '@/service/file'
-import { batchDeleteFiles, getOSSFiles } from '@/utils/qiniuUtil'
+import { batchDeleteFiles } from '@/utils/qiniuUtil'
 import { MessageType } from '@/db/model/message'
 import MessageService from '@/service/message'
 import { ReqUserInfo } from '@/decorator'
@@ -37,8 +35,7 @@ import {
   BehaviorService,
   QiniuService,
   SuperUserService,
-  TokenService,
-  UserService
+  TokenService
 } from '@/service'
 import { calculateSize } from '@/utils/userUtil'
 
@@ -58,14 +55,14 @@ export default class SuperUserController {
   @Inject(BehaviorService)
   private behaviorService: BehaviorService
 
-  @Inject(UserService)
-  private userService: UserService
-
   @Inject(UserRepository)
   private userRepository: UserRepository
 
   @Inject(QiniuService)
   private qiniuService: QiniuService
+
+  @Inject(FileRepository)
+  private fileRepository: FileRepository
 
   @Post('message')
   async sendMessage(
@@ -122,58 +119,32 @@ export default class SuperUserController {
    */
   @Get('list')
   async getUserList() {
-    const columns = [
+    // 用户数据
+    const users = await this.userRepository.findWithSpecifyColumn({}, [
       'id',
       'account',
       'phone',
       'status',
-      'join_time',
-      'login_time',
-      'login_count',
-      'open_time',
+      'joinTime',
+      'loginTime',
+      'openTime',
+      'power',
       'size',
-      'power'
-    ]
-    // 用户数据
-    const users = await selectAllUser(columns)
+      'loginCount'
+    ])
     // 获取文件数据
-    const files = await selectFiles({}, [
-      'task_key',
-      'user_id',
+    const files = await this.fileRepository.findWithSpecifyColumn({}, [
+      'taskKey',
+      'userId',
       'hash',
       'name',
       'date',
-      'category_key'
+      'categoryKey'
     ])
     const filesMap = await this.qiniuService.getFilesMap(files)
-    // // 云文件数据
-    // const ossFiles = await SuperService.getOssFiles()
-    // const filesMap = new Map<string, Qiniu.ItemInfo>()
-    // ossFiles.forEach((v) => {
-    //   filesMap.set(v.key, v)
-    // })
-
-    // // 兼容ep1网站数据
-    // const oldPrefixList = new Set(
-    //   files
-    //     .filter((v) => v.category_key)
-    //     .map((v) => {
-    //       return v.category_key.split('/')[0]
-    //     })
-    //     .filter((v) => !v.includes('"'))
-    //     .filter((v) => !v.startsWith('easypicker2'))
-    // )
-
-    // for (const prefix of oldPrefixList) {
-    //   const ossSources = await SuperService.getOssFilesByPrefix(`${prefix}/`)
-    //   ossSources.forEach((v) => {
-    //     filesMap.set(v.key, v)
-    //   })
-    // }
-
     // 遍历用户，获取文件数和占用空间数据
     for (const user of users) {
-      const fileInfo = files.filter((file) => file.user_id === user.id)
+      const fileInfo = files.filter((file) => file.userId === user.id)
       let AMonthAgoSize = 0
       let AQuarterAgoSize = 0
       let AHalfYearAgoSize = 0
@@ -181,7 +152,7 @@ export default class SuperUserController {
         const { date } = v
         const ossKey = FileService.getOssKey(v)
         const { fsize = 0 } =
-          filesMap.get(ossKey) || filesMap.get(v.category_key) || {}
+          filesMap.get(ossKey) || filesMap.get(v.categoryKey) || {}
 
         if (dayjs(date).isBefore(dayjs().subtract(1, 'month'))) {
           AMonthAgoSize += fsize
@@ -202,8 +173,7 @@ export default class SuperUserController {
       }
 
       const limitSize = calculateSize(user.size)
-      // TODO: 存储标志便于查询
-      // TODO：增加定时任务查询数据
+      // TODO: 存储标志便于二次查询
       const limitUpload = limitSize < fileSize
       const percentage =
         user.power === USER_POWER.SUPER
@@ -219,7 +189,10 @@ export default class SuperUserController {
         monthAgoSize: formatSize(AMonthAgoSize),
         quarterAgoSize: formatSize(AQuarterAgoSize),
         halfYearSize: formatSize(AHalfYearAgoSize),
-        onlineCount: userTokens.length
+        onlineCount: userTokens.length,
+        // 便于排序
+        usage: fileSize,
+        lastLoginTime: +new Date(user.loginTime) || 0
       })
     }
     return {
