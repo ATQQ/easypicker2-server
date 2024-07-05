@@ -5,7 +5,7 @@ export enum ActionType {
   PRAISE,
 
   /**
-   * 文件下载
+   * 单文件下载
    */
   Download,
 
@@ -17,7 +17,7 @@ export enum ActionType {
   /**
    * 路由禁用
    */
-  DisabledRoute
+  DisabledRoute,
 }
 export interface Action<T = any> {
   id: string
@@ -51,7 +51,7 @@ export enum DownloadStatus {
   /**
    * 归档失败
    */
-  FAIL
+  FAIL,
 }
 export interface DownloadActionData {
   status: DownloadStatus
@@ -59,7 +59,15 @@ export interface DownloadActionData {
   archiveKey?: string
   tip?: string
   url?: string
+  /**
+   * 实际 OSS 链接
+   */
+  originUrl?: string
   size?: number
+  /**
+   * 下载次数
+   */
+  count?: number
   error?: string
   expiredTime?: number // 链接过期时间
 }

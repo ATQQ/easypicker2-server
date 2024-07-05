@@ -35,9 +35,8 @@ export default class ActionController {
   @Post('download/list')
   async getDownloadActionList(
     @ReqUserInfo() user: User,
-    // TODO:支持传入默认值
-    @ReqBody('pageSize') size: string,
-    @ReqBody('pageIndex') index: string,
+    @ReqBody('pageSize') size: number,
+    @ReqBody('pageIndex') index: number,
     @ReqBody('extraIds') ids: string[],
     req: FWRequest,
   ) {
