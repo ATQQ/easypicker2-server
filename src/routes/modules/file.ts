@@ -4,10 +4,10 @@ import {
   deleteFileRecord,
   deleteFiles,
   insertFile,
-  selectFiles
+  selectFiles,
 } from '@/db/fileDb'
 import { addBehavior, addErrorLog } from '@/db/logDb'
-import { File } from '@/db/model/file'
+import type { File } from '@/db/model/file'
 import { selectPeople, updatePeople } from '@/db/peopleDb'
 import { selectTasks } from '@/db/taskDb'
 
@@ -19,7 +19,7 @@ import {
   deleteObjByKey,
   getUploadToken,
   judgeFileIsExist,
-  makeZipWithKeys
+  makeZipWithKeys,
 } from '@/utils/qiniuUtil'
 import { getUniqueKey, isSameInfo, normalizeFileName } from '@/utils/stringUtil'
 import { getQiniuFileUrlExpiredTime, getUserInfo } from '@/utils/userUtil'
@@ -37,10 +37,10 @@ router.get('token', (req, res) => {
   const token = getUploadToken()
   addBehavior(req, {
     module: 'file',
-    msg: '获取文件上传令牌'
+    msg: '获取文件上传令牌',
   })
   res.success({
-    token
+    token,
   })
 })
 
@@ -50,13 +50,13 @@ router.get('token', (req, res) => {
 router.post('info', async (req, res) => {
   const data: File = req.body
   const [task] = await selectTasks({
-    k: data.taskKey
+    k: data.taskKey,
   })
   if (!task) {
     addBehavior(req, {
       module: 'file',
       msg: '提交文件: 参数错误',
-      data
+      data,
     })
     res.failWithError(publicError.request.errorParams)
     return
@@ -67,14 +67,14 @@ router.post('info', async (req, res) => {
     date: new Date(),
     categoryKey: '',
     people: data.people || '',
-    originName: data.originName || ''
+    originName: data.originName || '',
   })
   data.name = normalizeFileName(data.name)
   await insertFile(data)
   addBehavior(req, {
     module: 'file',
     msg: `提交文件: 文件名:${data.name} 成功`,
-    data
+    data,
   })
   res.success()
 })
@@ -87,23 +87,23 @@ router.get(
   async (req, res) => {
     const { id: userId, account: logAccount } = await getUserInfo(req)
     const files = await selectFiles({
-      userId
+      userId,
     })
     // 逆序
     addBehavior(req, {
       module: 'file',
       msg: `获取文件列表 用户:${logAccount} 成功`,
       data: {
-        logAccount
-      }
+        logAccount,
+      },
     })
     res.success({
-      files
+      files,
     })
   },
   {
-    needLogin: true
-  }
+    needLogin: true,
+  },
 )
 
 /**
@@ -118,8 +118,8 @@ router.get('template', async (req, res) => {
       module: 'file',
       msg: '下载模板文件 参数错误',
       data: {
-        data: req.query
-      }
+        data: req.query,
+      },
     })
     res.failWithError(publicError.file.notExist)
     return
@@ -129,12 +129,12 @@ router.get('template', async (req, res) => {
     msg: `下载模板文件 文件:${template}`,
     data: {
       template,
-      key
-    }
+      key,
+    },
   })
   // TODO: 统计下载次数和流量
   res.success({
-    link: createDownloadUrl(k, getQiniuFileUrlExpiredTime(1))
+    link: createDownloadUrl(k, getQiniuFileUrlExpiredTime(1)),
   })
 })
 
@@ -148,15 +148,15 @@ router.get(
     const { id: userId, account: logAccount } = await getUserInfo(req)
     const [file] = await selectFiles({
       userId,
-      id: +id
+      id: +id,
     })
     if (!file) {
       addBehavior(req, {
         module: 'file',
         msg: `下载文件失败 用户:${logAccount} 文件记录不存在`,
         data: {
-          account: logAccount
-        }
+          account: logAccount,
+        },
       })
       res.failWithError(publicError.file.notExist)
       return
@@ -170,7 +170,8 @@ router.get(
 
     if (!isExist) {
       isExist = await judgeFileIsExist(k)
-    } else {
+    }
+    else {
       k = file.category_key
     }
 
@@ -180,8 +181,8 @@ router.get(
         msg: `下载文件失败 用户:${logAccount} 文件:${file.name} 已从云上移除`,
         data: {
           account: logAccount,
-          name: file.name
-        }
+          name: file.name,
+        },
       })
       res.failWithError(publicError.file.notExist)
       return
@@ -196,14 +197,12 @@ router.get(
         account: logAccount,
         name: file.name,
         mimeType,
-        size: file.size
-      }
+        size: file.size,
+      },
     })
-    // 单个文件链接 x 分钟有效期，避免频繁重复下载
-    const time =
-      LocalUserDB.findUserConfig({ type: 'global', key: 'site' })[0]?.value
-        ?.downloadOneExpired || 1
-    const link = createDownloadUrl(k, getQiniuFileUrlExpiredTime(time))
+    // 单个文件链接默认 1 分钟有效期，避免频繁重复下载
+    const expiredTime = getQiniuFileUrlExpiredTime(LocalUserDB.getSiteConfig()?.downloadOneExpired || 1)
+    const link = createDownloadUrl(k, expiredTime)
     await addDownloadAction({
       userId,
       type: ActionType.Download,
@@ -214,17 +213,17 @@ router.get(
         ids: [file.id],
         tip: file.name,
         size: file.size,
-        expiredTime: time * 1000
-      }
+        expiredTime: expiredTime * 1000,
+      },
     })
     res.success({
       link,
-      mimeType
+      mimeType,
     })
   },
   {
-    needLogin: true
-  }
+    needLogin: true,
+  },
 )
 
 /**
@@ -237,7 +236,7 @@ router.delete(
     const { id: userId, account: logAccount } = await getUserInfo(req)
     const [file] = await selectFiles({
       userId,
-      id
+      id,
     })
     if (!file) {
       addBehavior(req, {
@@ -245,8 +244,8 @@ router.delete(
         msg: `删除文件失败 用户:${logAccount} 文件记录不存在`,
         data: {
           account: logAccount,
-          fileId: id
-        }
+          fileId: id,
+        },
       })
       res.failWithError(publicError.file.notExist)
       return
@@ -259,7 +258,7 @@ router.delete(
     const sameRecord = await selectFiles({
       taskKey: file.task_key,
       hash: file.hash,
-      name: file.name
+      name: file.name,
     })
     const isRepeat = sameRecord.length > 1
 
@@ -277,14 +276,14 @@ router.delete(
         account: logAccount,
         name: file.name,
         taskKey: file.task_key,
-        hash: file.hash
-      }
+        hash: file.hash,
+      },
     })
     res.success()
   },
   {
-    needLogin: true
-  }
+    needLogin: true,
+  },
 )
 
 /**
@@ -300,11 +299,11 @@ router.delete('withdraw', async (req, res) => {
     taskKey,
     taskName,
     name: filename,
-    hash
+    hash,
   })
-  files = files.filter((file) => isSameInfo(file.info, info))
+  files = files.filter(file => isSameInfo(file.info, info))
 
-  const passFiles = files.filter((file) => file.people === peopleName)
+  const passFiles = files.filter(file => file.people === peopleName)
 
   if (!passFiles.length) {
     addBehavior(req, {
@@ -313,8 +312,8 @@ router.delete('withdraw', async (req, res) => {
       data: {
         filename,
         peopleName,
-        data: req.body
-      }
+        data: req.body,
+      },
     })
     res.failWithError(publicError.file.notExist)
     return
@@ -339,8 +338,8 @@ router.delete('withdraw', async (req, res) => {
       passFilesCount: passFiles.length,
       filename,
       peopleName,
-      data: req.body
-    }
+      data: req.body,
+    },
   })
 
   // 更新人员提交状态
@@ -349,9 +348,9 @@ router.delete('withdraw', async (req, res) => {
       {
         name: peopleName,
         status: 1,
-        taskKey
+        taskKey,
       },
-      ['id']
+      ['id'],
     )
     if (!p) {
       addBehavior(req, {
@@ -360,8 +359,8 @@ router.delete('withdraw', async (req, res) => {
         data: {
           filename,
           peopleName,
-          data: req.body
-        }
+          data: req.body,
+        },
       })
       res.failWithError(publicError.file.notExist)
       return
@@ -374,11 +373,11 @@ router.delete('withdraw', async (req, res) => {
           ? 1
           : 0,
         // 更新最后操作时间
-        submitDate: new Date()
+        submitDate: new Date(),
       },
       {
-        id: p.id
-      }
+        id: p.id,
+      },
     )
   }
   res.success()
@@ -394,15 +393,15 @@ router.post(
     const { id: userId, account: logAccount } = await getUserInfo(req)
     const files = await selectFiles({
       id: ids,
-      userId
+      userId,
     })
     if (files.length === 0) {
       addBehavior(req, {
         module: 'file',
         msg: `批量下载文件失败 用户:${logAccount}`,
         data: {
-          account: logAccount
-        }
+          account: logAccount,
+        },
       })
       res.failWithError(publicError.file.notExist)
       return
@@ -419,7 +418,8 @@ router.post(
         const isOldExist = await judgeFileIsExist(category_key)
         if (isOldExist) {
           keys.push(category_key)
-        } else {
+        }
+        else {
           keys.push(key)
         }
       }
@@ -439,8 +439,8 @@ router.post(
         module: 'file',
         msg: `批量下载文件失败 用户:${logAccount} 文件均已从云上移除`,
         data: {
-          account: logAccount
-        }
+          account: logAccount,
+        },
       })
       res.failWithError(publicError.file.notExist)
       return
@@ -451,8 +451,8 @@ router.post(
       data: {
         account: logAccount,
         length: keys.length,
-        size
-      }
+        size,
+      },
     })
     const filename = normalizeFileName(zipName) ?? `${getUniqueKey()}`
     const value = await makeZipWithKeys(keys, filename)
@@ -462,8 +462,8 @@ router.post(
       data: {
         account: logAccount,
         length: keys.length,
-        size
-      }
+        size,
+      },
     })
     await addDownloadAction({
       userId,
@@ -472,16 +472,16 @@ router.post(
         status: DownloadStatus.ARCHIVE,
         ids,
         tip: `${filename}.zip (${keys.length}个文件)`,
-        archiveKey: value
-      }
+        archiveKey: value,
+      },
     })
     res.success({
-      k: value
+      k: value,
     })
   },
   {
-    needLogin: true
-  }
+    needLogin: true,
+  },
 )
 
 /**
@@ -500,8 +500,8 @@ router.post(
     res.success(data)
   },
   {
-    needLogin: true
-  }
+    needLogin: true,
+  },
 )
 
 /**
@@ -514,7 +514,7 @@ router.delete(
     const { id: userId, account: logAccount } = await getUserInfo(req)
     const files = await selectFiles({
       id: ids,
-      userId
+      userId,
     })
     if (files.length === 0) {
       res.success()
@@ -529,20 +529,21 @@ router.delete(
       // 兼容旧逻辑
       if (category_key) {
         keys.add(category_key)
-      } else {
+      }
+      else {
         // 文件一模一样的记录避免误删
         const dbCount = (
           await selectFiles(
             {
               task_key,
               hash,
-              name
+              name,
             },
-            ['id']
+            ['id'],
           )
         ).length
         const delCount = files.filter(
-          (v) => v.task_key === task_key && v.hash === hash && v.name === name
+          v => v.task_key === task_key && v.hash === hash && v.name === name,
         ).length
         if (dbCount <= delCount) {
           keys.add(`easypicker2/${task_key}/${hash}/${name}`)
@@ -560,13 +561,13 @@ router.delete(
       data: {
         account: logAccount,
         length: files.length,
-        ossCount: keys.size
-      }
+        ossCount: keys.size,
+      },
     })
   },
   {
-    needLogin: true
-  }
+    needLogin: true,
+  },
 )
 
 /**
@@ -578,11 +579,11 @@ router.post(
     const { account: logAccount } = await getUserInfo(req)
     const { key } = req.body
     if (
-      typeof key === 'string' &&
-      key.startsWith('easypicker2/temp_package/')
+      typeof key === 'string'
+      && key.startsWith('easypicker2/temp_package/')
     ) {
       res.success({
-        url: createDownloadUrl(key)
+        url: createDownloadUrl(key),
       })
       const filename = key.slice(key.lastIndexOf('/') + 1)
       addBehavior(req, {
@@ -590,8 +591,8 @@ router.post(
         msg: `下载压缩文件成功 用户:${logAccount} 压缩文件名:${filename}`,
         data: {
           account: logAccount,
-          filename
-        }
+          filename,
+        },
       })
       return
     }
@@ -601,14 +602,14 @@ router.post(
       msg: `下载压缩文件失败 用户:${logAccount} 压缩文件名:${key} 不存在`,
       data: {
         account: logAccount,
-        key
-      }
+        key,
+      },
     })
     res.failWithError(publicError.file.notExist)
   },
   {
-    needLogin: true
-  }
+    needLogin: true,
+  },
 )
 
 /**
@@ -620,14 +621,14 @@ router.post('submit/people', async (req, res) => {
   let files = await selectFiles(
     {
       taskKey,
-      people: name
+      people: name,
     },
-    ['id', 'info']
+    ['id', 'info'],
   )
-  files = files.filter((v) => isSameInfo(v.info, JSON.stringify(info)))
+  files = files.filter(v => isSameInfo(v.info, JSON.stringify(info)))
   ;(async () => {
     const [task] = await selectTasks({
-      k: taskKey
+      k: taskKey,
     })
     if (task) {
       addBehavior(req, {
@@ -639,25 +640,26 @@ router.post('submit/people', async (req, res) => {
           taskKey,
           taskName: task.name,
           info,
-          count: files.length
-        }
+          count: files.length,
+        },
       })
-    } else {
+    }
+    else {
       addBehavior(req, {
         module: 'file',
         msg: `查询是否提交过文件: 任务 ${taskKey} 不存在`,
         data: {
           taskKey,
           taskName: task.name,
-          info
-        }
+          info,
+        },
       })
     }
   })()
 
   res.success({
     isSubmit: files.length > 0,
-    txt: ''
+    txt: '',
   })
 })
 export default router

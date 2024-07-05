@@ -1,32 +1,35 @@
-import { RouterController, Post, ReqBody, FWRequest } from 'flash-wolves'
-import { FilterQuery } from 'mongodb'
-import path from 'path'
+import path from 'node:path'
+import type { FWRequest } from 'flash-wolves'
+import { Post, ReqBody, RouterController } from 'flash-wolves'
+import type { FilterQuery } from 'mongodb'
 import type { User } from '@/db/model/user'
 import { ReqUserInfo } from '@/decorator'
 import {
   findAction,
   findActionCount,
   findActionWithPageOffset,
-  updateAction
+  updateAction,
 } from '@/db/actionDb'
-import {
+import type {
   Action,
-  ActionType,
   DownloadAction,
   DownloadActionData,
-  DownloadStatus
+} from '@/db/model/action'
+import {
+  ActionType,
+  DownloadStatus,
 } from '@/db/model/action'
 import {
   checkFopTaskStatus,
   createDownloadUrl,
-  getOSSFiles
+  getOSSFiles,
 } from '@/utils/qiniuUtil'
 import { addBehavior } from '@/db/logDb'
 import LocalUserDB from '@/utils/user-local-db'
 import { getQiniuFileUrlExpiredTime } from '@/utils/userUtil'
 
 @RouterController('action', {
-  needLogin: true
+  needLogin: true,
 })
 export default class ActionController {
   @Post('download/list')
@@ -36,7 +39,7 @@ export default class ActionController {
     @ReqBody('pageSize') size: string,
     @ReqBody('pageIndex') index: string,
     @ReqBody('extraIds') ids: string[],
-    req: FWRequest
+    req: FWRequest,
   ) {
     const pageIndex = +(index ?? 1)
     const extraIds = ids ?? []
@@ -44,17 +47,17 @@ export default class ActionController {
 
     const query: FilterQuery<Action> = {
       $or: [
-        ...extraIds.map((e) => ({ id: e })),
+        ...extraIds.map(e => ({ id: e })),
         { type: ActionType.Download },
-        { type: ActionType.Compress }
+        { type: ActionType.Compress },
       ],
-      userId: user.id
+      userId: user.id,
     }
     const count = await findActionCount(query)
     const actions: DownloadAction[] = await findActionWithPageOffset(
       (pageIndex - 1) * pageSize,
       pageSize,
-      query
+      query,
     )
     // 校验是否有效
     const now = Date.now()
@@ -65,11 +68,12 @@ export default class ActionController {
       // 检查是否过期
       if (action.data.status === DownloadStatus.SUCCESS) {
         const pass = Math.floor((now - +action.date) / oneHour)
-        console.log(action.data.expiredTime);
+        console.log(action.data.expiredTime)
         if (action.data.expiredTime && now > action.data.expiredTime) {
           action.data.status = DownloadStatus.EXPIRED
           needUpdate = true
-        } else if (pass >= expiredHours) {
+        }
+        else if (pass >= expiredHours) {
           action.data.status = DownloadStatus.EXPIRED
           needUpdate = true
         }
@@ -87,17 +91,15 @@ export default class ActionController {
           const [fileInfo] = await getOSSFiles(data.key)
           action.data.status = DownloadStatus.SUCCESS
           // 获取过期时间
-          const time =
-            LocalUserDB.findUserConfig({ type: 'global', key: 'site' })[0]
-              ?.value?.downloadCompressExpired || 60
+          const expiredTime
+            = getQiniuFileUrlExpiredTime(LocalUserDB.getSiteConfig()?.downloadCompressExpired || 60)
 
           action.data.url = createDownloadUrl(
             data.key,
-            getQiniuFileUrlExpiredTime(time)
+            expiredTime,
           )
           action.data.size = fileInfo.fsize
-          // TODO: bug
-          action.data.expiredTime = time * 1000
+          action.data.expiredTime = expiredTime * 1000
           const filename = path.parse(fileInfo.key).name
           // 归档完成，常理上前端会触发下载，记录一下
           addBehavior(req, {
@@ -107,8 +109,8 @@ export default class ActionController {
               account: user.account,
               name: filename,
               size: fileInfo.fsize,
-              mimeType: fileInfo.mimeType
-            }
+              mimeType: fileInfo.mimeType,
+            },
           })
           needUpdate = true
         }
@@ -120,10 +122,10 @@ export default class ActionController {
           {
             $set: {
               data: {
-                ...action.data
-              }
-            }
-          }
+                ...action.data,
+              },
+            },
+          },
         )
       }
     }
@@ -133,7 +135,7 @@ export default class ActionController {
       sum: count,
       pageIndex: index,
       pageSize: size,
-      actions: actions.map((v) => ({
+      actions: actions.map(v => ({
         id: v.id,
         type: v.type,
         status: v.data.status,
@@ -141,22 +143,22 @@ export default class ActionController {
         tip: v.data.tip,
         date: +v.date,
         size: v.data.size,
-        error: v.data.error
-      }))
+        error: v.data.error,
+      })),
     }
   }
 
   @Post('download/status')
   async checkCompressTaskStatus(
     @ReqUserInfo() user: User,
-    @ReqBody('ids') actionIds: string[]
+    @ReqBody('ids') actionIds: string[],
   ) {
     if (!actionIds) {
       return {}
     }
     const actions = await findAction<DownloadActionData>({
       userId: user.id,
-      $or: actionIds.map((v) => ({ id: v }))
+      $or: actionIds.map(v => ({ id: v })),
     })
     for (const action of actions) {
       let needUpdate = false
@@ -166,15 +168,14 @@ export default class ActionController {
         if (data.code === 0) {
           action.data.status = DownloadStatus.SUCCESS
           // 获取过期时间
-          const time =
-            LocalUserDB.findUserConfig({ type: 'global', key: 'site' })[0]
-              ?.value?.downloadCompressExpired || 60
+          const expiredTime
+            = getQiniuFileUrlExpiredTime(LocalUserDB.getSiteConfig()?.downloadCompressExpired || 60)
 
           action.data.url = createDownloadUrl(
             data.key,
-            getQiniuFileUrlExpiredTime(time)
+            expiredTime,
           )
-          action.data.expiredTime = time * 1000
+          action.data.expiredTime = expiredTime * 1000
           needUpdate = true
         }
       }
@@ -185,20 +186,20 @@ export default class ActionController {
           {
             $set: {
               data: {
-                ...action.data
-              }
-            }
-          }
+                ...action.data,
+              },
+            },
+          },
         )
       }
     }
-    return actions.map((v) => ({
+    return actions.map(v => ({
       id: v.id,
       type: v.type,
       status: v.data.status,
       url: v.data.url,
       tip: v.data.tip,
-      date: +v.date
+      date: +v.date,
     }))
   }
 }
