@@ -190,5 +190,6 @@ export default class FileController {
     })
     this.ctx.res.statusCode = 302
     this.ctx.res.setHeader('Location', download.data.originUrl)
+    this.ctx.res.end()
   }
 }
