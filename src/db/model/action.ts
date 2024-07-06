@@ -59,17 +59,15 @@ export interface DownloadActionData {
   archiveKey?: string
   tip?: string
   url?: string
+  size?: number
+  error?: string
+  expiredTime?: number // 链接过期时间
   /**
    * 实际 OSS 链接
    */
   originUrl?: string
-  size?: number
-  /**
-   * 下载次数
-   */
-  count?: number
-  error?: string
-  expiredTime?: number // 链接过期时间
+  account?: string
+  mimeType?: string
 }
 
 export type DownloadAction = Action<DownloadActionData>

@@ -1,40 +1,51 @@
-import {
-  RouterController,
-  Post,
-  ReqBody,
-  FWRequest,
-  Put,
-  Response,
-  Get,
-  InjectCtx,
+import type {
   Context,
-  Inject
+  FWRequest,
 } from 'flash-wolves'
+import {
+  Get,
+  Inject,
+  InjectCtx,
+  Post,
+  Put,
+  ReqBody,
+  ReqParams,
+  ReqQuery,
+  Response,
+  RouterController,
+} from 'flash-wolves'
+import { ObjectID } from 'mongodb'
 import { addBehavior } from '@/db/logDb'
 import { selectFiles, updateFileInfo } from '@/db/fileDb'
 import {
   batchFileStatus,
   createDownloadUrl,
   judgeFileIsExist,
-  mvOssFile
+  mvOssFile,
 } from '@/utils/qiniuUtil'
 import { qiniuConfig } from '@/config'
-import { fileError } from '@/constants/errorMsg'
+import { fileError, publicError } from '@/constants/errorMsg'
 import type { User } from '@/db/model/user'
 import { ReqUserInfo } from '@/decorator'
-import { FileService } from '@/service'
+import { BehaviorService, FileService } from '@/service'
+import { wrapperCatchError } from '@/utils/context'
+import { findAction } from '@/db/actionDb'
+import type { DownloadActionData } from '@/db/model/action'
 
 const power = {
-  needLogin: true
+  needLogin: true,
 }
 
-@RouterController('file')
+@RouterController('file', power)
 export default class FileController {
   @InjectCtx()
   private ctx: Context
 
   @Inject(FileService)
   private fileService: FileService
+
+  @Inject(BehaviorService)
+  private behaviorService: BehaviorService
 
   /**
    * 获取图片的预览图
@@ -43,42 +54,42 @@ export default class FileController {
   async checkPeopleIsExist(
     @ReqBody('ids') idList: number[],
     @ReqUserInfo() user: User,
-    req: FWRequest
+    req: FWRequest,
   ) {
     addBehavior(req, {
       module: 'file',
       msg: `获取图片预览链接 用户:${user.account}`,
       data: {
         account: user.account,
-        idList
-      }
+        idList,
+      },
     })
     const files = await selectFiles(
       {
         id: idList as any,
-        userId: user.id
+        userId: user.id,
       },
-      ['task_key', 'name', 'hash']
+      ['task_key', 'name', 'hash'],
     )
     const keys = files.map(
-      (file) => `easypicker2/${file.task_key}/${file.hash}/${file.name}`
+      file => `easypicker2/${file.task_key}/${file.hash}/${file.name}`,
     )
     const filesStatus = await batchFileStatus(keys)
     const result = filesStatus.map((status, idx) => {
       if (status.code === 200 && status.data?.mimeType?.includes('image')) {
         return {
           cover: createDownloadUrl(
-            `${keys[idx]}${qiniuConfig.imageCoverStyle}`
+            `${keys[idx]}${qiniuConfig.imageCoverStyle}`,
           ),
           preview: createDownloadUrl(
-            `${keys[idx]}${qiniuConfig.imagePreviewStyle}`
-          )
+            `${keys[idx]}${qiniuConfig.imagePreviewStyle}`,
+          ),
         }
       }
       return {
         cover: '',
         preview:
-          'https://img.cdn.sugarat.top/mdImg/MTY0OTkwMDMxNTY4NA==649900315684'
+          'https://img.cdn.sugarat.top/mdImg/MTY0OTkwMDMxNTY4NA==649900315684',
       }
     })
     return result
@@ -89,13 +100,13 @@ export default class FileController {
     @ReqBody('id') id: number,
     @ReqBody('name') newName: string,
     @ReqUserInfo() user: User,
-    req: FWRequest
+    req: FWRequest,
   ) {
     const file = (await selectFiles({ id, userId: user.id }))[0]
     if (!file) {
       addBehavior(req, {
         module: 'file',
-        msg: `重命名文件失败 用户:${user.account} 文件id:${id} 新文件名:${newName}`
+        msg: `重命名文件失败 用户:${user.account} 文件id:${id} 新文件名:${newName}`,
       })
       return Response.failWithError(fileError.noPower)
     }
@@ -116,7 +127,7 @@ export default class FileController {
     await updateFileInfo({ id, userId: user.id }, { name: newName })
     addBehavior(req, {
       module: 'file',
-      msg: `重命名文件成功 用户:${user.account} 文件id:${id} 新文件名:${newName}`
+      msg: `重命名文件成功 用户:${user.account} 文件id:${id} 新文件名:${newName}`,
     })
   }
 
@@ -127,15 +138,57 @@ export default class FileController {
   async listWithUrl() {
     const { id: userId } = this.ctx.req.userInfo
     const files = await selectFiles({
-      userId
+      userId,
     })
     return {
-      files: files.map((v) => ({
+      files: files.map(v => ({
         ...v,
-        download: createDownloadUrl(this.fileService.getOssKey(v))
-      }))
+        download: createDownloadUrl(this.fileService.getOssKey(v)),
+      })),
     }
   }
 
   // TODO: 后端限制超容量下载上传
+  @Get('/one')
+  async downloadOne(@ReqQuery('id') id: string) {
+    try {
+      return await this.fileService.downloadOne(+id)
+    }
+    catch (error) {
+      return wrapperCatchError(error)
+    }
+  }
+
+  /**
+   * 文件重定向下载，记录下载日志，便于统计单文件真实被下载次数
+   */
+  @Get('/download/:key', { needLogin: false })
+  async downloadFile(@ReqParams('key') key: string) {
+    // 302重定向到OSS下载地址
+    try {
+      ObjectID(key)
+    }
+    catch {
+      this.behaviorService.add('file', `非法文件下载参数: ${key}`)
+      return Response.failWithError(publicError.request.errorParams)
+    }
+    const [download] = await findAction<DownloadActionData>({
+      _id: ObjectID(key),
+    })
+    if (!download) {
+      return Response.failWithError(publicError.request.errorParams)
+    }
+    const { account: logAccount, tip: fileName, mimeType, size: fileSize } = download.data
+
+    // TODO：压缩文件适配，模板文件下载适配
+    // 添加日志
+    this.behaviorService.add('file', `下载文件成功 用户:${logAccount} 文件:${fileName} 类型:${mimeType}`, {
+      account: logAccount,
+      name: fileName,
+      mimeType,
+      size: fileSize,
+    })
+    this.ctx.res.statusCode = 302
+    this.ctx.res.setHeader('Location', download.data.originUrl)
+  }
 }

@@ -21,12 +21,11 @@ import {
   judgeFileIsExist,
   makeZipWithKeys,
 } from '@/utils/qiniuUtil'
-import { getUniqueKey, isSameInfo, normalizeFileName } from '@/utils/stringUtil'
+import { getUniqueKey, isSameInfo, normalizeFileName, randomShortLink } from '@/utils/stringUtil'
 import { getQiniuFileUrlExpiredTime, getUserInfo } from '@/utils/userUtil'
 import { selectTaskInfo } from '@/db/taskInfoDb'
 import { addDownloadAction } from '@/db/actionDb'
 import { ActionType, DownloadStatus } from '@/db/model/action'
-import LocalUserDB from '@/utils/user-local-db'
 
 const router = new Router('file')
 
@@ -137,94 +136,6 @@ router.get('template', async (req, res) => {
     link: createDownloadUrl(k, getQiniuFileUrlExpiredTime(1)),
   })
 })
-
-/**
- * 下载单个文件
- */
-router.get(
-  'one',
-  async (req, res) => {
-    const { id } = req.query
-    const { id: userId, account: logAccount } = await getUserInfo(req)
-    const [file] = await selectFiles({
-      userId,
-      id: +id,
-    })
-    if (!file) {
-      addBehavior(req, {
-        module: 'file',
-        msg: `下载文件失败 用户:${logAccount} 文件记录不存在`,
-        data: {
-          account: logAccount,
-        },
-      })
-      res.failWithError(publicError.file.notExist)
-      return
-    }
-    let k = `easypicker2/${file.task_key}/${file.hash}/${file.name}`
-    let isExist = false
-    // 兼容旧路径的逻辑
-    if (file.category_key) {
-      isExist = await judgeFileIsExist(file.category_key)
-    }
-
-    if (!isExist) {
-      isExist = await judgeFileIsExist(k)
-    }
-    else {
-      k = file.category_key
-    }
-
-    if (!isExist) {
-      addBehavior(req, {
-        module: 'file',
-        msg: `下载文件失败 用户:${logAccount} 文件:${file.name} 已从云上移除`,
-        data: {
-          account: logAccount,
-          name: file.name,
-        },
-      })
-      res.failWithError(publicError.file.notExist)
-      return
-    }
-
-    const status = await batchFileStatus([k])
-    const mimeType = status[0]?.data?.mimeType
-    addBehavior(req, {
-      module: 'file',
-      msg: `下载文件成功 用户:${logAccount} 文件:${file.name} 类型:${mimeType}`,
-      data: {
-        account: logAccount,
-        name: file.name,
-        mimeType,
-        size: file.size,
-      },
-    })
-    // 单个文件链接默认 1 分钟有效期，避免频繁重复下载
-    const expiredTime = getQiniuFileUrlExpiredTime(LocalUserDB.getSiteConfig()?.downloadOneExpired || 1)
-    const link = createDownloadUrl(k, expiredTime)
-    await addDownloadAction({
-      userId,
-      type: ActionType.Download,
-      thingId: file.id,
-      data: {
-        url: link,
-        status: DownloadStatus.SUCCESS,
-        ids: [file.id],
-        tip: file.name,
-        size: file.size,
-        expiredTime: expiredTime * 1000,
-      },
-    })
-    res.success({
-      link,
-      mimeType,
-    })
-  },
-  {
-    needLogin: true,
-  },
-)
 
 /**
  * 删除单个文件
