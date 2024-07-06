@@ -15,6 +15,9 @@ import { addDownloadAction, updateAction } from '@/db/actionDb'
 import type { DownloadActionData } from '@/db/model/action'
 import { ActionType, DownloadStatus } from '@/db/model/action'
 import { getUniqueKey, normalizeFileName, shortLink } from '@/utils/stringUtil'
+import { TaskRepository } from '@/db/taskDb'
+import { UserRepository } from '@/db/userDb'
+import { BOOLEAN } from '@/db/model/public'
 
 @Provide()
 export default class FileService {
@@ -29,6 +32,12 @@ export default class FileService {
 
   @Inject(BehaviorService)
   private behaviorService: BehaviorService
+
+  @Inject(TaskRepository)
+  private taskRepository: TaskRepository
+
+  @Inject(UserRepository)
+  private userRepository: UserRepository
 
   async selectFilesLimitCount(options: Partial<Files>, count: number) {
     return this.fileRepository.findWithLimitCount(options, count, {
@@ -104,12 +113,6 @@ export default class FileService {
     const status = await batchFileStatus([k])
     const mimeType = status[0]?.data?.mimeType
     // 新日志记录在重定向链接中
-    // this.behaviorService.add('file', `下载文件成功 用户:${logAccount} 文件:${file.name} 类型:${mimeType}`, {
-    //   account: logAccount,
-    //   name: file.name,
-    //   mimeType,
-    //   size: file.size,
-    // })
 
     // 单个文件链接默认 1 分钟有效期，避免频繁重复下载
     const expiredTime = getQiniuFileUrlExpiredTime(LocalUserDB.getSiteConfig()?.downloadOneExpired || 1)
@@ -216,6 +219,75 @@ export default class FileService {
     })
     return {
       k: value,
+    }
+  }
+
+  async downloadTemplate(filename: string, taskKey: string) {
+    const k = `easypicker2/${taskKey}_template/${filename}`
+    const isExist = await judgeFileIsExist(k)
+    if (!isExist) {
+      this.behaviorService.add('file', '下载模板文件 参数错误', {
+        data: this.ctx.req.query,
+      })
+      throw publicError.file.notExist
+    }
+
+    // TODO: 统计下载次数和流量
+    const task = await this.taskRepository.findOne({
+      k: taskKey,
+      del: BOOLEAN.FALSE,
+    })
+
+    if (!task) {
+      this.behaviorService.add('file', '下载模板文件 参数错误', {
+        data: this.ctx.req.query,
+      })
+      throw publicError.file.notExist
+    }
+
+    const user = await this.userRepository.findOne({
+      id: task.userId,
+    })
+
+    const [fileInfo] = await batchFileStatus([k])
+    const { mimeType, fsize } = fileInfo?.data || {}
+
+    // 单个文件链接默认 1 分钟有效期，避免频繁重复下载
+    const expiredTime = getQiniuFileUrlExpiredTime(LocalUserDB.getSiteConfig()?.downloadOneExpired || 1)
+    const originUrl = createDownloadUrl(k, expiredTime)
+
+    const result = await addDownloadAction({
+      userId: task.userId,
+      type: ActionType.TemplateDownload,
+      thingId: taskKey,
+    })
+
+    const link = shortLink(result.insertedId, this.ctx.req)
+    const data: DownloadActionData = {
+      url: link,
+      originUrl,
+      status: DownloadStatus.SUCCESS,
+      ids: [],
+      tip: filename,
+      name: filename,
+      size: fsize,
+      account: user.account,
+      mimeType,
+      expiredTime: expiredTime * 1000,
+    }
+
+    await updateAction<DownloadActionData>(
+      { _id: ObjectID(result.insertedId) },
+      {
+        $set: {
+          data,
+        },
+      },
+    )
+
+    return {
+      link,
+      mimeType,
     }
   }
 }

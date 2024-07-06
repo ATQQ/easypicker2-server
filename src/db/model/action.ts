@@ -18,6 +18,11 @@ export enum ActionType {
    * 路由禁用
    */
   DisabledRoute,
+
+  /**
+   * 示例文件下载
+   */
+  TemplateDownload,
 }
 export interface Action<T = any> {
   id: string

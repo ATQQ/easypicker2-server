@@ -101,37 +101,37 @@ router.get(
   },
 )
 
-/**
- * 获取模板文件下载链接
- */
-router.get('template', async (req, res) => {
-  const { template, key } = req.query
-  const k = `easypicker2/${key}_template/${template}`
-  const isExist = await judgeFileIsExist(k)
-  if (!isExist) {
-    addBehavior(req, {
-      module: 'file',
-      msg: '下载模板文件 参数错误',
-      data: {
-        data: req.query,
-      },
-    })
-    res.failWithError(publicError.file.notExist)
-    return
-  }
-  addBehavior(req, {
-    module: 'file',
-    msg: `下载模板文件 文件:${template}`,
-    data: {
-      template,
-      key,
-    },
-  })
-  // TODO: 统计下载次数和流量
-  res.success({
-    link: createDownloadUrl(k, getQiniuFileUrlExpiredTime(1)),
-  })
-})
+// /**
+//  * 获取模板文件下载链接
+//  */
+// router.get('template', async (req, res) => {
+//   const { template, key } = req.query
+//   const k = `easypicker2/${key}_template/${template}`
+//   const isExist = await judgeFileIsExist(k)
+//   if (!isExist) {
+//     addBehavior(req, {
+//       module: 'file',
+//       msg: '下载模板文件 参数错误',
+//       data: {
+//         data: req.query,
+//       },
+//     })
+//     res.failWithError(publicError.file.notExist)
+//     return
+//   }
+//   addBehavior(req, {
+//     module: 'file',
+//     msg: `下载模板文件 文件:${template}`,
+//     data: {
+//       template,
+//       key,
+//     },
+//   })
+//   // TODO: 统计下载次数和流量
+//   res.success({
+//     link: createDownloadUrl(k, getQiniuFileUrlExpiredTime(1)),
+//   })
+// })
 
 /**
  * 删除单个文件

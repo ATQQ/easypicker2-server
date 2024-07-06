@@ -180,36 +180,44 @@ export default class FileController {
     }
     const { account: logAccount, tip: fileName, mimeType, size: fileSize } = download.data
 
-    // TODO: 模板文件下载适配
+    const logMap = {
+      [ActionType.Download]: '下载文件成功',
+      [ActionType.Compress]: '归档下载文件成功',
+      [ActionType.TemplateDownload]: '下载模板文件',
+    }
 
-    if (download.type === ActionType.Compress) {
-      this.behaviorService.add('file', `归档下载文件成功 用户:${logAccount} 文件:${fileName} 类型:${mimeType}`, {
-        account: logAccount,
-        name: fileName,
-        size: fileSize,
-        mimeType,
-        downloadActionId: key,
-      })
-    }
-    if (download.type === ActionType.Download) {
-      this.behaviorService.add('file', `下载文件成功 用户:${logAccount} 文件:${fileName} 类型:${mimeType}`, {
-        account: logAccount,
-        name: fileName,
-        mimeType,
-        size: fileSize,
-        downloadActionId: key,
-      })
-    }
+    this.behaviorService.add('file', `${logMap[download.type]} 用户:${logAccount} 文件:${fileName} 类型:${mimeType}`, {
+      account: logAccount,
+      name: fileName,
+      size: fileSize,
+      mimeType,
+      downloadActionId: key,
+    })
+
     this.ctx.res.statusCode = 302
     this.ctx.res.setHeader('Location', download.data.originUrl)
     this.ctx.res.end()
   }
 
-  @Post('batch/down')
+  @Post('/batch/down')
   async batchDownload(@ReqBody() body) {
     const { ids, zipName } = body
     try {
-      await this.fileService.batchDownload(ids, zipName)
+      return await this.fileService.batchDownload(ids, zipName)
+    }
+    catch (error) {
+      return wrapperCatchError(error)
+    }
+  }
+
+  /**
+   * 模板文件下载
+   */
+  @Get('/template')
+  async downloadTemplate(@ReqQuery() query) {
+    const { template, key } = query
+    try {
+      return await this.fileService.downloadTemplate(template, key)
     }
     catch (error) {
       return wrapperCatchError(error)
