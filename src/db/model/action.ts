@@ -68,6 +68,7 @@ export interface DownloadActionData {
   originUrl?: string
   account?: string
   mimeType?: string
+  name?: string
 }
 
 export type DownloadAction = Action<DownloadActionData>

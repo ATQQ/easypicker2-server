@@ -1,19 +1,20 @@
 import type { Context } from 'flash-wolves'
 import { Inject, InjectCtx, Provide } from 'flash-wolves'
 import { ObjectID } from 'mongodb'
+import { In } from 'typeorm'
 import QiniuService from './qiniuService'
 import BehaviorService from './behaviorService'
 import type { Files } from '@/db/entity'
 import { FileRepository } from '@/db/fileDb'
 import type { File } from '@/db/model/file'
 import { publicError } from '@/constants/errorMsg'
-import { batchFileStatus, createDownloadUrl, judgeFileIsExist } from '@/utils/qiniuUtil'
+import { batchFileStatus, createDownloadUrl, judgeFileIsExist, makeZipWithKeys } from '@/utils/qiniuUtil'
 import { getQiniuFileUrlExpiredTime } from '@/utils/userUtil'
 import LocalUserDB from '@/utils/user-local-db'
 import { addDownloadAction, updateAction } from '@/db/actionDb'
 import type { DownloadActionData } from '@/db/model/action'
 import { ActionType, DownloadStatus } from '@/db/model/action'
-import { shortLink } from '@/utils/stringUtil'
+import { getUniqueKey, normalizeFileName, shortLink } from '@/utils/stringUtil'
 
 @Provide()
 export default class FileService {
@@ -127,6 +128,7 @@ export default class FileService {
       status: DownloadStatus.SUCCESS,
       ids: [file.id],
       tip: file.name,
+      name: file.name,
       size: file.size,
       account: logAccount,
       mimeType,
@@ -144,6 +146,76 @@ export default class FileService {
     return {
       link,
       mimeType,
+    }
+  }
+
+  async batchDownload(ids: number[], zipName: string) {
+    const { id: userId, account: logAccount } = this.ctx.req.userInfo
+    const files = await this.fileRepository.findMany({
+      id: In(ids),
+      userId,
+    })
+    if (files.length === 0) {
+      this.behaviorService.add('file', `批量下载文件失败 用户:${logAccount}`, {
+        account: logAccount,
+      })
+      throw publicError.file.notExist
+    }
+    let keys = []
+    for (const file of files) {
+      const { categoryKey } = file
+      const key = this.getOssKey(file)
+      if (!categoryKey) {
+        keys.push(key)
+      }
+      // 兼容老板平台数据
+      if (categoryKey) {
+        const isOldExist = await judgeFileIsExist(categoryKey)
+        if (isOldExist) {
+          keys.push(categoryKey)
+        }
+        else {
+          keys.push(key)
+        }
+      }
+    }
+
+    const filesStatus = await batchFileStatus(keys)
+    let size = 0
+    keys = keys.filter((_, idx) => {
+      const { code } = filesStatus[idx]
+      if (code === 200) {
+        size += filesStatus[idx].data.fsize || 0
+      }
+      return code === 200
+    })
+    if (keys.length === 0) {
+      this.behaviorService.add('file', `批量下载文件失败 用户:${logAccount} 文件均已从云上移除`, {
+        account: logAccount,
+      })
+      throw publicError.file.notExist
+    }
+
+    const filename = normalizeFileName(zipName) ?? `${getUniqueKey()}`
+    const value = await makeZipWithKeys(keys, filename)
+    this.behaviorService.add('file', `批量下载任务 用户:${logAccount} 文件数量:${keys.length} 压缩任务名${value}`, {
+      account: logAccount,
+      length: keys.length,
+      size,
+    })
+
+    await addDownloadAction({
+      userId,
+      type: ActionType.Compress,
+      data: {
+        status: DownloadStatus.ARCHIVE,
+        ids,
+        tip: `${filename}.zip (${keys.length}个文件)`,
+        archiveKey: value,
+      },
+    })
+    return {
+      k: value,
     }
   }
 }

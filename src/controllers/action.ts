@@ -1,11 +1,8 @@
 import path from 'node:path'
-import type { FWRequest } from 'flash-wolves'
-import { Post, ReqBody, RouterController } from 'flash-wolves'
+import type { Context, FWRequest } from 'flash-wolves'
+import { InjectCtx, Post, ReqBody, RouterController } from 'flash-wolves'
 import type { FilterQuery } from 'mongodb'
-import type { User } from '@/db/model/user'
-import { ReqUserInfo } from '@/decorator'
 import {
-  findAction,
   findActionCount,
   findActionWithPageOffset,
   updateAction,
@@ -24,26 +21,27 @@ import {
   createDownloadUrl,
   getOSSFiles,
 } from '@/utils/qiniuUtil'
-import { addBehavior } from '@/db/logDb'
 import LocalUserDB from '@/utils/user-local-db'
 import { getQiniuFileUrlExpiredTime } from '@/utils/userUtil'
+import { shortLink } from '@/utils/stringUtil'
 
 @RouterController('action', {
   needLogin: true,
 })
 export default class ActionController {
+  @InjectCtx()
+  ctx!: Context
+
   @Post('download/list')
   async getDownloadActionList(
-    @ReqUserInfo() user: User,
     @ReqBody('pageSize') size: number,
     @ReqBody('pageIndex') index: number,
     @ReqBody('extraIds') ids: string[],
-    req: FWRequest,
   ) {
     const pageIndex = +(index ?? 1)
     const extraIds = ids ?? []
     const pageSize = Math.max(+(size ?? 3), extraIds.length)
-
+    const user = this.ctx.req.userInfo
     const query: FilterQuery<Action> = {
       $or: [
         ...extraIds.map(e => ({ id: e })),
@@ -67,7 +65,6 @@ export default class ActionController {
       // 检查是否过期
       if (action.data.status === DownloadStatus.SUCCESS) {
         const pass = Math.floor((now - +action.date) / oneHour)
-        console.log(action.data.expiredTime)
         if (action.data.expiredTime && now > action.data.expiredTime) {
           action.data.status = DownloadStatus.EXPIRED
           needUpdate = true
@@ -93,24 +90,20 @@ export default class ActionController {
           const expiredTime
             = getQiniuFileUrlExpiredTime(LocalUserDB.getSiteConfig()?.downloadCompressExpired || 60)
 
-          action.data.url = createDownloadUrl(
+          action.data.originUrl = createDownloadUrl(
             data.key,
             expiredTime,
           )
+          // @ts-expect-error
+          action.data.url = shortLink(action._id, this.ctx.req)
           action.data.size = fileInfo.fsize
           action.data.expiredTime = expiredTime * 1000
           const filename = path.parse(fileInfo.key).name
+          action.data.name = filename
+          action.data.account = user.account
+          action.data.mimeType = fileInfo.mimeType
           // 归档完成，常理上前端会触发下载，记录一下
-          addBehavior(req, {
-            module: 'file',
-            msg: `归档下载文件成功 用户:${user.account} 文件:${filename} 类型:${fileInfo.mimeType}`,
-            data: {
-              account: user.account,
-              name: filename,
-              size: fileInfo.fsize,
-              mimeType: fileInfo.mimeType,
-            },
-          })
+          // 移动至，真正下载位置记录
           needUpdate = true
         }
       }
@@ -145,60 +138,5 @@ export default class ActionController {
         error: v.data.error,
       })),
     }
-  }
-
-  @Post('download/status')
-  async checkCompressTaskStatus(
-    @ReqUserInfo() user: User,
-    @ReqBody('ids') actionIds: string[],
-  ) {
-    if (!actionIds) {
-      return {}
-    }
-    const actions = await findAction<DownloadActionData>({
-      userId: user.id,
-      $or: actionIds.map(v => ({ id: v })),
-    })
-    for (const action of actions) {
-      let needUpdate = false
-      // 检查归档是否完成
-      if (action.data.status === DownloadStatus.ARCHIVE) {
-        const data = await checkFopTaskStatus(action.data.archiveKey)
-        if (data.code === 0) {
-          action.data.status = DownloadStatus.SUCCESS
-          // 获取过期时间
-          const expiredTime
-            = getQiniuFileUrlExpiredTime(LocalUserDB.getSiteConfig()?.downloadCompressExpired || 60)
-
-          action.data.url = createDownloadUrl(
-            data.key,
-            expiredTime,
-          )
-          action.data.expiredTime = expiredTime * 1000
-          needUpdate = true
-        }
-      }
-      // 异步更新落库
-      if (needUpdate) {
-        updateAction<DownloadActionData>(
-          { id: action.id },
-          {
-            $set: {
-              data: {
-                ...action.data,
-              },
-            },
-          },
-        )
-      }
-    }
-    return actions.map(v => ({
-      id: v.id,
-      type: v.type,
-      status: v.data.status,
-      url: v.data.url,
-      tip: v.data.tip,
-      date: +v.date,
-    }))
   }
 }

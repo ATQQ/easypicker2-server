@@ -30,7 +30,7 @@ import { ReqUserInfo } from '@/decorator'
 import { BehaviorService, FileService } from '@/service'
 import { wrapperCatchError } from '@/utils/context'
 import { findAction } from '@/db/actionDb'
-import type { DownloadActionData } from '@/db/model/action'
+import { ActionType, type DownloadActionData } from '@/db/model/action'
 
 const power = {
   needLogin: true,
@@ -180,16 +180,39 @@ export default class FileController {
     }
     const { account: logAccount, tip: fileName, mimeType, size: fileSize } = download.data
 
-    // TODO：压缩文件适配，模板文件下载适配
-    // 添加日志
-    this.behaviorService.add('file', `下载文件成功 用户:${logAccount} 文件:${fileName} 类型:${mimeType}`, {
-      account: logAccount,
-      name: fileName,
-      mimeType,
-      size: fileSize,
-    })
+    // TODO: 模板文件下载适配
+
+    if (download.type === ActionType.Compress) {
+      this.behaviorService.add('file', `归档下载文件成功 用户:${logAccount} 文件:${fileName} 类型:${mimeType}`, {
+        account: logAccount,
+        name: fileName,
+        size: fileSize,
+        mimeType,
+        downloadActionId: key,
+      })
+    }
+    if (download.type === ActionType.Download) {
+      this.behaviorService.add('file', `下载文件成功 用户:${logAccount} 文件:${fileName} 类型:${mimeType}`, {
+        account: logAccount,
+        name: fileName,
+        mimeType,
+        size: fileSize,
+        downloadActionId: key,
+      })
+    }
     this.ctx.res.statusCode = 302
     this.ctx.res.setHeader('Location', download.data.originUrl)
     this.ctx.res.end()
+  }
+
+  @Post('batch/down')
+  async batchDownload(@ReqBody() body) {
+    const { ids, zipName } = body
+    try {
+      await this.fileService.batchDownload(ids, zipName)
+    }
+    catch (error) {
+      return wrapperCatchError(error)
+    }
   }
 }

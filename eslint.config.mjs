@@ -5,5 +5,6 @@ export default antfu({
   vue: true,
   rules: {
     'no-console': 'off',
+    'ts/ban-ts-comment': 'off',
   },
 })

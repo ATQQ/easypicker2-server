@@ -13,19 +13,15 @@ import { selectTasks } from '@/db/taskDb'
 
 import {
   batchDeleteFiles,
-  batchFileStatus,
   checkFopTaskStatus,
   createDownloadUrl,
   deleteObjByKey,
   getUploadToken,
   judgeFileIsExist,
-  makeZipWithKeys,
 } from '@/utils/qiniuUtil'
-import { getUniqueKey, isSameInfo, normalizeFileName, randomShortLink } from '@/utils/stringUtil'
+import { isSameInfo, normalizeFileName } from '@/utils/stringUtil'
 import { getQiniuFileUrlExpiredTime, getUserInfo } from '@/utils/userUtil'
 import { selectTaskInfo } from '@/db/taskInfoDb'
-import { addDownloadAction } from '@/db/actionDb'
-import { ActionType, DownloadStatus } from '@/db/model/action'
 
 const router = new Router('file')
 
@@ -293,107 +289,6 @@ router.delete('withdraw', async (req, res) => {
   }
   res.success()
 })
-
-/**
- * 批量下载
- */
-router.post(
-  'batch/down',
-  async (req, res) => {
-    const { ids, zipName } = req.body
-    const { id: userId, account: logAccount } = await getUserInfo(req)
-    const files = await selectFiles({
-      id: ids,
-      userId,
-    })
-    if (files.length === 0) {
-      addBehavior(req, {
-        module: 'file',
-        msg: `批量下载文件失败 用户:${logAccount}`,
-        data: {
-          account: logAccount,
-        },
-      })
-      res.failWithError(publicError.file.notExist)
-      return
-    }
-    let keys = []
-    for (const file of files) {
-      const { name, task_key, hash, category_key } = file
-      const key = `easypicker2/${task_key}/${hash}/${name}`
-      if (!category_key) {
-        keys.push(key)
-      }
-      // 兼容老板平台数据
-      if (category_key) {
-        const isOldExist = await judgeFileIsExist(category_key)
-        if (isOldExist) {
-          keys.push(category_key)
-        }
-        else {
-          keys.push(key)
-        }
-      }
-    }
-
-    const filesStatus = await batchFileStatus(keys)
-    let size = 0
-    keys = keys.filter((_, idx) => {
-      const { code } = filesStatus[idx]
-      if (code === 200) {
-        size += filesStatus[idx].data.fsize || 0
-      }
-      return code === 200
-    })
-    if (keys.length === 0) {
-      addBehavior(req, {
-        module: 'file',
-        msg: `批量下载文件失败 用户:${logAccount} 文件均已从云上移除`,
-        data: {
-          account: logAccount,
-        },
-      })
-      res.failWithError(publicError.file.notExist)
-      return
-    }
-    addBehavior(req, {
-      module: 'file',
-      msg: `批量下载文件成功 用户:${logAccount} 文件数量:${keys.length}`,
-      data: {
-        account: logAccount,
-        length: keys.length,
-        size,
-      },
-    })
-    const filename = normalizeFileName(zipName) ?? `${getUniqueKey()}`
-    const value = await makeZipWithKeys(keys, filename)
-    addBehavior(req, {
-      module: 'file',
-      msg: `批量下载任务 用户:${logAccount} 文件数量:${keys.length} 压缩任务名${value}`,
-      data: {
-        account: logAccount,
-        length: keys.length,
-        size,
-      },
-    })
-    await addDownloadAction({
-      userId,
-      type: ActionType.Compress,
-      data: {
-        status: DownloadStatus.ARCHIVE,
-        ids,
-        tip: `${filename}.zip (${keys.length}个文件)`,
-        archiveKey: value,
-      },
-    })
-    res.success({
-      k: value,
-    })
-  },
-  {
-    needLogin: true,
-  },
-)
 
 /**
  * 查询文件归档进度
