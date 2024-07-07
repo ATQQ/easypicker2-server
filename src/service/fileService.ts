@@ -11,13 +11,14 @@ import { publicError } from '@/constants/errorMsg'
 import { batchFileStatus, createDownloadUrl, judgeFileIsExist, makeZipWithKeys } from '@/utils/qiniuUtil'
 import { getQiniuFileUrlExpiredTime } from '@/utils/userUtil'
 import LocalUserDB from '@/utils/user-local-db'
-import { addDownloadAction, updateAction } from '@/db/actionDb'
+import { addDownloadAction, findAction, updateAction } from '@/db/actionDb'
 import type { DownloadActionData } from '@/db/model/action'
 import { ActionType, DownloadStatus } from '@/db/model/action'
 import { getUniqueKey, normalizeFileName, shortLink } from '@/utils/stringUtil'
 import { TaskRepository } from '@/db/taskDb'
 import { UserRepository } from '@/db/userDb'
 import { BOOLEAN } from '@/db/model/public'
+import { findLog } from '@/db/logDb'
 
 @Provide()
 export default class FileService {
@@ -288,5 +289,40 @@ export default class FileService {
       link,
       mimeType,
     }
+  }
+
+  async downloadCount(idList: number[]) {
+    // 先获取 downloadAction
+    // 筛选状态，不包含失败的
+    const actions = await findAction({
+      'userId': this.ctx.req.userInfo.id,
+      'data.status': {
+        $in: [DownloadStatus.ARCHIVE, DownloadStatus.SUCCESS, DownloadStatus.EXPIRED],
+      },
+      'data.ids': {
+        $in: idList,
+      },
+    })
+
+    // 再获取 action 对应的日志条数
+    // 有日志就按照日志计算
+    // @ts-expect-error
+    const actionsIds = actions.map(v => v._id.toHexString())
+    const logs = await findLog({
+      'type': 'behavior',
+      'data.info.data.downloadActionId': { $in: actionsIds },
+    })
+
+    const values = idList.map((fileId) => {
+      const baseCount = actions
+        .filter(v => v.data.ids?.includes(fileId))
+        .reduce((pre, action) => {
+          // @ts-expect-error
+          const logCount = logs.filter(v => v.data?.info?.data?.downloadActionId === action._id.toHexString()).length
+          return pre + (logCount || 1)
+        }, 0)
+      return baseCount
+    })
+    return values
   }
 }

@@ -31,6 +31,8 @@ import { BehaviorService, FileService } from '@/service'
 import { wrapperCatchError } from '@/utils/context'
 import { findAction } from '@/db/actionDb'
 import { ActionType, type DownloadActionData } from '@/db/model/action'
+import { getQiniuFileUrlExpiredTime } from '@/utils/userUtil'
+import LocalUserDB from '@/utils/user-local-db'
 
 const power = {
   needLogin: true,
@@ -74,15 +76,19 @@ export default class FileController {
     const keys = files.map(
       file => `easypicker2/${file.task_key}/${file.hash}/${file.name}`,
     )
+    const expiredTime = getQiniuFileUrlExpiredTime(LocalUserDB.getSiteConfig()?.downloadOneExpired || 1)
+
     const filesStatus = await batchFileStatus(keys)
     const result = filesStatus.map((status, idx) => {
       if (status.code === 200 && status.data?.mimeType?.includes('image')) {
         return {
           cover: createDownloadUrl(
             `${keys[idx]}${qiniuConfig.imageCoverStyle}`,
+            expiredTime,
           ),
           preview: createDownloadUrl(
             `${keys[idx]}${qiniuConfig.imagePreviewStyle}`,
+            expiredTime,
           ),
         }
       }
@@ -93,6 +99,13 @@ export default class FileController {
       }
     })
     return result
+  }
+
+  @Post('/download/count', power)
+  async downloadCount(
+    @ReqBody('ids') idList: number[],
+  ) {
+    return this.fileService.downloadCount(idList)
   }
 
   @Put('/name/rewrite', power)
