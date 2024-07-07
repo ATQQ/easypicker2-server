@@ -232,7 +232,6 @@ export default class FileService {
       throw publicError.file.notExist
     }
 
-    // TODO: 统计下载次数和流量
     const task = await this.taskRepository.findOne({
       k: taskKey,
       del: BOOLEAN.FALSE,

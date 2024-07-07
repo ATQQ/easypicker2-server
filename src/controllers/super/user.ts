@@ -1,14 +1,15 @@
-/* eslint-disable no-loop-func */
+import type {
+  FWRequest,
+} from 'flash-wolves'
 import {
   Delete,
-  FWRequest,
   Get,
   Inject,
   Post,
   Put,
   ReqBody,
   Response,
-  RouterController
+  RouterController,
 } from 'flash-wolves'
 import dayjs from 'dayjs'
 import { USER_POWER, USER_STATUS } from '@/db/model/user'
@@ -18,7 +19,7 @@ import {
   selectUserByAccount,
   selectUserById,
   selectUserByPhone,
-  updateUser
+  updateUser,
 } from '@/db/userDb'
 import { addBehavior } from '@/db/logDb'
 import { rMobilePhone, rPassword, rVerCode } from '@/utils/regExp'
@@ -35,13 +36,13 @@ import {
   BehaviorService,
   QiniuService,
   SuperUserService,
-  TokenService
+  TokenService,
 } from '@/service'
 import { calculateSize } from '@/utils/userUtil'
 
 const power = {
   userPower: USER_POWER.SUPER,
-  needLogin: true
+  needLogin: true,
 }
 
 @RouterController('super/user', power)
@@ -72,7 +73,7 @@ export default class SuperUserController {
     text: string,
     @ReqUserInfo() user: User,
     @ReqBody('target')
-    target?: number
+    target?: number,
   ) {
     // 数据格式校验
     if ((type === MessageType.USER_PUSH && !target) || !text.trim()) {
@@ -80,7 +81,8 @@ export default class SuperUserController {
     }
     if (type === MessageType.USER_PUSH) {
       MessageService.sendMessage(user.id, target, text)
-    } else if (type === MessageType.GLOBAL_PUSH) {
+    }
+    else if (type === MessageType.GLOBAL_PUSH) {
       MessageService.sendGlobalMessage(user.id, text)
     }
   }
@@ -91,7 +93,7 @@ export default class SuperUserController {
   }
 
   @Get('message', {
-    userPower: USER_POWER.NORMAL
+    userPower: USER_POWER.NORMAL,
   })
   async getMessageList(@ReqUserInfo() user: User) {
     const messageList = await MessageService.getMessageList(user.id)
@@ -102,13 +104,13 @@ export default class SuperUserController {
         style: v.style,
         date: v.date,
         text: v.text,
-        read: v.read
+        read: v.read,
       }
     })
   }
 
   @Put('message', {
-    userPower: USER_POWER.NORMAL
+    userPower: USER_POWER.NORMAL,
   })
   readMessage(@ReqUserInfo() user: User, @ReqBody('id') id: string) {
     MessageService.readMessage(user.id, id)
@@ -130,7 +132,7 @@ export default class SuperUserController {
       'openTime',
       'power',
       'size',
-      'loginCount'
+      'loginCount',
     ])
     // 获取文件数据
     const files = await this.fileRepository.findWithSpecifyColumn({}, [
@@ -139,20 +141,20 @@ export default class SuperUserController {
       'hash',
       'name',
       'date',
-      'categoryKey'
+      'categoryKey',
     ])
     const filesMap = await this.qiniuService.getFilesMap(files)
     // 遍历用户，获取文件数和占用空间数据
     for (const user of users) {
-      const fileInfo = files.filter((file) => file.userId === user.id)
+      const fileInfo = files.filter(file => file.userId === user.id)
       let AMonthAgoSize = 0
       let AQuarterAgoSize = 0
       let AHalfYearAgoSize = 0
       const fileSize = fileInfo.reduce((pre, v) => {
         const { date } = v
         const ossKey = FileService.getOssKey(v)
-        const { fsize = 0 } =
-          filesMap.get(ossKey) || filesMap.get(v.categoryKey) || {}
+        const { fsize = 0 }
+          = filesMap.get(ossKey) || filesMap.get(v.categoryKey) || {}
 
         if (dayjs(date).isBefore(dayjs().subtract(1, 'month'))) {
           AMonthAgoSize += fsize
@@ -173,10 +175,9 @@ export default class SuperUserController {
       }
 
       const limitSize = calculateSize(user.size)
-      // TODO: 存储标志便于二次查询
       const limitUpload = limitSize < fileSize
-      const percentage =
-        user.power === USER_POWER.SUPER
+      const percentage
+        = user.power === USER_POWER.SUPER
           ? 0
           : ((fileSize / limitSize) * 100).toFixed(2)
       Object.assign(user, {
@@ -192,14 +193,14 @@ export default class SuperUserController {
         onlineCount: userTokens.length,
         // 便于排序
         usage: fileSize,
-        lastLoginTime: +new Date(user.loginTime) || 0
+        lastLoginTime: +new Date(user.loginTime) || 0,
       })
     }
     return {
-      list: users.map((u) => ({
+      list: users.map(u => ({
         ...u,
-        phone: u?.phone?.slice(-4)
-      }))
+        phone: u?.phone?.slice(-4),
+      })),
     }
   }
 
@@ -209,7 +210,7 @@ export default class SuperUserController {
     @ReqBody('type')
     type: 'month' | 'quarter' | 'half',
     @ReqUserInfo()
-    userInfo: User
+    userInfo: User,
   ) {
     const user = (await selectUserById(id))[0]
     if (!user) {
@@ -218,7 +219,7 @@ export default class SuperUserController {
     const months = {
       month: 1,
       quarter: 3,
-      half: 6
+      half: 6,
     }
     if (!months[type]) {
       return
@@ -227,9 +228,9 @@ export default class SuperUserController {
     const files = (
       await selectFiles(
         {
-          userId: id
+          userId: id,
         },
-        ['task_key', 'user_id', 'hash', 'name', 'date']
+        ['task_key', 'user_id', 'hash', 'name', 'date'],
       )
     ).filter((v) => {
       return dayjs(v.date).isBefore(beforeDate)
@@ -240,8 +241,8 @@ export default class SuperUserController {
       user.id,
       MessageService.clearMessageFormat('文件清理提醒', [
         `<strong style="font-weight: bold; color: rgb(71, 193, 168);">由于服务运维费用过高，系统已<span style="color:red;">自动清理 ${months[type]} 个月</span>之前收集的文件</strong>`,
-        '如有特殊疑问，或者以后不希望被清理，请联系系统管理员Thanks♪(･ω･)ﾉ'
-      ])
+        '如有特殊疑问，或者以后不希望被清理，请联系系统管理员Thanks♪(･ω･)ﾉ',
+      ]),
     )
 
     batchDeleteFiles(delKeys)
@@ -254,21 +255,22 @@ export default class SuperUserController {
   async changeStatus(
     @ReqBody('id') id: number,
     @ReqBody('status') status: USER_STATUS,
-    @ReqBody('openTime') openTime: any
+    @ReqBody('openTime') openTime: any,
   ) {
     if (status !== USER_STATUS.FREEZE) {
       openTime = null
-    } else {
+    }
+    else {
       openTime = new Date(new Date(openTime).getTime())
     }
     await updateUser(
       {
         status,
-        openTime
+        openTime,
       },
       {
-        id
-      }
+        id,
+      },
     )
   }
 
@@ -276,14 +278,14 @@ export default class SuperUserController {
   async resetPassword(
     @ReqBody('id') id: number,
     @ReqBody('password') password: string,
-    req: FWRequest
+    req: FWRequest,
   ) {
     const user = await selectUserById(id)
     if (!user.length || !rPassword.test(password)) {
       addBehavior(req, {
         module: 'super',
         data: req.body,
-        msg: '管理员重置用户密码: 参数不合法'
+        msg: '管理员重置用户密码: 参数不合法',
       })
       return Response.fail(500, '参数不合法')
     }
@@ -291,15 +293,15 @@ export default class SuperUserController {
     addBehavior(req, {
       module: 'super',
       data: req.body,
-      msg: `管理员重置用户密码: ${user[0].account}`
+      msg: `管理员重置用户密码: ${user[0].account}`,
     })
     await updateUser(
       {
-        password: encryption(password)
+        password: encryption(password),
       },
       {
-        id
-      }
+        id,
+      },
     )
   }
 
@@ -308,14 +310,14 @@ export default class SuperUserController {
     @ReqBody('id') id: number,
     @ReqBody('phone') phone: string,
     @ReqBody('code') code: string,
-    req: FWRequest
+    req: FWRequest,
   ) {
     const user = await selectUserById(id)
     if (!user.length || !rMobilePhone.test(phone) || !rVerCode.test(code)) {
       addBehavior(req, {
         module: 'super',
         data: req.body,
-        msg: '管理员重置手机号: 参数不合法'
+        msg: '管理员重置手机号: 参数不合法',
       })
       return Response.fail(500, '参数不合法')
     }
@@ -324,7 +326,7 @@ export default class SuperUserController {
       addBehavior(req, {
         module: 'super',
         data: req.body,
-        msg: '管理员重置手机号: 验证码错误'
+        msg: '管理员重置手机号: 验证码错误',
       })
       return Response.failWithError(UserError.code.fault)
     }
@@ -337,7 +339,7 @@ export default class SuperUserController {
       addBehavior(req, {
         module: 'super',
         msg: `管理员重置手机号: 手机号 ${phone} 已存在`,
-        data: req.body
+        data: req.body,
       })
       return Response.failWithError(UserError.mobile.exist)
     }
@@ -345,30 +347,30 @@ export default class SuperUserController {
     addBehavior(req, {
       module: 'super',
       data: req.body,
-      msg: `管理员重置用户手机号: ${user[0].account}`
+      msg: `管理员重置用户手机号: ${user[0].account}`,
     })
     await updateUser(
       {
-        phone
+        phone,
       },
       {
-        id
-      }
+        id,
+      },
     )
   }
 
   @Put('size')
   async changeSize(@ReqBody('id') id: number, @ReqBody('size') size: number) {
     const user = await this.userRepository.findOne({
-      id
+      id,
     })
     this.behaviorService.add(
       'super',
       `修改用户空间容量 ${user.account} ${user.size} => ${size}GB`,
       {
         oldSize: user.size,
-        newSize: size
-      }
+        newSize: size,
+      },
     )
     user.size = size
     await this.userRepository.update(user)

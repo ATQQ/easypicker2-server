@@ -1,3 +1,4 @@
+import process from 'node:process'
 import { Provide } from 'flash-wolves'
 import { User } from '@/db/entity'
 import { encryption } from '@/utils/stringUtil'
@@ -8,7 +9,6 @@ import { throttle } from '@/utils'
 
 @Provide()
 export default class TokenService {
-  // TODO: inject ctx
   realToken(token) {
     return process.env.TOKEN_PREFIX + token
   }
@@ -47,7 +47,8 @@ export default class TokenService {
         return JSON.parse(str)
       }
       return []
-    } catch (e) {
+    }
+    catch (e) {
       return []
     }
   }
@@ -95,8 +96,8 @@ export default class TokenService {
     // 查询库中的用户信息
     const userInfo = await AppDataSource.manager.findOne(User, {
       where: {
-        id: cacheUser.id
-      }
+        id: cacheUser.id,
+      },
     })
     // 清理脏数据
     if (!userInfo) {
@@ -117,7 +118,7 @@ export default class TokenService {
 
     // 检查当前账号所有token
     const values = await Promise.all(
-      onlineTokens.map((token) => getRedisVal(token))
+      onlineTokens.map(token => getRedisVal(token)),
     )
     const newTokenList = onlineTokens.filter((_, idx) => {
       return values[idx]
@@ -125,7 +126,7 @@ export default class TokenService {
     if (newTokenList.length !== onlineTokens.length) {
       setRedisValue(
         this.onlineTokenKey(userInfo.account),
-        JSON.stringify(newTokenList)
+        JSON.stringify(newTokenList),
       )
     }
   }, 500)
@@ -133,7 +134,7 @@ export default class TokenService {
   async checkAllToken(onlineTokens: string[], account: string) {
     // 检查当前账号所有token
     const values = await Promise.all(
-      onlineTokens.map((token) => getRedisVal(token))
+      onlineTokens.map(token => getRedisVal(token)),
     )
     const newTokenList = onlineTokens.filter((_, idx) => {
       return values[idx]
@@ -141,7 +142,7 @@ export default class TokenService {
     if (newTokenList.length !== onlineTokens.length) {
       await setRedisValue(
         this.onlineTokenKey(account),
-        JSON.stringify(newTokenList)
+        JSON.stringify(newTokenList),
       )
     }
   }
