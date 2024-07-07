@@ -212,15 +212,15 @@ export default class SuperUserController {
           const { info } = v.data
           const { msg } = info
           const size = +info.data.size || 0
-          if (msg.includes('下载文件成功 用户:')) {
+          if (msg.startsWith('下载文件成功 用户:')) {
             oneFile.count += 1
             oneFile.size += size
           }
-          else if (msg.includes('归档下载文件成功 用户:')) {
+          else if (msg.startsWith('归档下载文件成功 用户:')) {
             compressFile.count += 1
             compressFile.size += size
           }
-          else if (msg.includes('下载模板文件 用户:')) {
+          else if (msg.startsWith('下载模板文件 用户:')) {
             templateFile.count += 1
             templateFile.size += size
           }
