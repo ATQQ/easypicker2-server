@@ -142,6 +142,7 @@ export default class SuperUserController {
       'hash',
       'name',
       'date',
+      'size',
       'categoryKey',
     ])
     const filesMap = await this.qiniuService.getFilesMap(files)
@@ -156,11 +157,13 @@ export default class SuperUserController {
     for (const user of users) {
       const fileInfo = files.filter(file => file.userId === user.id)
       let ossCount = 0
+      let originFileSize = 0
       let AMonthAgoSize = 0
       let AQuarterAgoSize = 0
       let AHalfYearAgoSize = 0
       const fileSize = fileInfo.reduce((pre, v) => {
         const { date } = v
+        originFileSize += (+v.size || 0)
         const ossKey = FileService.getOssKey(v)
         const { fsize = 0 }
           = filesMap.get(ossKey) || filesMap.get(v.categoryKey) || {}
@@ -228,6 +231,7 @@ export default class SuperUserController {
         })
       Object.assign(user, {
         fileCount: fileInfo.length,
+        originFileSize,
         ossCount,
         limitSize:
           user.power === USER_POWER.SUPER ? '无限制' : formatSize(limitSize),
