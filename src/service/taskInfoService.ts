@@ -75,7 +75,6 @@ export default class TaskInfoService {
         tipImageKey,
       },
     )
-    // TODO: tip 流量统计
     this.qiniuService.deleteObjByKey(tipImageKey)
   }
 

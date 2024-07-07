@@ -147,6 +147,7 @@ export default class SuperUserController {
     // 遍历用户，获取文件数和占用空间数据
     for (const user of users) {
       const fileInfo = files.filter(file => file.userId === user.id)
+      let ossCount = 0
       let AMonthAgoSize = 0
       let AQuarterAgoSize = 0
       let AHalfYearAgoSize = 0
@@ -156,6 +157,9 @@ export default class SuperUserController {
         const { fsize = 0 }
           = filesMap.get(ossKey) || filesMap.get(v.categoryKey) || {}
 
+        if (!fsize) {
+          ossCount += 1
+        }
         if (dayjs(date).isBefore(dayjs().subtract(1, 'month'))) {
           AMonthAgoSize += fsize
         }
@@ -182,6 +186,7 @@ export default class SuperUserController {
           : ((fileSize / limitSize) * 100).toFixed(2)
       Object.assign(user, {
         fileCount: fileInfo.length,
+        ossCount,
         limitSize:
           user.power === USER_POWER.SUPER ? '无限制' : formatSize(limitSize),
         limitUpload: user.power === USER_POWER.SUPER ? false : limitUpload,

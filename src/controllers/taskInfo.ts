@@ -29,6 +29,7 @@ export default class TaskInfoController {
     return this.taskInfoService.getUseFullTemplate(taskKey)
   }
 
+  // TODO：预览图片流量统计
   @Delete('/tip/image/:key')
   async delTipImage(
     @ReqBody('uid') uid: number,
