@@ -187,7 +187,8 @@ export default class SuperUserController {
       }
 
       const limitSize = calculateSize(user.size)
-      const limitUpload = limitSize < fileSize
+      // 空间为 0 也不允许上传
+      const limitUpload = limitSize === 0 || limitSize < fileSize
       const percentage
         = user.power === USER_POWER.SUPER
           ? 0

@@ -88,7 +88,7 @@ export default class TaskController {
           : user?.size) ?? 2,
       )
       const usage = await this.fileService.getFileUsage(user.id)
-      const limitUpload = size < usage
+      const limitUpload = size === 0 || size < usage
       if (limitUpload) {
         this.behaviorService.add('user', `用户 ${user.account} 超出容量限制`, {
           space: formatSize(size),
