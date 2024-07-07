@@ -245,7 +245,7 @@ export async function initUserConfig() {
           item => item.key === key,
         )?.value
         // 判断是否有新key不存在
-        if (Object.keys(config[key]).some(k => !oldConfig?.[k])) {
+        if (Object.keys(config[key]).some(k => oldConfig?.[k] === undefined)) {
           const newValue = {
             ...config[key],
             ...oldConfig,
@@ -279,6 +279,7 @@ export async function initUserConfig() {
       downloadOneExpired: 1, // 单个文件链接下载过期时间（min）
       downloadCompressExpired: 60, // 归档文件下载过期时间（min）
       compressSizeLimit: 10, // 压缩文件大小限制（GB）
+      needBindPhone: false, // 是否需要绑定手机号
     } as GlobalSiteConfig,
   })
   // 更新配置
