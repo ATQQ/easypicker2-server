@@ -168,7 +168,7 @@ export default class SuperUserController {
         const { fsize = 0 }
           = filesMap.get(ossKey) || filesMap.get(v.categoryKey) || {}
 
-        if (!fsize) {
+        if (fsize) {
           ossCount += 1
         }
         if (dayjs(date).isBefore(dayjs().subtract(1, 'month'))) {
