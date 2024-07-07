@@ -188,6 +188,7 @@ export default class FileController {
 
     this.behaviorService.add('file', `${logMap[download.type]} 用户:${logAccount} 文件:${fileName} 类型:${mimeType}`, {
       account: logAccount,
+      downloadType: download.type,
       name: fileName,
       size: fileSize,
       mimeType,

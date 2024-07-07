@@ -21,7 +21,7 @@ import {
   selectUserByPhone,
   updateUser,
 } from '@/db/userDb'
-import { addBehavior } from '@/db/logDb'
+import { addBehavior, findLog } from '@/db/logDb'
 import { rMobilePhone, rPassword, rVerCode } from '@/utils/regExp'
 import { encryption, formatSize } from '@/utils/stringUtil'
 import { expiredRedisKey, getRedisVal } from '@/db/redisDb'
@@ -116,6 +116,7 @@ export default class SuperUserController {
     MessageService.readMessage(user.id, id)
   }
 
+  // TODO：优化
   /**
    * 获取用户列表
    */
@@ -144,6 +145,13 @@ export default class SuperUserController {
       'categoryKey',
     ])
     const filesMap = await this.qiniuService.getFilesMap(files)
+    console.time('downloadLog')
+    const downloadLog = await findLog({
+      'type': 'behavior',
+      'data.info.msg': { $regex: /^(下载文件成功 用户:|归档下载文件成功 用户:|下载模板文件 用户:)/ },
+    })
+    console.log('🚀 ~ SuperUserController ~ getUserList ~ downloadLog:', downloadLog.length)
+    console.timeEnd('downloadLog')
     // 遍历用户，获取文件数和占用空间数据
     for (const user of users) {
       const fileInfo = files.filter(file => file.userId === user.id)
@@ -184,6 +192,39 @@ export default class SuperUserController {
         = user.power === USER_POWER.SUPER
           ? 0
           : ((fileSize / limitSize) * 100).toFixed(2)
+
+      // 不同类型文件下载记录
+      const oneFile = {
+        count: 0,
+        size: 0,
+      }
+      const compressFile = {
+        count: 0,
+        size: 0,
+      }
+
+      const templateFile = {
+        count: 0,
+        size: 0,
+      }
+      downloadLog.filter((v => v.data?.info?.data?.account === user.account))
+        .forEach((v) => {
+          const { info } = v.data
+          const { msg } = info
+          const size = +info.data.size || 0
+          if (msg.includes('下载文件成功 用户:')) {
+            oneFile.count += 1
+            oneFile.size += size
+          }
+          else if (msg.includes('归档下载文件成功 用户:')) {
+            compressFile.count += 1
+            compressFile.size += size
+          }
+          else if (msg.includes('下载模板文件 用户:')) {
+            templateFile.count += 1
+            templateFile.size += size
+          }
+        })
       Object.assign(user, {
         fileCount: fileInfo.length,
         ossCount,
@@ -199,6 +240,11 @@ export default class SuperUserController {
         // 便于排序
         usage: fileSize,
         lastLoginTime: +new Date(user.loginTime) || 0,
+        oneFile,
+        compressFile,
+        templateFile,
+        downloadCount: oneFile.count + compressFile.count + templateFile.count,
+        downloadSize: oneFile.size + compressFile.size + templateFile.size,
       })
     }
     return {
