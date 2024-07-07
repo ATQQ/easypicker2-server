@@ -1,9 +1,11 @@
-import { Context, Inject, InjectCtx, Provide, Response } from 'flash-wolves'
+import process from 'node:process'
+import type { Context } from 'flash-wolves'
+import { Inject, InjectCtx, Provide, Response } from 'flash-wolves'
 import { rMobilePhone } from '@/utils/regExp'
 import { UserError } from '@/constants/errorMsg'
 import { randomNumStr } from '@/utils/randUtil'
 import { sendMessage } from '@/utils/tencent'
-import { TokenService, BehaviorService } from '@/service'
+import { BehaviorService, TokenService } from '@/service'
 import { UserRepository } from '@/db/userDb'
 import { createDownloadUrl } from '@/utils/qiniuUtil'
 import { qiniuConfig } from '@/config'
@@ -29,8 +31,8 @@ export default class PublicService {
         'public',
         `获取验证码 手机号:${phone} 格式不正确`,
         {
-          phone
-        }
+          phone,
+        },
       )
       throw UserError.mobile.fault
     }
@@ -41,15 +43,15 @@ export default class PublicService {
       `获取验证码 手机尾号:${logPhone}  验证码:${code} 成功`,
       {
         phone: logPhone,
-        code
-      }
+        code,
+      },
     )
     if (process.env.NODE_ENV !== 'development') {
       sendMessage(phone, code, 2)
     }
     console.log(
       new Date().toLocaleString(),
-      `获取验证码 手机尾号:${logPhone}  验证码:${code} 成功`
+      `获取验证码 手机尾号:${logPhone}  验证码:${code} 成功`,
     )
     this.tokenService.setVerifyCode(phone, code)
   }
@@ -71,8 +73,8 @@ export default class PublicService {
         'public',
         `检查手机号是否存在 手机号:${phone} 格式不正确`,
         {
-          phone
-        }
+          phone,
+        },
       )
 
       return Response.failWithError(UserError.mobile.fault)
@@ -87,8 +89,8 @@ export default class PublicService {
         'public',
         `检查手机号是否存在 手机号:${phone} 已存在`,
         {
-          phone
-        }
+          phone,
+        },
       )
       throw UserError.mobile.exist
     }
@@ -96,8 +98,8 @@ export default class PublicService {
       'public',
       `检查手机号是否存在 手机号:${phone} 不存在`,
       {
-        phone
-      }
+        phone,
+      },
     )
   }
 
@@ -106,15 +108,15 @@ export default class PublicService {
     data: {
       uid: number
       name: string
-    }[]
+    }[],
   ) {
-    return data.map((v) => ({
+    return data.map(v => ({
       cover: createDownloadUrl(
-        `easypicker2/tip/${key}/${v.uid}/${v.name}${qiniuConfig.imageCoverStyle}`
+        `easypicker2/tip/${key}/${v.uid}/${v.name}${qiniuConfig.imageCoverStyle}`,
       ),
       preview: createDownloadUrl(
-        `easypicker2/tip/${key}/${v.uid}/${v.name}${qiniuConfig.imagePreviewStyle}`
-      )
+        `easypicker2/tip/${key}/${v.uid}/${v.name}${qiniuConfig.imagePreviewStyle}`,
+      ),
     }))
   }
 }
