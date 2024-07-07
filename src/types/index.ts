@@ -6,4 +6,5 @@ export interface GlobalSiteConfig {
   downloadCompressExpired: number
   compressSizeLimit: number
   needBindPhone: boolean
+  limitSpace: boolean
 }

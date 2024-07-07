@@ -1,14 +1,16 @@
-import {
-  RouterController,
-  Post,
+import type {
   Context,
-  InjectCtx,
-  ReqBody,
-  Inject,
-  Get,
-  ReqParams,
+} from 'flash-wolves'
+import {
   Delete,
-  Put
+  Get,
+  Inject,
+  InjectCtx,
+  Post,
+  Put,
+  ReqBody,
+  ReqParams,
+  RouterController,
 } from 'flash-wolves'
 import { BehaviorService, FileService, TaskService } from '@/service'
 import { Task } from '@/db/entity'
@@ -17,9 +19,10 @@ import { UserRepository } from '@/db/userDb'
 import { calculateSize } from '@/utils/userUtil'
 import { USER_POWER } from '@/db/model/user'
 import { formatSize } from '@/utils/stringUtil'
+import LocalUserDB from '@/utils/user-local-db'
 
 const needLogin = {
-  needLogin: true
+  needLogin: true,
 }
 @RouterController('task', needLogin)
 export default class TaskController {
@@ -56,8 +59,8 @@ export default class TaskController {
       `创建任务 用户:${logAccount} 任务:${name} 成功`,
       {
         account: logAccount,
-        name
-      }
+        name,
+      },
     )
   }
 
@@ -72,7 +75,7 @@ export default class TaskController {
     try {
       const data = await this.taskService.getTaskByKey(key)
       const user = await this.userRepository.findOne({
-        id: data.userId
+        id: data.userId,
       })
 
       // user.size = 0
@@ -82,22 +85,25 @@ export default class TaskController {
       const size = calculateSize(
         (user.power === USER_POWER.SUPER
           ? Math.max(1024, user?.size)
-          : user?.size) ?? 2
+          : user?.size) ?? 2,
       )
       const usage = await this.fileService.getFileUsage(user.id)
       const limitUpload = size < usage
       if (limitUpload) {
         this.behaviorService.add('user', `用户 ${user.account} 超出容量限制`, {
           space: formatSize(size),
-          usage: formatSize(usage)
+          usage: formatSize(usage),
         })
       }
       // 判断是否限制上传
+      const { limitSpace } = LocalUserDB.getSiteConfig()
+
       return {
         ...data,
-        limitUpload
+        limitUpload: limitSpace && limitUpload,
       }
-    } catch (error) {
+    }
+    catch (error) {
       return wrapperCatchError(error)
     }
   }
