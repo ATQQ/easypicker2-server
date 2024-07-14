@@ -23,7 +23,7 @@ import {
 } from '@/db/userDb'
 import { addBehavior, findLog } from '@/db/logDb'
 import { rMobilePhone, rPassword, rVerCode } from '@/utils/regExp'
-import { encryption, formatSize } from '@/utils/stringUtil'
+import { encryption, formatSize, percentageValue } from '@/utils/stringUtil'
 import { expiredRedisKey, getRedisVal } from '@/db/redisDb'
 import { FileRepository, selectFiles } from '@/db/fileDb'
 import { UserError } from '@/constants/errorMsg'
@@ -37,6 +37,7 @@ import {
   QiniuService,
   SuperUserService,
   TokenService,
+  FileService as newFileService,
 } from '@/service'
 import { calculateSize } from '@/utils/userUtil'
 
@@ -64,6 +65,9 @@ export default class SuperUserController {
 
   @Inject(FileRepository)
   private fileRepository: FileRepository
+
+  @Inject(newFileService)
+  private fileService: newFileService
 
   @Post('message')
   async sendMessage(
@@ -116,7 +120,6 @@ export default class SuperUserController {
     MessageService.readMessage(user.id, id)
   }
 
-  // TODO：优化
   /**
    * 获取用户列表
    */
@@ -146,13 +149,7 @@ export default class SuperUserController {
       'categoryKey',
     ])
     const filesMap = await this.qiniuService.getFilesMap(files)
-    console.time('downloadLog')
-    const downloadLog = await findLog({
-      'type': 'behavior',
-      'data.info.msg': { $regex: /^(下载文件成功 用户:|归档下载文件成功 用户:|下载模板文件 用户:)/ },
-    })
-    console.log('🚀 ~ SuperUserController ~ getUserList ~ downloadLog:', downloadLog.length)
-    console.timeEnd('downloadLog')
+    const downloadLog = await this.fileService.downloadLog('')
     // 遍历用户，获取文件数和占用空间数据
     for (const user of users) {
       const fileInfo = files.filter(file => file.userId === user.id)
@@ -191,44 +188,19 @@ export default class SuperUserController {
 
       const limitSize = calculateSize(user.size)
       // 空间为 0 也不允许上传
-      const limitUpload = limitSize === 0 || limitSize < fileSize
+      const limitUpload = this.fileService.limitUploadBySpace(limitSize, fileSize)
       const percentage
-        = user.power === USER_POWER.SUPER
-          ? 0
-          : ((fileSize / limitSize) * 100).toFixed(2)
+        = percentageValue(fileSize, limitSize)
 
-      // 不同类型文件下载记录
-      const oneFile = {
-        count: 0,
-        size: 0,
-      }
-      const compressFile = {
-        count: 0,
-        size: 0,
-      }
+      const { oneFile, compressFile, templateFile } = this.fileService.analyzeDownloadLog(
+        downloadLog.filter((v => v.data?.info?.data?.account === user.account)),
+      )
 
-      const templateFile = {
-        count: 0,
-        size: 0,
-      }
-      downloadLog.filter((v => v.data?.info?.data?.account === user.account))
-        .forEach((v) => {
-          const { info } = v.data
-          const { msg } = info
-          const size = +info.data.size || 0
-          if (msg.startsWith('下载文件成功 用户:')) {
-            oneFile.count += 1
-            oneFile.size += size
-          }
-          else if (msg.startsWith('归档下载文件成功 用户:')) {
-            compressFile.count += 1
-            compressFile.size += size
-          }
-          else if (msg.startsWith('下载模板文件 用户:')) {
-            templateFile.count += 1
-            templateFile.size += size
-          }
-        })
+      const price = this.fileService.calculateQiniuPrice({
+        one: oneFile,
+        compress: compressFile,
+        template: templateFile,
+      }, fileSize)
       Object.assign(user, {
         fileCount: fileInfo.length,
         originFileSize,
@@ -250,6 +222,8 @@ export default class SuperUserController {
         templateFile,
         downloadCount: oneFile.count + compressFile.count + templateFile.count,
         downloadSize: oneFile.size + compressFile.size + templateFile.size,
+        price,
+        cost: +price.total,
       })
     }
     return {

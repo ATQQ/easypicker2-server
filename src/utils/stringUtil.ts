@@ -79,6 +79,14 @@ export function formatSize(
   )
 }
 
+export function B2GB(size: number) {
+  return size / 1024 / 1024 / 1024
+}
+
+export function formatPrice(...prices: number[]) {
+  return prices.reduce((pre, cur) => pre + cur, 0).toFixed(2)
+}
+
 type InfoItemType = 'input' | 'radio' | 'text' | 'select'
 interface InfoItem {
   type?: InfoItemType
@@ -138,4 +146,13 @@ export function getTipImageKey(
 
 export function shortLink(key: string, req: FWRequest) {
   return `${new URL(req.headers.referer).origin}/api/file/download/${key}`
+}
+
+/**
+ * A/B百分比值
+ * @param A
+ * @param B
+ */
+export function percentageValue(A: number, B: number) {
+  return ((A / B) * 100).toFixed(2)
 }

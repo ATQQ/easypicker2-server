@@ -59,4 +59,5 @@ export interface User {
    * 可使用存储空间（单位：GB）
    */
   size?: number
+  wallet?: number
 }

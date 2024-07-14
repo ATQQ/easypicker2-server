@@ -1,6 +1,6 @@
 import type { Context } from 'flash-wolves'
 import { Inject, InjectCtx, Provide } from 'flash-wolves'
-import { ObjectID } from 'mongodb'
+import { ObjectID, ObjectId } from 'mongodb'
 import { In } from 'typeorm'
 import QiniuService from './qiniuService'
 import BehaviorService from './behaviorService'
@@ -14,11 +14,13 @@ import LocalUserDB from '@/utils/user-local-db'
 import { addDownloadAction, findAction, updateAction } from '@/db/actionDb'
 import type { DownloadActionData } from '@/db/model/action'
 import { ActionType, DownloadStatus } from '@/db/model/action'
-import { getUniqueKey, normalizeFileName, shortLink } from '@/utils/stringUtil'
+import { B2GB, formatPrice, getUniqueKey, normalizeFileName, shortLink } from '@/utils/stringUtil'
 import { TaskRepository } from '@/db/taskDb'
 import { UserRepository } from '@/db/userDb'
 import { BOOLEAN } from '@/db/model/public'
-import { findLog } from '@/db/logDb'
+import { findLog, timeToObjId } from '@/db/logDb'
+import type { Log } from '@/db/model/log'
+import type { DownloadLogAnalyzeItem } from '@/types'
 
 @Provide()
 export default class FileService {
@@ -324,5 +326,103 @@ export default class FileService {
       return baseCount
     })
     return values
+  }
+
+  async downloadLog(account = '', ops?: {
+    startTime?: Date
+    endTime?: Date
+  }) {
+    const { startTime, endTime } = ops || {}
+    return findLog({
+      ...(startTime || endTime) && {
+        _id: {
+          ...startTime && { $gte: new ObjectId(timeToObjId(startTime)) },
+          ...endTime && { $lte: new ObjectId(timeToObjId(endTime)) },
+        },
+      },
+      'type': 'behavior',
+      'data.info.msg': { $regex: new RegExp(`^(下载文件成功 用户:${account}|归档下载文件成功 用户:${account}|下载模板文件 用户:${account})`) },
+    })
+  }
+
+  analyzeDownloadLog(logs: Log[]) {
+    const oneFile = {
+      count: 0,
+      size: 0,
+    }
+    const compressFile = {
+      count: 0,
+      size: 0,
+    }
+
+    const templateFile = {
+      count: 0,
+      size: 0,
+    }
+
+    logs.forEach((v) => {
+      const { info } = v.data
+      const { msg } = info
+      const size = +info.data.size || 0
+      if (msg.startsWith('下载文件成功 用户:')) {
+        oneFile.count += 1
+        oneFile.size += size
+      }
+      else if (msg.startsWith('归档下载文件成功 用户:')) {
+        compressFile.count += 1
+        compressFile.size += size
+      }
+      else if (msg.startsWith('下载模板文件 用户:')) {
+        templateFile.count += 1
+        templateFile.size += size
+      }
+    })
+    return {
+      oneFile,
+      compressFile,
+      templateFile,
+    }
+  }
+
+  /**
+   * 通过空间判断是否限制上传
+   * @param limitSize 可用空间
+   * @param fileSize 已用空间
+   */
+  limitUploadBySpace(limitSize: number, fileSize: number) {
+    return limitSize === 0 || limitSize < fileSize
+  }
+
+  calculateQiniuPrice(download: {
+    one: DownloadLogAnalyzeItem
+    compress: DownloadLogAnalyzeItem
+    template: DownloadLogAnalyzeItem
+  }, ossSize: number) {
+    const { qiniuBackhaulTrafficPercentage, qiniuCompressPrice, qiniuBackhaulTrafficPrice, qiniuOSSPrice, qiniuCDNPrice } = LocalUserDB.getSiteConfig()
+    // 存储费用
+    const OSSPrice = B2GB(ossSize) * qiniuOSSPrice
+    // 压缩费用
+    const compressPrice = B2GB(download.compress.size) * qiniuCompressPrice
+    // 回源费用
+    const backhaulTrafficPrice = B2GB(ossSize) * qiniuBackhaulTrafficPercentage * qiniuBackhaulTrafficPrice
+    // CDN 费用
+    const cdnPrice = B2GB(
+      download.one.size
+      + download.compress.size
+      + download.template.size,
+    ) * qiniuCDNPrice
+
+    return {
+      ossPrice: formatPrice(OSSPrice),
+      compressPrice: formatPrice(compressPrice),
+      backhaulTrafficPrice: formatPrice(backhaulTrafficPrice),
+      cdnPrice: formatPrice(cdnPrice),
+      total: formatPrice(
+        +formatPrice(OSSPrice)
+        + +formatPrice(compressPrice)
+        + +formatPrice(backhaulTrafficPrice)
+        + +formatPrice(cdnPrice),
+      ),
+    }
   }
 }

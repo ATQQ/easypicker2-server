@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm'
+import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
 
 @Entity('user')
 export class User {
@@ -23,14 +23,14 @@ export class User {
   @Column('timestamp', {
     default: 'CURRENT_TIMESTAMP',
     comment: '注册时间',
-    name: 'join_time'
+    name: 'join_time',
   })
   joinTime: Date
 
   @Column('timestamp', {
     nullable: true,
     comment: '最后登录时间',
-    name: 'login_time'
+    name: 'login_time',
   })
   loginTime: Date
 
@@ -40,10 +40,13 @@ export class User {
   @Column('timestamp', {
     nullable: true,
     comment: '解封时间',
-    name: 'open_time'
+    name: 'open_time',
   })
   openTime: Date
 
   @Column('int', { default: 2, comment: '可支配空间上限GB' })
   size: number
+
+  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  wallet: number
 }

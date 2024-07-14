@@ -7,4 +7,14 @@ export interface GlobalSiteConfig {
   compressSizeLimit: number
   needBindPhone: boolean
   limitSpace: boolean
+  qiniuOSSPrice: number
+  qiniuCDNPrice: number
+  qiniuBackhaulTrafficPrice: number
+  qiniuBackhaulTrafficPercentage: number
+  qiniuCompressPrice: number
+}
+
+export interface DownloadLogAnalyzeItem {
+  size: number
+  count: number
 }
