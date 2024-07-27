@@ -196,6 +196,8 @@ export default class SuperUserController {
         downloadLog.filter((v => v.data?.info?.data?.account === user.account)),
       )
 
+      // TODO：累计费用
+      // TODO：实时消费 + 已结算费用
       const price = this.fileService.calculateQiniuPrice({
         one: oneFile,
         compress: compressFile,

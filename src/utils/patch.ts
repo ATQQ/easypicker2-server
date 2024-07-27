@@ -284,7 +284,7 @@ export async function initUserConfig() {
       formLength: 10, // 表单项数量
       downloadOneExpired: 1, // 单个文件链接下载过期时间（min）
       downloadCompressExpired: 60, // 归档文件下载过期时间（min）
-      compressSizeLimit: 10, // 压缩文件大小限制（GB）
+      compressSizeLimit: 10, // TODO: 压缩文件大小限制（GB）
       needBindPhone: false, // 是否需要绑定手机号
       limitSpace: false, // 是否限制空间
       qiniuOSSPrice: 0.099, // 七牛云存储价格
@@ -292,6 +292,7 @@ export async function initUserConfig() {
       qiniuBackhaulTrafficPrice: 0.15, // 七牛云回源流量价格
       qiniuBackhaulTrafficPercentage: 0.8, // 七牛云回源流量占比
       qiniuCompressPrice: 0.05, // 七牛云压缩价格
+      moneyStartDay: +new Date('2024-01-01'), // 开始计算日期
     } as GlobalSiteConfig,
   })
   // 更新配置
