@@ -459,4 +459,10 @@ export default class FileService {
       ),
     }
   }
+
+  addFile(file: Files) {
+    file.name = normalizeFileName(file.name)
+    file.date = new Date()
+    return this.fileRepository.insert(file)
+  }
 }

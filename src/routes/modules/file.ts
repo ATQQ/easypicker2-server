@@ -25,54 +25,40 @@ import { selectTaskInfo } from '@/db/taskInfoDb'
 
 const router = new Router('file')
 
-/**
- * 获取上传令牌
- */
-router.get('token', (req, res) => {
-  const token = getUploadToken()
-  addBehavior(req, {
-    module: 'file',
-    msg: '获取文件上传令牌',
-  })
-  res.success({
-    token,
-  })
-})
-
-/**
- * 记录提交的文件信息
- */
-router.post('info', async (req, res) => {
-  const data: File = req.body
-  const [task] = await selectTasks({
-    k: data.taskKey,
-  })
-  if (!task) {
-    addBehavior(req, {
-      module: 'file',
-      msg: '提交文件: 参数错误',
-      data,
-    })
-    res.failWithError(publicError.request.errorParams)
-    return
-  }
-  const { user_id } = task
-  Object.assign<File, File>(data, {
-    user_id,
-    date: new Date(),
-    categoryKey: '',
-    people: data.people || '',
-    originName: data.originName || '',
-  })
-  data.name = normalizeFileName(data.name)
-  await insertFile(data)
-  addBehavior(req, {
-    module: 'file',
-    msg: `提交文件: 文件名:${data.name} 成功`,
-    data,
-  })
-  res.success()
-})
+// /**
+//  * 记录提交的文件信息
+//  */
+// router.post('info', async (req, res) => {
+//   const data: File = req.body
+//   const [task] = await selectTasks({
+//     k: data.taskKey,
+//   })
+//   if (!task) {
+//     addBehavior(req, {
+//       module: 'file',
+//       msg: '提交文件: 参数错误',
+//       data,
+//     })
+//     res.failWithError(publicError.request.errorParams)
+//     return
+//   }
+//   const { user_id } = task
+//   Object.assign<File, File>(data, {
+//     user_id,
+//     date: new Date(),
+//     categoryKey: '',
+//     people: data.people || '',
+//     originName: data.originName || '',
+//   })
+//   data.name = normalizeFileName(data.name)
+//   await insertFile(data)
+//   addBehavior(req, {
+//     module: 'file',
+//     msg: `提交文件: 文件名:${data.name} 成功`,
+//     data,
+//   })
+//   res.success()
+// })
 
 /**
  * 获取文件列表
@@ -132,6 +118,7 @@ router.get(
 //   })
 // })
 
+// TODO: 优化上传逻辑，记录删除时间
 /**
  * 删除单个文件
  */

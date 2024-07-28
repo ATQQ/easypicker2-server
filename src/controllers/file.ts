@@ -21,6 +21,7 @@ import { selectFiles, updateFileInfo } from '@/db/fileDb'
 import {
   batchFileStatus,
   createDownloadUrl,
+  getUploadToken,
   judgeFileIsExist,
   mvOssFile,
 } from '@/utils/qiniuUtil'
@@ -28,12 +29,13 @@ import { qiniuConfig } from '@/config'
 import { fileError, publicError } from '@/constants/errorMsg'
 import type { User } from '@/db/model/user'
 import { ReqUserInfo } from '@/decorator'
-import { BehaviorService, FileService } from '@/service'
+import { BehaviorService, FileService, TaskService } from '@/service'
 import { wrapperCatchError } from '@/utils/context'
 import { findAction } from '@/db/actionDb'
 import { ActionType, type DownloadActionData } from '@/db/model/action'
 import { getQiniuFileUrlExpiredTime } from '@/utils/userUtil'
 import LocalUserDB from '@/utils/user-local-db'
+import type { Files } from '@/db/entity'
 
 const power = {
   needLogin: true,
@@ -49,6 +51,9 @@ export default class FileController {
 
   @Inject(BehaviorService)
   private behaviorService: BehaviorService
+
+  @Inject(TaskService)
+  private taskService: TaskService
 
   /**
    * 获取图片的预览图
@@ -233,6 +238,40 @@ export default class FileController {
     const { template, key } = query
     try {
       return await this.fileService.downloadTemplate(template, key)
+    }
+    catch (error) {
+      return wrapperCatchError(error)
+    }
+  }
+
+  /**
+   * 获取上传令牌
+   */
+  @Get('/token', { needLogin: false })
+  getUploadToken() {
+    const token = getUploadToken()
+    this.behaviorService.add('file', '获取文件上传令牌')
+    return { token }
+  }
+
+  @Post('/info', { needLogin: false })
+  async submitInfo(@ReqBody() data: Files) {
+    try {
+      const task = await this.taskService.getTaskByKey(data.taskKey)
+      if (!task) {
+        this.behaviorService.add('file', '提交文件: 参数错误', data)
+        throw publicError.request.errorParams
+      }
+
+      const { userId } = task
+      Object.assign<Files, Partial<Files>>(data, {
+        userId,
+        categoryKey: '',
+        people: data.people || '',
+        originName: data.originName || '',
+      })
+      await this.fileService.addFile(data)
+      this.behaviorService.add('file', `提交文件: 文件名:${data.name} 成功`, data)
     }
     catch (error) {
       return wrapperCatchError(error)
