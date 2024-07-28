@@ -40,6 +40,7 @@ import {
   FileService as newFileService,
 } from '@/service'
 import { calculateSize } from '@/utils/userUtil'
+import LocalUserDB from '@/utils/user-local-db'
 
 const power = {
   userPower: USER_POWER.SUPER,
@@ -126,30 +127,15 @@ export default class SuperUserController {
   @Get('list')
   async getUserList() {
     // 用户数据
-    const users = await this.userRepository.findWithSpecifyColumn({}, [
-      'id',
-      'account',
-      'phone',
-      'status',
-      'joinTime',
-      'loginTime',
-      'openTime',
-      'power',
-      'size',
-      'loginCount',
-    ])
+    const users = await this.userRepository.findMany({})
     // 获取文件数据
-    const files = await this.fileRepository.findWithSpecifyColumn({}, [
-      'taskKey',
-      'userId',
-      'hash',
-      'name',
-      'date',
-      'size',
-      'categoryKey',
-    ])
+    const files = await this.fileRepository.findMany({})
+    const { moneyStartDay } = LocalUserDB.getSiteConfig()
     const filesMap = await this.qiniuService.getFilesMap(files)
-    const downloadLog = await this.fileService.downloadLog('')
+    const downloadLog = await this.fileService.downloadLog('', {
+      startTime: new Date(moneyStartDay),
+    })
+    // TODO: 拆分方法
     // 遍历用户，获取文件数和占用空间数据
     for (const user of users) {
       const fileInfo = files.filter(file => file.userId === user.id)
@@ -196,13 +182,16 @@ export default class SuperUserController {
         downloadLog.filter((v => v.data?.info?.data?.account === user.account)),
       )
 
-      // TODO：累计费用
-      // TODO：实时消费 + 已结算费用
+      // TODO：累计费用 = 实时消费 + 已结算费用
+      // 实时消费
       const price = this.fileService.calculateQiniuPrice({
         one: oneFile,
         compress: compressFile,
         template: templateFile,
-      }, fileSize)
+      }, this.fileService.getOSSFileSizeUntilNow(fileInfo, filesMap, {
+        startTime: new Date(moneyStartDay),
+      }))
+
       Object.assign(user, {
         fileCount: fileInfo.length,
         originFileSize,

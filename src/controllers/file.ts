@@ -3,6 +3,7 @@ import type {
   FWRequest,
 } from 'flash-wolves'
 import {
+  Delete,
   Get,
   Inject,
   InjectCtx,

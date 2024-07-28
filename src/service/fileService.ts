@@ -21,6 +21,7 @@ import { BOOLEAN } from '@/db/model/public'
 import { findLog, timeToObjId } from '@/db/logDb'
 import type { Log } from '@/db/model/log'
 import type { DownloadLogAnalyzeItem } from '@/types'
+import { diffMonth } from '@/utils/time-utils'
 
 @Provide()
 export default class FileService {
@@ -343,6 +344,39 @@ export default class FileService {
       'type': 'behavior',
       'data.info.msg': { $regex: new RegExp(`^(下载文件成功 用户:${account}|归档下载文件成功 用户:${account}|下载模板文件 用户:${account})`) },
     })
+  }
+
+  getOSSFileSizeUntilNow(
+    fileList: Files[],
+    filesMap: Map<string, Qiniu.ItemInfo>,
+    ops?: {
+      startTime?: Date
+    },
+  ) {
+    const { startTime } = ops || {}
+    const sum = fileList.reduce((pre, file) => {
+      const ossKey = this.getOssKey(file)
+      const { categoryKey } = file
+      const fileSize = +file.size
+      const ossSize = (filesMap.get(ossKey) || filesMap.get(categoryKey))?.fsize || 0
+      // 文件已经被删除
+      if (!ossSize) {
+        const { ossDelTime } = file
+        // 不存在 删除时间 为存量数据，就算1月
+        if (!ossDelTime) {
+          return pre + fileSize
+        }
+        // 删除时间在统计时间之前，不计算
+        if (ossDelTime < startTime) {
+          return pre
+        }
+        // 存在 删除时间 说明是删除数据，按实际月数计算
+        return pre + diffMonth(ossDelTime, startTime) * fileSize
+      }
+      // 文件没有被删除，按实际存在时间计算
+      return pre + diffMonth(Date.now(), Math.max(+new Date(file.date), +startTime)) * fileSize
+    }, 0)
+    return Math.round(sum)
   }
 
   analyzeDownloadLog(logs: Log[]) {
