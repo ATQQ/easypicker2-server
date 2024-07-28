@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm'
+import { Column, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm'
 
 @Entity('files')
 export class Files {
@@ -11,7 +11,7 @@ export class Files {
   @Column('varchar', {
     length: 256,
     name: 'task_name',
-    comment: '提交时的任务名称'
+    comment: '提交时的任务名称',
   })
   taskName: string
 
@@ -32,7 +32,7 @@ export class Files {
 
   @Column('timestamp', {
     comment: '上传日期',
-    default: () => 'CURRENT_TIMESTAMP'
+    default: () => 'CURRENT_TIMESTAMP',
   })
   date: Date
 
@@ -46,10 +46,19 @@ export class Files {
     length: 1024,
     default: '',
     name: 'origin_name',
-    comment: '原文件名'
+    comment: '原文件名',
   })
   originName: string
 
   @Column('tinyint', { default: 0, comment: '是否删除' })
   del: number
+
+  @Column('timestamp', { name: 'oss_del_time', nullable: true, comment: 'OSS删除时间' })
+  ossDelTime: Date | null
+
+  @Column('timestamp', { name: 'del_time', nullable: true, comment: '删除时间' })
+  delTime: Date | null
+
+  @UpdateDateColumn({ name: 'last_update_time', comment: '最后更新时间' })
+  lastUpdateTime: Date
 }

@@ -50,6 +50,10 @@ interface TableField<T extends TableName> {
    * 字段释义
    */
   comment: string
+  /**
+   * 自动更新最后更新时间
+   */
+  lastUpdateTime?: boolean
 }
 async function addTableField<T extends TableName>(
   tableName: T,
@@ -58,7 +62,7 @@ async function addTableField<T extends TableName>(
   const cfg = LocalUserDB.getUserConfigByType('mysql')
   const dbName = cfg.database
 
-  const { fieldName, defaultValue, comment, fieldType } = field
+  const { fieldName, defaultValue, comment, fieldType, lastUpdateTime = false } = field
 
   const checkFieldCountSql
     = 'SELECT count(*) as count FROM information_schema.COLUMNS WHERE table_name = ? AND column_name = ? AND table_schema = ?'
@@ -67,18 +71,11 @@ async function addTableField<T extends TableName>(
   )[0]
   if (count === 0) {
     console.log(`添加字段 ${tableName}.${String(fieldName)}`)
-    console.log(
-      `ALTER TABLE ${tableName} ADD COLUMN ${String(
-        fieldName,
-      )} ${fieldType} DEFAULT ${defaultValue} COMMENT '${comment}'`,
-    )
-    console.log(
-      await query(
-        `ALTER TABLE ${tableName} ADD COLUMN ${String(
+    const sql = `ALTER TABLE ${tableName} ADD COLUMN ${String(
           fieldName,
-        )} ${fieldType} DEFAULT ${defaultValue} COMMENT '${comment}'`,
-      ),
-    )
+        )} ${fieldType} DEFAULT ${defaultValue} ${lastUpdateTime ? 'ON UPDATE CURRENT_TIMESTAMP' : ''} COMMENT '${comment}'`
+    console.log(sql)
+    console.log(await query(sql))
   }
 }
 
@@ -190,6 +187,26 @@ export async function patchTable() {
     fieldType: 'decimal(10,2)',
     defaultValue: 2,
     comment: '钱包余额',
+  })
+
+  await addTableField('files', {
+    fieldName: 'oss_del_time',
+    fieldType: 'timestamp',
+    defaultValue: null,
+    comment: 'OSS资源删除时间',
+  })
+  await addTableField('files', {
+    fieldName: 'del_time',
+    fieldType: 'timestamp',
+    defaultValue: null,
+    comment: '删除时间',
+  })
+  await addTableField('files', {
+    fieldName: 'last_update_time',
+    fieldType: 'timestamp',
+    defaultValue: 'CURRENT_TIMESTAMP',
+    comment: '最后更新时间',
+    lastUpdateTime: true,
   })
 }
 

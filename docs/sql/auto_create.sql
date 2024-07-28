@@ -52,7 +52,10 @@ CREATE TABLE IF NOT EXISTS `files` (
   `size` bigint NOT NULL COMMENT '文件大小',
   `people` varchar(256) DEFAULT NULL COMMENT '人员姓名',
   `origin_name` varchar(1024) DEFAULT '' COMMENT '原文件名',
-  `del` tinyint(4) DEFAULT '0' COMMENT '是否删除'
+  `del` tinyint(4) DEFAULT '0' COMMENT '是否删除',
+  `oss_del_time` TIMESTAMP NULL DEFAULT NULL COMMENT 'oss资源删除时间',
+  `del_time` TIMESTAMP NULL DEFAULT NULL COMMENT '删除时间',
+  `last_update_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最后更新时间'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='用户提交的问题';
 
 -- --------------------------------------------------------

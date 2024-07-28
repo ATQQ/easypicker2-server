@@ -17,4 +17,10 @@ export interface File {
   originName?: string
   origin_name?: string
   del?: number
+  ossDelTime?: Date
+  oss_del_time?: Date
+  delTime?: Date
+  del_time?: Date
+  lastUpdateTime?: Date
+  last_update_time?: Date
 }
