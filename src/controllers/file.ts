@@ -41,6 +41,10 @@ const power = {
   needLogin: true,
 }
 
+const noLogin = {
+  needLogin: false,
+}
+
 @RouterController('file', power)
 export default class FileController {
   @InjectCtx()
@@ -58,7 +62,7 @@ export default class FileController {
   /**
    * 获取图片的预览图
    */
-  @Post('/image/preview', power)
+  @Post('/image/preview')
   async checkPeopleIsExist(
     @ReqBody('ids') idList: number[],
     @ReqUserInfo() user: User,
@@ -107,14 +111,14 @@ export default class FileController {
     return result
   }
 
-  @Post('/download/count', power)
+  @Post('/download/count')
   async downloadCount(
     @ReqBody('ids') idList: number[],
   ) {
     return this.fileService.downloadCount(idList)
   }
 
-  @Put('/name/rewrite', power)
+  @Put('/name/rewrite')
   async rewriteFilename(
     @ReqBody('id') id: number,
     @ReqBody('name') newName: string,
@@ -153,7 +157,7 @@ export default class FileController {
   /**
    * 获取文件列表(带下载链接)
    */
-  @Get('/list/withUrl', power)
+  @Get('/list/withUrl')
   async listWithUrl() {
     const { id: userId } = this.ctx.req.userInfo
     const files = await selectFiles({
@@ -181,7 +185,7 @@ export default class FileController {
   /**
    * 文件重定向下载，记录下载日志，便于统计单文件真实被下载次数
    */
-  @Get('/download/:key', { needLogin: false })
+  @Get('/download/:key', noLogin)
   async downloadFile(@ReqParams('key') key: string) {
     // 302重定向到OSS下载地址
     try {
@@ -233,7 +237,7 @@ export default class FileController {
   /**
    * 模板文件下载
    */
-  @Get('/template')
+  @Get('/template', noLogin)
   async downloadTemplate(@ReqQuery() query) {
     const { template, key } = query
     try {
@@ -247,14 +251,14 @@ export default class FileController {
   /**
    * 获取上传令牌
    */
-  @Get('/token', { needLogin: false })
+  @Get('/token', noLogin)
   getUploadToken() {
     const token = getUploadToken()
     this.behaviorService.add('file', '获取文件上传令牌')
     return { token }
   }
 
-  @Post('/info', { needLogin: false })
+  @Post('/info', noLogin)
   async submitInfo(@ReqBody() data: Files) {
     try {
       const task = await this.taskService.getTaskByKey(data.taskKey)
@@ -272,6 +276,40 @@ export default class FileController {
       })
       await this.fileService.addFile(data)
       this.behaviorService.add('file', `提交文件: 文件名:${data.name} 成功`, data)
+    }
+    catch (error) {
+      return wrapperCatchError(error)
+    }
+  }
+
+  @Get('/list')
+  async getAllUserFiles() {
+    const { account: logAccount } = this.ctx.req.userInfo
+    const files = await this.fileService.getUserFiles()
+    this.behaviorService.add('file', `获取文件列表 用户:${logAccount} 成功`, {
+      logAccount,
+    })
+    return {
+      files: files.map(v => ({
+        ...v,
+        // 兼容逻辑
+        category_key: v.categoryKey,
+        origin_name: v.originName,
+        task_name: v.taskName,
+        task_key: v.taskKey,
+      })),
+    }
+  }
+
+  @Delete('/one')
+  async deleteOneFile(@ReqBody('id') id) {
+    const { id: userId } = this.ctx.req.userInfo
+    try {
+      const file = await this.fileService.findOneFile({
+        id,
+        userId,
+      })
+      await this.fileService.deleteOneFile(file)
     }
     catch (error) {
       return wrapperCatchError(error)

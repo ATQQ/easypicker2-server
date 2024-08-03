@@ -25,159 +25,7 @@ import { selectTaskInfo } from '@/db/taskInfoDb'
 
 const router = new Router('file')
 
-// /**
-//  * 记录提交的文件信息
-//  */
-// router.post('info', async (req, res) => {
-//   const data: File = req.body
-//   const [task] = await selectTasks({
-//     k: data.taskKey,
-//   })
-//   if (!task) {
-//     addBehavior(req, {
-//       module: 'file',
-//       msg: '提交文件: 参数错误',
-//       data,
-//     })
-//     res.failWithError(publicError.request.errorParams)
-//     return
-//   }
-//   const { user_id } = task
-//   Object.assign<File, File>(data, {
-//     user_id,
-//     date: new Date(),
-//     categoryKey: '',
-//     people: data.people || '',
-//     originName: data.originName || '',
-//   })
-//   data.name = normalizeFileName(data.name)
-//   await insertFile(data)
-//   addBehavior(req, {
-//     module: 'file',
-//     msg: `提交文件: 文件名:${data.name} 成功`,
-//     data,
-//   })
-//   res.success()
-// })
-
-/**
- * 获取文件列表
- */
-router.get(
-  'list',
-  async (req, res) => {
-    const { id: userId, account: logAccount } = await getUserInfo(req)
-    const files = await selectFiles({
-      userId,
-    })
-    // 逆序
-    addBehavior(req, {
-      module: 'file',
-      msg: `获取文件列表 用户:${logAccount} 成功`,
-      data: {
-        logAccount,
-      },
-    })
-    res.success({
-      files,
-    })
-  },
-  {
-    needLogin: true,
-  },
-)
-
-// /**
-//  * 获取模板文件下载链接
-//  */
-// router.get('template', async (req, res) => {
-//   const { template, key } = req.query
-//   const k = `easypicker2/${key}_template/${template}`
-//   const isExist = await judgeFileIsExist(k)
-//   if (!isExist) {
-//     addBehavior(req, {
-//       module: 'file',
-//       msg: '下载模板文件 参数错误',
-//       data: {
-//         data: req.query,
-//       },
-//     })
-//     res.failWithError(publicError.file.notExist)
-//     return
-//   }
-//   addBehavior(req, {
-//     module: 'file',
-//     msg: `下载模板文件 文件:${template}`,
-//     data: {
-//       template,
-//       key,
-//     },
-//   })
-//   res.success({
-//     link: createDownloadUrl(k, getQiniuFileUrlExpiredTime(1)),
-//   })
-// })
-
-// TODO: 优化上传逻辑，记录删除时间
-/**
- * 删除单个文件
- */
-router.delete(
-  'one',
-  async (req, res) => {
-    const { id } = req.body
-    const { id: userId, account: logAccount } = await getUserInfo(req)
-    const [file] = await selectFiles({
-      userId,
-      id,
-    })
-    if (!file) {
-      addBehavior(req, {
-        module: 'file',
-        msg: `删除文件失败 用户:${logAccount} 文件记录不存在`,
-        data: {
-          account: logAccount,
-          fileId: id,
-        },
-      })
-      res.failWithError(publicError.file.notExist)
-      return
-    }
-    let k = `easypicker2/${file.task_key}/${file.hash}/${file.name}`
-    // 兼容旧路径的逻辑
-    if (file.category_key) {
-      k = file.category_key
-    }
-    const sameRecord = await selectFiles({
-      taskKey: file.task_key,
-      hash: file.hash,
-      name: file.name,
-    })
-    const isRepeat = sameRecord.length > 1
-
-    if (!isRepeat) {
-      // 删除OSS上文件
-      deleteObjByKey(k)
-    }
-    await deleteFileRecord(file)
-    addBehavior(req, {
-      module: 'file',
-      msg: `删除文件提交记录成功 用户:${logAccount} 文件:${file.name} ${
-        isRepeat ? `还存在${sameRecord.length - 1}个重复文件` : '删除OSS资源'
-      }`,
-      data: {
-        account: logAccount,
-        name: file.name,
-        taskKey: file.task_key,
-        hash: file.hash,
-      },
-    })
-    res.success()
-  },
-  {
-    needLogin: true,
-  },
-)
+// TODO: 优化上传逻辑
 
 /**
  * 撤回提交的文件
@@ -362,47 +210,47 @@ router.delete(
   },
 )
 
-/**
- * 下载压缩文件
- */
-router.post(
-  'compress/down',
-  async (req, res) => {
-    const { account: logAccount } = await getUserInfo(req)
-    const { key } = req.body
-    if (
-      typeof key === 'string'
-      && key.startsWith('easypicker2/temp_package/')
-    ) {
-      res.success({
-        url: createDownloadUrl(key),
-      })
-      const filename = key.slice(key.lastIndexOf('/') + 1)
-      addBehavior(req, {
-        module: 'file',
-        msg: `下载压缩文件成功 用户:${logAccount} 压缩文件名:${filename}`,
-        data: {
-          account: logAccount,
-          filename,
-        },
-      })
-      return
-    }
+// /**
+//  * 下载压缩文件，下线
+//  */
+// router.post(
+//   'compress/down',
+//   async (req, res) => {
+//     const { account: logAccount } = await getUserInfo(req)
+//     const { key } = req.body
+//     if (
+//       typeof key === 'string'
+//       && key.startsWith('easypicker2/temp_package/')
+//     ) {
+//       res.success({
+//         url: createDownloadUrl(key),
+//       })
+//       const filename = key.slice(key.lastIndexOf('/') + 1)
+//       addBehavior(req, {
+//         module: 'file',
+//         msg: `下载压缩文件成功 用户:${logAccount} 压缩文件名:${filename}`,
+//         data: {
+//           account: logAccount,
+//           filename,
+//         },
+//       })
+//       return
+//     }
 
-    addBehavior(req, {
-      module: 'file',
-      msg: `下载压缩文件失败 用户:${logAccount} 压缩文件名:${key} 不存在`,
-      data: {
-        account: logAccount,
-        key,
-      },
-    })
-    res.failWithError(publicError.file.notExist)
-  },
-  {
-    needLogin: true,
-  },
-)
+//     addBehavior(req, {
+//       module: 'file',
+//       msg: `下载压缩文件失败 用户:${logAccount} 压缩文件名:${key} 不存在`,
+//       data: {
+//         account: logAccount,
+//         key,
+//       },
+//     })
+//     res.failWithError(publicError.file.notExist)
+//   },
+//   {
+//     needLogin: true,
+//   },
+// )
 
 /**
  * 查询是否提交

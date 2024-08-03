@@ -1,6 +1,7 @@
 import type { Context } from 'flash-wolves'
 import { Inject, InjectCtx, Provide } from 'flash-wolves'
 import { ObjectID, ObjectId } from 'mongodb'
+import type { FindOptionsWhere } from 'typeorm'
 import { In } from 'typeorm'
 import QiniuService from './qiniuService'
 import BehaviorService from './behaviorService'
@@ -8,7 +9,7 @@ import type { Files } from '@/db/entity'
 import { FileRepository } from '@/db/fileDb'
 import type { File } from '@/db/model/file'
 import { publicError } from '@/constants/errorMsg'
-import { batchFileStatus, createDownloadUrl, judgeFileIsExist, makeZipWithKeys } from '@/utils/qiniuUtil'
+import { batchFileStatus, createDownloadUrl, deleteObjByKey, judgeFileIsExist, makeZipWithKeys } from '@/utils/qiniuUtil'
 import { getQiniuFileUrlExpiredTime } from '@/utils/userUtil'
 import LocalUserDB from '@/utils/user-local-db'
 import { addDownloadAction, findAction, updateAction } from '@/db/actionDb'
@@ -464,5 +465,63 @@ export default class FileService {
     file.name = normalizeFileName(file.name)
     file.date = new Date()
     return this.fileRepository.insert(file)
+  }
+
+  async getUserFiles() {
+    const { id } = this.ctx.req.userInfo
+    const files = await this.fileRepository.findMany({
+      userId: id,
+      del: BOOLEAN.FALSE,
+    }, { order: { id: 'DESC' } })
+    return files
+  }
+
+  async findOneFile(ops: FindOptionsWhere<Files>) {
+    return this.fileRepository.findOne({
+      del: BOOLEAN.FALSE,
+      ...ops,
+    })
+  }
+
+  async deleteOneFile(file: Files) {
+    const { account: logAccount } = this.ctx.req.userInfo
+    if (!file) {
+      this.behaviorService.add('file', `删除文件失败 用户:${logAccount} 文件记录不存在`, {
+        account: logAccount,
+        fileId: file.id,
+      })
+      throw publicError.file.notExist
+    }
+    let k = `easypicker2/${file.taskKey}/${file.hash}/${file.name}`
+    // 兼容旧路径的逻辑
+    if (file.categoryKey) {
+      k = file.categoryKey
+    }
+    const sameRecord = await this.fileRepository.findMany({
+      taskKey: file.taskKey,
+      hash: file.hash,
+      name: file.name,
+      del: BOOLEAN.FALSE,
+    })
+
+    const isRepeat = sameRecord.length > 1
+
+    // 存在相同文件时，存储上共用一份数据，不能删除OSS资源
+    if (!isRepeat) {
+      // 删除OSS上文件
+      deleteObjByKey(k)
+    }
+    file.ossDelTime = new Date()
+    file.del = BOOLEAN.TRUE
+    file.delTime = new Date()
+    await this.fileRepository.update(file)
+    this.behaviorService.add('file', `删除文件提交记录成功 用户:${logAccount} 文件:${file.name} ${
+        isRepeat ? `还存在${sameRecord.length - 1}个重复文件` : '删除OSS资源'
+      }`, {
+      account: logAccount,
+      name: file.name,
+      taskKey: file.taskKey,
+      hash: file.hash,
+    })
   }
 }
