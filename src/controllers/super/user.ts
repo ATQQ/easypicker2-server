@@ -12,6 +12,7 @@ import {
   RouterController,
 } from 'flash-wolves'
 import dayjs from 'dayjs'
+import { In } from 'typeorm'
 import { USER_POWER, USER_STATUS } from '@/db/model/user'
 import type { User } from '@/db/model/user'
 import {
@@ -251,11 +252,14 @@ export default class SuperUserController {
         {
           userId: id,
         },
-        ['task_key', 'user_id', 'hash', 'name', 'date'],
+        ['task_key', 'user_id', 'hash', 'name', 'date', 'id', 'oss_del_time'],
       )
     ).filter((v) => {
-      return dayjs(v.date).isBefore(beforeDate)
+      return dayjs(v.date).isBefore(beforeDate) && !v.oss_del_time
     })
+    if (files.length === 0) {
+      return
+    }
     const delKeys = files.map(FileService.getOssKey)
     MessageService.sendMessage(
       userInfo.id,
@@ -265,8 +269,14 @@ export default class SuperUserController {
         '如有特殊疑问，或者以后不希望被清理，请联系系统管理员Thanks♪(･ω･)ﾉ',
       ]),
     )
-
     batchDeleteFiles(delKeys)
+
+    // 更新OSS资源移除时间
+    await this.fileRepository.updateSpecifyFields({
+      id: In(files.map(v => v.id)),
+    }, {
+      ossDelTime: new Date(),
+    })
   }
 
   /**

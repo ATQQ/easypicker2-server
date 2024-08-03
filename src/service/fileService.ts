@@ -511,7 +511,9 @@ export default class FileService {
       // 删除OSS上文件
       deleteObjByKey(k)
     }
-    file.ossDelTime = new Date()
+    if (!file.ossDelTime) {
+      file.ossDelTime = new Date()
+    }
     file.del = BOOLEAN.TRUE
     file.delTime = new Date()
     await this.fileRepository.update(file)
