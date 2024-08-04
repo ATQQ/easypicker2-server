@@ -48,5 +48,5 @@ export class User {
   size: number
 
   @Column({ type: 'decimal', precision: 10, scale: 2 })
-  wallet: number
+  wallet: string
 }

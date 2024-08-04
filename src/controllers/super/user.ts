@@ -193,13 +193,14 @@ export default class SuperUserController {
         startTime: new Date(moneyStartDay),
       }))
 
+      const balance = +user.wallet - +price.total
       Object.assign(user, {
         fileCount: fileInfo.length,
         originFileSize,
         ossCount,
         limitSize:
           user.power === USER_POWER.SUPER ? '无限制' : formatSize(limitSize),
-        limitUpload: user.power === USER_POWER.SUPER ? false : limitUpload,
+        limitUpload: balance <= 0 || (user.power === USER_POWER.SUPER ? false : limitUpload),
         percentage,
         resources: formatSize(fileSize),
         monthAgoSize: formatSize(AMonthAgoSize),
@@ -216,6 +217,9 @@ export default class SuperUserController {
         downloadSize: oneFile.size + compressFile.size + templateFile.size,
         price,
         cost: +price.total,
+        wallet: user.wallet || 0,
+        // 剩余
+        balance: balance.toFixed(2),
       })
     }
     return {
@@ -404,6 +408,23 @@ export default class SuperUserController {
       },
     )
     user.size = size
+    await this.userRepository.update(user)
+  }
+
+  @Put('wallet')
+  async updateWalletValue(@ReqBody('id') id: number, @ReqBody('value') value: number) {
+    const user = await this.userRepository.findOne({
+      id,
+    })
+    this.behaviorService.add(
+      'super',
+      `修改用户余额 ${user.account} ${user.wallet} => ${value} ￥`,
+      {
+        oldValue: user.wallet,
+        newValue: value,
+      },
+    )
+    user.wallet = value.toFixed(2)
     await this.userRepository.update(user)
   }
 }
