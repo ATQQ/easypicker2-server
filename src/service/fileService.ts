@@ -625,7 +625,7 @@ export default class FileService {
       ossCount,
       limitSize:
           user.power === USER_POWER.SUPER ? '无限制' : formatSize(limitSize),
-      size: limitSize,
+      maxSize: limitSize,
       limitUpload: isAdmin ? false : (limitWallet || limitUpload),
       limitSpace: limitUpload,
       limitWallet,

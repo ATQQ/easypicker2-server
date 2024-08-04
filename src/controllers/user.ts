@@ -176,10 +176,10 @@ export default class UserController {
       id: this.Ctx.req.userInfo.id,
     })
     const userOverview = await this.fileService.getUserOverview(user)
-    const { size, usage, limitUpload, wallet, cost, limitSpace, limitWallet } = userOverview
+    const { maxSize, usage, limitUpload, wallet, cost, limitSpace, limitWallet, price } = userOverview
     if (limitSpace) {
       this.behaviorService.add('user', `用户 ${user.account} 超出容量限制`, {
-        space: formatSize(size),
+        space: formatSize(maxSize),
         usage: formatSize(usage),
       })
     }
@@ -190,11 +190,17 @@ export default class UserController {
       })
     }
     return {
-      size,
+      size: maxSize,
       usage,
       limitUpload,
       wallet,
-      cost,
+      cost: cost.toFixed(2),
+      limitSpace,
+      limitWallet,
+      price: {
+        storage: price.ossPrice,
+        download: (+price.backhaulTrafficPrice + +price.cdnPrice + +price.compressPrice).toFixed(2),
+      },
     }
   }
 }
