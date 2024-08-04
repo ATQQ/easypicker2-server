@@ -36,7 +36,7 @@ export class Files {
   })
   date: Date
 
-  @Column('int', { comment: '文件大小' })
+  @Column('bigint', { comment: '文件大小' })
   size: number
 
   @Column('varchar', { length: 256, nullable: true, comment: '人员姓名' })

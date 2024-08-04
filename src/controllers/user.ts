@@ -1,5 +1,7 @@
-import {
+import type {
   Context,
+} from 'flash-wolves'
+import {
   Get,
   Inject,
   InjectCtx,
@@ -7,7 +9,7 @@ import {
   Put,
   ReqBody,
   Response,
-  RouterController
+  RouterController,
 } from 'flash-wolves'
 import { findAction } from '@/db/actionDb'
 
@@ -18,7 +20,7 @@ import {
   BehaviorService,
   FileService,
   TokenService,
-  UserService
+  UserService,
 } from '@/service'
 import { wrapperCatchError } from '@/utils/context'
 import { User } from '@/db/entity'
@@ -54,21 +56,22 @@ export default class UserController {
       const [action] = await findAction<{
         status: boolean
       }>({
-        type: ActionType.DisabledRoute,
-        'data.route': '/register'
+        'type': ActionType.DisabledRoute,
+        'data.route': '/register',
       })
       if (action?.data?.status) {
         this.behaviorService.add('user', `禁止注册 ${body?.account}`, {
-          account: body?.account
+          account: body?.account,
         })
         throw UserError.system.ban
       }
       const user = await this.userService.register(body)
       const token = await this.tokenService.createTokenByUser(user)
       return {
-        token
+        token,
       }
-    } catch (error) {
+    }
+    catch (error) {
       return wrapperCatchError(error)
     }
   }
@@ -76,18 +79,18 @@ export default class UserController {
   @Post('login')
   async login(
     @ReqBody('account') account: string,
-    @ReqBody('pwd') pwd: string
+    @ReqBody('pwd') pwd: string,
   ) {
     // 先判断是否系统账号
-    const isSystemAccount =
-      LocalUserDB.findUserConfig({
+    const isSystemAccount
+      = LocalUserDB.findUserConfig({
         type: 'server',
         key: 'USER',
-        value: account
+        value: account,
       }).length !== 0
     if (isSystemAccount) {
-      const isRightPwd =
-        LocalUserDB.findUserConfig({ type: 'server', key: 'PWD', value: pwd })
+      const isRightPwd
+        = LocalUserDB.findUserConfig({ type: 'server', key: 'PWD', value: pwd })
           .length !== 0
       if (isRightPwd) {
         const u = new User()
@@ -95,7 +98,7 @@ export default class UserController {
         u.power = USER_POWER.SYSTEM
         return {
           token: await this.tokenService.createTokenByUser(u),
-          system: true
+          system: true,
         }
       }
       return Response.failWithError(UserError.account.fault)
@@ -105,9 +108,10 @@ export default class UserController {
       const user = await this.userService.login(account, pwd)
       const token = await this.tokenService.createTokenByUser(user)
       return {
-        token
+        token,
       }
-    } catch (error) {
+    }
+    catch (error) {
       return wrapperCatchError(error)
     }
   }
@@ -116,7 +120,7 @@ export default class UserController {
   async logout() {
     const { account } = this.Ctx.req.userInfo
     this.behaviorService.add('user', `退出登录 ${account}`, {
-      account
+      account,
     })
     this.tokenService.expiredToken(this.Ctx.req.headers.token as string)
   }
@@ -128,9 +132,10 @@ export default class UserController {
       const user = await this.userService.loginByCode(phone, code)
       const token = await this.tokenService.createTokenByUser(user)
       return {
-        token
+        token,
       }
-    } catch (error) {
+    }
+    catch (error) {
       return wrapperCatchError(error)
     }
   }
@@ -141,9 +146,10 @@ export default class UserController {
       const user = await this.userService.updatePassword(body)
       const token = await this.tokenService.createTokenByUser(user)
       return {
-        token
+        token,
       }
-    } catch (error) {
+    }
+    catch (error) {
       return wrapperCatchError(error)
     }
   }
@@ -155,7 +161,7 @@ export default class UserController {
     return {
       power: power === USER_POWER.SUPER,
       name: account,
-      system: power === USER_POWER.SYSTEM
+      system: power === USER_POWER.SYSTEM,
     }
   }
 
@@ -167,24 +173,28 @@ export default class UserController {
   @Get('usage', { needLogin: true })
   async getUsage() {
     const user = await this.userRepository.findOne({
-      id: this.Ctx.req.userInfo.id
+      id: this.Ctx.req.userInfo.id,
     })
-    const size = calculateSize(
-      (user.power === USER_POWER.SUPER
-        ? Math.max(1024, user?.size)
-        : user?.size) ?? 2
-    )
-    const usage = await this.fileService.getFileUsage(user.id)
-    const limitUpload = size < usage
-    if (limitUpload) {
+    const userOverview = await this.fileService.getUserOverview(user)
+    const { size, usage, limitUpload, wallet, cost, limitSpace, limitWallet } = userOverview
+    if (limitSpace) {
       this.behaviorService.add('user', `用户 ${user.account} 超出容量限制`, {
         space: formatSize(size),
-        usage: formatSize(usage)
+        usage: formatSize(usage),
+      })
+    }
+    if (limitWallet) {
+      this.behaviorService.add('user', `用户 ${user.account} 余额不足`, {
+        wallet,
+        cost,
       })
     }
     return {
       size,
-      usage
+      usage,
+      limitUpload,
+      wallet,
+      cost,
     }
   }
 }

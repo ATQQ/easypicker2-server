@@ -593,7 +593,10 @@ export default class FileService {
       this.tokenService.checkAllToken(userTokens, user.account)
     }
 
-    const limitSize = calculateSize(user.size)
+    const limitSize = calculateSize((user.power === USER_POWER.SUPER
+      ? Math.max(1024, user?.size)
+      : user?.size) ?? 2)
+
     // 空间为 0 也不允许上传
     const limitUpload = this.limitUploadBySpace(limitSize, fileSize)
     const percentage
@@ -622,7 +625,10 @@ export default class FileService {
       ossCount,
       limitSize:
           user.power === USER_POWER.SUPER ? '无限制' : formatSize(limitSize),
+      size: limitSize,
       limitUpload: isAdmin ? false : (limitWallet || limitUpload),
+      limitSpace: limitUpload,
+      limitWallet,
       percentage,
       resources: formatSize(fileSize),
       monthAgoSize: formatSize(AMonthAgoSize),

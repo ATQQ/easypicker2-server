@@ -297,6 +297,7 @@ export default class FileController {
         origin_name: v.originName,
         task_name: v.taskName,
         task_key: v.taskKey,
+        size: +v.size,
       })),
     }
   }

@@ -80,7 +80,20 @@ export default class TaskController {
 
       // user.size = 0
       // user.power = USER_POWER.NORMAL
-      const { limitUpload } = await this.fileService.getUserOverview(user)
+      const userOverview = await this.fileService.getUserOverview(user)
+      const { size, usage, limitUpload, wallet, cost, limitSpace, limitWallet } = userOverview
+      if (limitSpace) {
+        this.behaviorService.add('user', `用户 ${user.account} 超出容量限制`, {
+          space: formatSize(size),
+          usage: formatSize(usage),
+        })
+      }
+      if (limitWallet) {
+        this.behaviorService.add('user', `用户 ${user.account} 余额不足`, {
+          wallet,
+          cost,
+        })
+      }
       return {
         ...data,
         limitUpload,
