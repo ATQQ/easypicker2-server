@@ -136,91 +136,15 @@ export default class SuperUserController {
     const downloadLog = await this.fileService.downloadLog('', {
       startTime: new Date(moneyStartDay),
     })
-    // TODO: 拆分方法
     // 遍历用户，获取文件数和占用空间数据
     for (const user of users) {
       const fileInfo = files.filter(file => file.userId === user.id)
-      let ossCount = 0
-      let originFileSize = 0
-      let AMonthAgoSize = 0
-      let AQuarterAgoSize = 0
-      let AHalfYearAgoSize = 0
-      const fileSize = fileInfo.reduce((pre, v) => {
-        const { date } = v
-        originFileSize += (+v.size || 0)
-        const ossKey = FileService.getOssKey(v)
-        const { fsize = 0 }
-          = filesMap.get(ossKey) || filesMap.get(v.categoryKey) || {}
-
-        if (fsize) {
-          ossCount += 1
-        }
-        if (dayjs(date).isBefore(dayjs().subtract(1, 'month'))) {
-          AMonthAgoSize += fsize
-        }
-        if (dayjs(date).isBefore(dayjs().subtract(3, 'month'))) {
-          AQuarterAgoSize += fsize
-        }
-        if (dayjs(date).isBefore(dayjs().subtract(6, 'month'))) {
-          AHalfYearAgoSize += fsize
-        }
-
-        return pre + fsize
-      }, 0)
-
-      const userTokens = await this.tokenService.getAllTokens(user.account)
-      if (!userTokens.length) {
-        this.tokenService.checkAllToken(userTokens, user.account)
-      }
-
-      const limitSize = calculateSize(user.size)
-      // 空间为 0 也不允许上传
-      const limitUpload = this.fileService.limitUploadBySpace(limitSize, fileSize)
-      const percentage
-        = percentageValue(fileSize, limitSize)
-
-      const { oneFile, compressFile, templateFile } = this.fileService.analyzeDownloadLog(
-        downloadLog.filter((v => v.data?.info?.data?.account === user.account)),
-      )
-
-      // TODO：累计费用 = 实时消费 + 已结算费用
-      // 实时消费
-      const price = this.fileService.calculateQiniuPrice({
-        one: oneFile,
-        compress: compressFile,
-        template: templateFile,
-      }, this.fileService.getOSSFileSizeUntilNow(fileInfo, filesMap, {
-        startTime: new Date(moneyStartDay),
-      }))
-
-      const balance = +user.wallet - +price.total
-      Object.assign(user, {
-        fileCount: fileInfo.length,
-        originFileSize,
-        ossCount,
-        limitSize:
-          user.power === USER_POWER.SUPER ? '无限制' : formatSize(limitSize),
-        limitUpload: balance <= 0 || (user.power === USER_POWER.SUPER ? false : limitUpload),
-        percentage,
-        resources: formatSize(fileSize),
-        monthAgoSize: formatSize(AMonthAgoSize),
-        quarterAgoSize: formatSize(AQuarterAgoSize),
-        halfYearSize: formatSize(AHalfYearAgoSize),
-        onlineCount: userTokens.length,
-        // 便于排序
-        usage: fileSize,
-        lastLoginTime: +new Date(user.loginTime) || 0,
-        oneFile,
-        compressFile,
-        templateFile,
-        downloadCount: oneFile.count + compressFile.count + templateFile.count,
-        downloadSize: oneFile.size + compressFile.size + templateFile.size,
-        price,
-        cost: +price.total,
-        wallet: user.wallet || 0,
-        // 剩余
-        balance: balance.toFixed(2),
+      const overviewData = await this.fileService.getUserOverview(user, {
+        files: fileInfo,
+        filesMap,
+        downloadLog: downloadLog.filter((v => v.data?.info?.data?.account === user.account)),
       })
+      Object.assign(user, overviewData)
     }
     return {
       list: users.map(u => ({

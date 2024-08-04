@@ -3,19 +3,21 @@ import { Inject, InjectCtx, Provide } from 'flash-wolves'
 import { ObjectID, ObjectId } from 'mongodb'
 import type { FindOptionsWhere } from 'typeorm'
 import { In } from 'typeorm'
+import dayjs from 'dayjs'
 import QiniuService from './qiniuService'
 import BehaviorService from './behaviorService'
-import type { Files } from '@/db/entity'
+import TokenService from './tokenService'
+import type { Files, User } from '@/db/entity'
 import { FileRepository } from '@/db/fileDb'
 import type { File } from '@/db/model/file'
 import { publicError } from '@/constants/errorMsg'
 import { batchFileStatus, createDownloadUrl, deleteObjByKey, judgeFileIsExist, makeZipWithKeys } from '@/utils/qiniuUtil'
-import { getQiniuFileUrlExpiredTime } from '@/utils/userUtil'
+import { calculateSize, getQiniuFileUrlExpiredTime } from '@/utils/userUtil'
 import LocalUserDB from '@/utils/user-local-db'
 import { addDownloadAction, findAction, updateAction } from '@/db/actionDb'
 import type { DownloadActionData } from '@/db/model/action'
 import { ActionType, DownloadStatus } from '@/db/model/action'
-import { B2GB, formatPrice, getUniqueKey, normalizeFileName, shortLink } from '@/utils/stringUtil'
+import { B2GB, formatPrice, formatSize, getUniqueKey, normalizeFileName, percentageValue, shortLink } from '@/utils/stringUtil'
 import { TaskRepository } from '@/db/taskDb'
 import { UserRepository } from '@/db/userDb'
 import { BOOLEAN } from '@/db/model/public'
@@ -23,6 +25,7 @@ import { findLog, timeToObjId } from '@/db/logDb'
 import type { Log } from '@/db/model/log'
 import type { DownloadLogAnalyzeItem } from '@/types'
 import { diffMonth } from '@/utils/time-utils'
+import { USER_POWER } from '@/db/model/user'
 
 @Provide()
 export default class FileService {
@@ -43,6 +46,9 @@ export default class FileService {
 
   @Inject(UserRepository)
   private userRepository: UserRepository
+
+  @Inject(TokenService)
+  private tokenService: TokenService
 
   async selectFilesLimitCount(options: Partial<Files>, count: number) {
     return this.fileRepository.findWithLimitCount(options, count, {
@@ -425,7 +431,13 @@ export default class FileService {
    * @param fileSize 已用空间
    */
   limitUploadBySpace(limitSize: number, fileSize: number) {
-    return limitSize === 0 || limitSize < fileSize
+    const { limitSpace } = LocalUserDB.getSiteConfig()
+    return limitSpace && (limitSize === 0 || limitSize < fileSize)
+  }
+
+  limitUploadByWallet(balance: number) {
+    const { limitWallet } = LocalUserDB.getSiteConfig()
+    return limitWallet && balance <= 0
   }
 
   calculateQiniuPrice(download: {
@@ -525,5 +537,111 @@ export default class FileService {
       taskKey: file.taskKey,
       hash: file.hash,
     })
+  }
+
+  async getUserOverview(user: User, options?: Partial<{
+    files: Files[]
+    filesMap: Map<string, Qiniu.ItemInfo>
+    downloadLog: Log[]
+  }>) {
+    let { files, filesMap, downloadLog } = options || {}
+    const { moneyStartDay } = LocalUserDB.getSiteConfig()
+    if (!files) {
+      files = await this.fileRepository.findMany({
+        userId: user.id,
+      })
+    }
+    if (!filesMap) {
+      filesMap = await this.qiniuService.getFilesMap(files)
+    }
+    if (!downloadLog) {
+      downloadLog = await this.downloadLog(user.account, {
+        startTime: new Date(moneyStartDay),
+      })
+    }
+    const fileInfo = files
+    let ossCount = 0
+    let originFileSize = 0
+    let AMonthAgoSize = 0
+    let AQuarterAgoSize = 0
+    let AHalfYearAgoSize = 0
+    const fileSize = fileInfo.reduce((pre, v) => {
+      const { date } = v
+      originFileSize += (+v.size || 0)
+      const ossKey = this.getOssKey(v)
+      const { fsize = 0 }
+          = filesMap.get(ossKey) || filesMap.get(v.categoryKey) || {}
+
+      if (fsize) {
+        ossCount += 1
+      }
+      if (dayjs(date).isBefore(dayjs().subtract(1, 'month'))) {
+        AMonthAgoSize += fsize
+      }
+      if (dayjs(date).isBefore(dayjs().subtract(3, 'month'))) {
+        AQuarterAgoSize += fsize
+      }
+      if (dayjs(date).isBefore(dayjs().subtract(6, 'month'))) {
+        AHalfYearAgoSize += fsize
+      }
+
+      return pre + fsize
+    }, 0)
+
+    const userTokens = await this.tokenService.getAllTokens(user.account)
+    if (!userTokens.length) {
+      this.tokenService.checkAllToken(userTokens, user.account)
+    }
+
+    const limitSize = calculateSize(user.size)
+    // 空间为 0 也不允许上传
+    const limitUpload = this.limitUploadBySpace(limitSize, fileSize)
+    const percentage
+        = percentageValue(fileSize, limitSize)
+
+    const { oneFile, compressFile, templateFile } = this.analyzeDownloadLog(
+      downloadLog,
+    )
+
+    // TODO：累计费用 = 实时消费 + 已结算费用
+    // 实时消费
+    const price = this.calculateQiniuPrice({
+      one: oneFile,
+      compress: compressFile,
+      template: templateFile,
+    }, this.getOSSFileSizeUntilNow(fileInfo, filesMap, {
+      startTime: new Date(moneyStartDay),
+    }))
+
+    const balance = +user.wallet - +price.total
+    const isAdmin = user.power === USER_POWER.SUPER
+    const limitWallet = this.limitUploadByWallet(balance)
+    return {
+      fileCount: fileInfo.length,
+      originFileSize,
+      ossCount,
+      limitSize:
+          user.power === USER_POWER.SUPER ? '无限制' : formatSize(limitSize),
+      limitUpload: isAdmin ? false : (limitWallet || limitUpload),
+      percentage,
+      resources: formatSize(fileSize),
+      monthAgoSize: formatSize(AMonthAgoSize),
+      quarterAgoSize: formatSize(AQuarterAgoSize),
+      halfYearSize: formatSize(AHalfYearAgoSize),
+      onlineCount: userTokens.length,
+      // 便于排序
+      usage: fileSize,
+      lastLoginTime: +new Date(user.loginTime) || 0,
+      oneFile,
+      compressFile,
+      templateFile,
+      downloadCount: oneFile.count + compressFile.count + templateFile.count,
+      downloadSize: oneFile.size + compressFile.size + templateFile.size,
+      price,
+      cost: +price.total,
+      wallet: user.wallet || 0,
+      // 剩余
+      balance: balance.toFixed(2),
+    }
   }
 }

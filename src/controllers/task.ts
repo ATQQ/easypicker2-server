@@ -80,27 +80,10 @@ export default class TaskController {
 
       // user.size = 0
       // user.power = USER_POWER.NORMAL
-
-      // TODO：重复代码，可优化
-      const size = calculateSize(
-        (user.power === USER_POWER.SUPER
-          ? Math.max(1024, user?.size)
-          : user?.size) ?? 2,
-      )
-      const usage = await this.fileService.getFileUsage(user.id)
-      const limitUpload = size === 0 || size < usage
-      if (limitUpload) {
-        this.behaviorService.add('user', `用户 ${user.account} 超出容量限制`, {
-          space: formatSize(size),
-          usage: formatSize(usage),
-        })
-      }
-      // 判断是否限制上传
-      const { limitSpace } = LocalUserDB.getSiteConfig()
-
+      const { limitUpload } = await this.fileService.getUserOverview(user)
       return {
         ...data,
-        limitUpload: limitSpace && limitUpload,
+        limitUpload,
       }
     }
     catch (error) {

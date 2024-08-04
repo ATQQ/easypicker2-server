@@ -137,7 +137,25 @@ export function judgeFileIsExist(key: string): Promise<boolean> {
   })
 }
 
-export function getOSSFiles(prefix: string): Promise<Qiniu.ItemInfo[]> {
+function mergeRequest<T extends Function>(callback: T, delay = 1000) {
+  const pMap = new Map<string, Promise<any>>()
+  const cb: any = (...args) => {
+    const key = JSON.stringify(args)
+    let p = pMap.get(key)
+    if (!p) {
+      p = callback(...args)
+      pMap.set(key, p)
+      setTimeout(() => {
+        pMap.delete(key)
+      }, delay)
+    }
+    return p
+  }
+  return cb as T
+}
+
+// 同 prefix 缓存，避免重复请求
+export const getOSSFiles = mergeRequest((prefix: string): Promise<Qiniu.ItemInfo[]> => {
   let data = []
   let marker = ''
   const ops: any = {
@@ -164,7 +182,7 @@ export function getOSSFiles(prefix: string): Promise<Qiniu.ItemInfo[]> {
     }
     analyze()
   })
-}
+})
 
 export function getFileKeys(prefix: string): Promise<Qiniu.ItemInfo[]> {
   return new Promise((res) => {
