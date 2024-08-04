@@ -103,4 +103,10 @@ export class BaseRepository<T> {
   delete(options: FindOptionsWhere<T>) {
     return this.repository.delete(options)
   }
+
+  count(where: FindOptionsWhere<T>) {
+    return this.repository.count({
+      where,
+    })
+  }
 }

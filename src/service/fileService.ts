@@ -7,6 +7,7 @@ import dayjs from 'dayjs'
 import QiniuService from './qiniuService'
 import BehaviorService from './behaviorService'
 import TokenService from './tokenService'
+import TaskInfoService from './taskInfoService'
 import type { Files, User } from '@/db/entity'
 import { FileRepository } from '@/db/fileDb'
 import type { File } from '@/db/model/file'
@@ -17,7 +18,7 @@ import LocalUserDB from '@/utils/user-local-db'
 import { addDownloadAction, findAction, updateAction } from '@/db/actionDb'
 import type { DownloadActionData } from '@/db/model/action'
 import { ActionType, DownloadStatus } from '@/db/model/action'
-import { B2GB, formatPrice, formatSize, getUniqueKey, normalizeFileName, percentageValue, shortLink } from '@/utils/stringUtil'
+import { B2GB, formatPrice, formatSize, getUniqueKey, isSameInfo, normalizeFileName, percentageValue, shortLink } from '@/utils/stringUtil'
 import { TaskRepository } from '@/db/taskDb'
 import { UserRepository } from '@/db/userDb'
 import { BOOLEAN } from '@/db/model/public'
@@ -26,6 +27,7 @@ import type { Log } from '@/db/model/log'
 import type { DownloadLogAnalyzeItem } from '@/types'
 import { diffMonth } from '@/utils/time-utils'
 import { USER_POWER } from '@/db/model/user'
+import { PeopleRepository } from '@/db/peopleDb'
 
 @Provide()
 export default class FileService {
@@ -49,6 +51,12 @@ export default class FileService {
 
   @Inject(TokenService)
   private tokenService: TokenService
+
+  @Inject(TaskInfoService)
+  private taskInfoService: TaskInfoService
+
+  @Inject(PeopleRepository)
+  private peopleRepository: PeopleRepository
 
   async selectFilesLimitCount(options: Partial<Files>, count: number) {
     return this.fileRepository.findWithLimitCount(options, count, {
@@ -87,6 +95,7 @@ export default class FileService {
 
   async downloadOne(fileId: number) {
     const { id: userId, account: logAccount } = this.ctx.req.userInfo
+    // TODO: 后端限制超容量下载上传
     const file = await this.fileRepository.findOne({
       userId,
       id: fileId,
@@ -648,6 +657,182 @@ export default class FileService {
       wallet: user.wallet || 0,
       // 剩余
       balance: balance.toFixed(2),
+    }
+  }
+
+  async withdrawFile(data) {
+    const { taskKey, taskName, filename, hash, peopleName, info } = data
+    const taskInfo = await this.taskInfoService.getTaskInfo(taskKey)
+    const limitPeople = taskInfo.people === BOOLEAN.TRUE
+
+    // 内容完全一致的提交记录，不包含限制的名字
+    let files = await this.fileRepository.findMany({
+      del: BOOLEAN.FALSE,
+      taskKey,
+      taskName,
+      name: filename,
+      hash,
+    })
+
+    files = files.filter(file => isSameInfo(file.info, info))
+
+    const passFiles = files.filter(file => file.people === peopleName)
+
+    if (!passFiles.length) {
+      this.behaviorService.add('file', `撤回文件失败 ${peopleName} 文件:${filename} 信息不匹配`, {
+        filename,
+        peopleName,
+        data,
+      })
+      throw publicError.file.notExist
+    }
+    const isDelOss = passFiles.length === files.length
+    // 删除提交记录
+    // 删除文件
+    if (isDelOss) {
+      const key = `easypicker2/${taskKey}/${hash}/${filename}`
+      deleteObjByKey(key)
+    }
+    await this.fileRepository.updateSpecifyFields({
+      id: In(passFiles.map(file => file.id)),
+    }, {
+      del: BOOLEAN.TRUE,
+      ossDelTime: new Date(),
+      delTime: new Date(),
+    })
+    this.behaviorService.add('file', `撤回文件成功 文件:${filename} 删除记录:${
+      passFiles.length
+    } 删除OSS资源:${isDelOss ? '是' : '否'}`, {
+      limitPeople,
+      isDelOss,
+      filesCount: files.length,
+      passFilesCount: passFiles.length,
+      filename,
+      peopleName,
+      data,
+    })
+
+    // 更新人员提交状态
+    if (peopleName) {
+      const people = await this.peopleRepository.findOne({
+        name: peopleName,
+        status: 1,
+        taskKey,
+      })
+
+      if (!people) {
+        this.behaviorService.add('file', `姓名:${peopleName} 不存在`, {
+          filename,
+          peopleName,
+          data,
+        })
+        throw publicError.file.notExist
+      }
+      people.status = (await this.fileRepository.findMany({
+        del: BOOLEAN.FALSE,
+        people: peopleName,
+        taskKey,
+      })).length
+        ? 1
+        : 0
+      people.submitDate = new Date()
+      await this.peopleRepository.update(people)
+    }
+  }
+
+  async batchDelete(ids: number[]) {
+    const { id: userId, account: logAccount } = this.ctx.req.userInfo
+    const files = await this.fileRepository.findMany({
+      del: BOOLEAN.FALSE,
+      userId,
+      id: In(ids),
+    })
+
+    if (files.length === 0) {
+      return
+    }
+    const keys = new Set<string>()
+
+    // TODO：上传时尽力保持每个文件的独立性
+    // TODO：O(n²)的复杂度，观察一下实际操作频率优化，会导致接口时间变长
+    for (const file of files) {
+      const { name, taskKey, hash, categoryKey } = file
+      // 兼容旧逻辑
+      if (categoryKey) {
+        keys.add(categoryKey)
+      }
+      else {
+        // 文件一模一样的记录避免误删
+        const dbCount = await this.fileRepository.count({
+          del: BOOLEAN.FALSE,
+          taskKey,
+          hash,
+          name,
+        })
+
+        const delCount = files.filter(
+          v => v.taskKey === taskKey && v.hash === hash && v.name === name,
+        ).length
+        if (dbCount <= delCount) {
+          keys.add(this.getOssKey(file))
+        }
+      }
+    }
+
+    // 删除OSS上文件
+    // TODO: 优化重复代码
+    this.qiniuService.batchDeleteFiles([...keys])
+    await this.fileRepository.updateSpecifyFields({
+      id: In(files.map(file => file.id)),
+    }, {
+      del: BOOLEAN.TRUE,
+      ossDelTime: new Date(),
+      delTime: new Date(),
+    })
+
+    this.behaviorService.add('file', `批量删除文件成功 用户:${logAccount} 文件记录数量:${files.length} OSS资源数量:${keys.size}`, {
+      account: logAccount,
+      length: files.length,
+      ossCount: keys.size,
+    })
+  }
+
+  // TODO：利用 cookie 优化
+  async checkSubmitInfo(data) {
+    const { taskKey, info, name = '' } = data
+
+    let files = await this.fileRepository.findMany({
+      del: BOOLEAN.FALSE,
+      taskKey,
+      people: name,
+    })
+    files = files.filter(v => isSameInfo(v.info, JSON.stringify(info)))
+    ;(async () => {
+      const task = await this.taskRepository.findOne({
+        k: taskKey,
+      })
+      if (task) {
+        this.behaviorService.add('file', `查询是否提交过文件: ${files.length > 0 ? '是' : '否'} 任务:${
+          task.name
+        } 数量:${files.length}`, {
+          taskKey,
+          taskName: task.name,
+          info,
+          count: files.length,
+        })
+      }
+      else {
+        this.behaviorService.add('file', `查询是否提交过文件: 任务 ${taskKey} 不存在`, {
+          taskKey,
+          taskName: task.name,
+          info,
+        })
+      }
+    })()
+
+    return {
+      isSubmit: files.length > 0,
+      txt: '',
     }
   }
 }

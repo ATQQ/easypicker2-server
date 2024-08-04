@@ -16,10 +16,11 @@ import {
   RouterController,
 } from 'flash-wolves'
 import { ObjectID } from 'mongodb'
-import { addBehavior } from '@/db/logDb'
+import { addBehavior, addErrorLog } from '@/db/logDb'
 import { selectFiles, updateFileInfo } from '@/db/fileDb'
 import {
   batchFileStatus,
+  checkFopTaskStatus,
   createDownloadUrl,
   getUploadToken,
   judgeFileIsExist,
@@ -29,13 +30,14 @@ import { qiniuConfig } from '@/config'
 import { fileError, publicError } from '@/constants/errorMsg'
 import type { User } from '@/db/model/user'
 import { ReqUserInfo } from '@/decorator'
-import { BehaviorService, FileService, TaskService } from '@/service'
+import { BehaviorService, FileService, TaskInfoService, TaskService } from '@/service'
 import { wrapperCatchError } from '@/utils/context'
 import { findAction } from '@/db/actionDb'
 import { ActionType, type DownloadActionData } from '@/db/model/action'
 import { getQiniuFileUrlExpiredTime } from '@/utils/userUtil'
 import LocalUserDB from '@/utils/user-local-db'
 import type { Files } from '@/db/entity'
+// TODO: 优化上传逻辑
 
 const power = {
   needLogin: true,
@@ -63,7 +65,7 @@ export default class FileController {
    * 获取图片的预览图
    */
   @Post('/image/preview')
-  async checkPeopleIsExist(
+  async getPreviewURL(
     @ReqBody('ids') idList: number[],
     @ReqUserInfo() user: User,
     req: FWRequest,
@@ -171,7 +173,6 @@ export default class FileController {
     }
   }
 
-  // TODO: 后端限制超容量下载上传
   @Get('/one')
   async downloadOne(@ReqQuery('id') id: string) {
     try {
@@ -315,5 +316,44 @@ export default class FileController {
     catch (error) {
       return wrapperCatchError(error)
     }
+  }
+
+  @Delete('/withdraw', noLogin)
+  async withdrawFile(@ReqBody() body) {
+    try {
+      await this.fileService.withdrawFile(body)
+    }
+    catch (error) {
+      return wrapperCatchError(error)
+    }
+  }
+
+  @Delete('/batch/del')
+  async batchDelete(@ReqBody('ids') ids: number[]) {
+    try {
+      await this.fileService.batchDelete(ids)
+    }
+    catch (error) {
+      return wrapperCatchError(error)
+    }
+  }
+
+  /**
+   * 查询文件归档进度，已下线
+   */
+  @Post('/compress/status')
+  async compressStatus(@ReqBody('id') id: string, req: FWRequest) {
+    const data = await checkFopTaskStatus(id)
+    if (data.code === 3) {
+      addErrorLog(req, data.desc + data.error)
+      return Response.fail(500, data.desc + data.error)
+    }
+    return data
+  }
+
+  @Post('submit/people')
+  async checkSubmitInfo(@ReqBody() body) {
+    const result = await this.fileService.checkSubmitInfo(body)
+    return result
   }
 }
