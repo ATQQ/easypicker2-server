@@ -459,14 +459,15 @@ export default class FileService {
     const OSSPrice = B2GB(ossSize) * qiniuOSSPrice
     // 压缩费用
     const compressPrice = B2GB(download.compress.size) * qiniuCompressPrice
-    // 回源费用
-    const backhaulTrafficPrice = B2GB(ossSize) * qiniuBackhaulTrafficPercentage * qiniuBackhaulTrafficPrice
-    // CDN 费用
-    const cdnPrice = B2GB(
+    const downloadSize = B2GB(
       download.one.size
       + download.compress.size
       + download.template.size,
-    ) * qiniuCDNPrice
+    )
+    // 回源费用
+    const backhaulTrafficPrice = downloadSize * qiniuBackhaulTrafficPercentage * qiniuBackhaulTrafficPrice
+    // CDN 费用
+    const cdnPrice = downloadSize * qiniuCDNPrice
 
     return {
       ossPrice: formatPrice(OSSPrice),
