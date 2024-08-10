@@ -378,9 +378,9 @@ export default class FileService {
       // 文件已经被删除
       if (!ossSize) {
         const { ossDelTime } = file
-        // 不存在 删除时间 为存量数据，就算1月
+        // 不存在 删除时间 为存量数据，不计算
         if (!ossDelTime) {
-          return pre + fileSize
+          return pre
         }
         // 删除时间在统计时间之前，不计算
         if (ossDelTime < startTime) {
