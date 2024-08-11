@@ -1,10 +1,11 @@
-import fs, { existsSync } from 'fs'
-import path from 'path'
-import { UserConfig, UserConfigType } from '@/db/model/config'
+import fs, { existsSync } from 'node:fs'
+import path from 'node:path'
+import process from 'node:process'
+import type { UserConfig, UserConfigType } from '@/db/model/config'
 import { LocalEnvMap } from '@/constants'
+import type { GlobalSiteConfig } from '@/types'
 
 const JSONDbFile = path.join(process.cwd(), 'user-config.json')
-const localEnvFile = path.resolve(process.cwd(), '.env.local')
 
 export default class LocalUserDB {
   private static data: UserConfig[] = []
@@ -17,7 +18,8 @@ export default class LocalUserDB {
     }
     try {
       this.data = JSON.parse(await fs.promises.readFile(JSONDbFile, 'utf-8'))
-    } catch (error) {
+    }
+    catch (error) {
       this.data = []
       console.log('❌ user-config.json 配置文件解析失败, 已重置为默认配置')
       await fs.promises.writeFile(JSONDbFile, '[]', 'utf-8')
@@ -50,7 +52,7 @@ export default class LocalUserDB {
     return fs.promises.writeFile(
       JSONDbFile,
       JSON.stringify(this.data, null, 2),
-      'utf-8'
+      'utf-8',
     )
   }
 
@@ -59,17 +61,17 @@ export default class LocalUserDB {
   }
 
   static findUserConfig(query: Partial<UserConfig>) {
-    return this.data.filter((item) =>
-      Object.keys(query).every((key) => item[key] === query[key])
+    return this.data.filter(item =>
+      Object.keys(query).every(key => item[key] === query[key]),
     )
   }
 
   static updateUserConfig(
     query: Partial<UserConfig>,
-    data: Partial<UserConfig>
+    data: Partial<UserConfig>,
   ) {
-    const index = this.data.findIndex((item) =>
-      Object.keys(query).every((key) => item[key] === query[key])
+    const index = this.data.findIndex(item =>
+      Object.keys(query).every(key => item[key] === query[key]),
     )
     if (index > -1) {
       this.data[index] = { ...this.data[index], ...data }
@@ -82,5 +84,9 @@ export default class LocalUserDB {
       prev[curr.key] = curr.value
       return prev
     }, {})
+  }
+
+  static getSiteConfig() {
+    return this.findUserConfig({ type: 'global', key: 'site' })[0]?.value as GlobalSiteConfig
   }
 }

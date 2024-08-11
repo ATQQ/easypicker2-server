@@ -1,21 +1,22 @@
 import {
-  RouterController,
-  ReqParams,
-  Get,
   Delete,
-  ReqBody,
+  Get,
   Inject,
-  Put
+  Put,
+  ReqBody,
+  ReqParams,
+  RouterController,
 } from 'flash-wolves'
 
 import { TaskInfoService } from '@/service'
+import { wrapperCatchError } from '@/utils/context'
 
 const power = {
-  needLogin: true
+  needLogin: true,
 }
 
 const notLogin = {
-  needLogin: false
+  needLogin: false,
 }
 
 @RouterController('task_info', power)
@@ -28,13 +29,19 @@ export default class TaskInfoController {
     return this.taskInfoService.getUseFullTemplate(taskKey)
   }
 
+  // TODO：预览图片流量统计
   @Delete('/tip/image/:key')
   async delTipImage(
     @ReqBody('uid') uid: number,
     @ReqBody('name') name: string,
-    @ReqParams('key') key: string
+    @ReqParams('key') key: string,
   ) {
-    return this.taskInfoService.delTipImage({ uid, name, key })
+    try {
+      await this.taskInfoService.delTipImage({ uid, name, key })
+    }
+    catch (error) {
+      return wrapperCatchError(error)
+    }
   }
 
   @Get('/:key', notLogin)

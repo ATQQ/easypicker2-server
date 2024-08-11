@@ -8,6 +8,7 @@ import { User } from '@/db/entity'
 import { BehaviorService, TokenService } from '@/service'
 import { USER_STATUS } from '@/db/model/user'
 import { randomNumStr } from '@/utils/randUtil'
+import LocalUserDB from '@/utils/user-local-db'
 
 @Provide()
 export default class UserService {
@@ -22,10 +23,16 @@ export default class UserService {
 
   async register(payload: any) {
     const { account, pwd, bindPhone, phone, code } = payload
+    const { needBindPhone } = LocalUserDB.getSiteConfig()
+    // 注册必须绑定手机号卡控
+    if (needBindPhone && !bindPhone) {
+      throw UserError.account.bindPhone
+    }
+
     // TODO：参数校验可优化使用zod
     if (!rAccount.test(account)) {
       this.behaviorService.add('user', `新用户注册 账号:${account} 格式错误`, {
-        account
+        account,
       })
       throw UserError.account.fault
     }
@@ -34,8 +41,8 @@ export default class UserService {
         'user',
         `新用户注册 账号:${account} 密码格式不正确`,
         {
-          account
-        }
+          account,
+        },
       )
       throw UserError.pwd.fault
     }
@@ -48,7 +55,7 @@ export default class UserService {
     // 存在返回错误
     if (user) {
       this.behaviorService.add('user', `新用户注册 账号:${account} 已存在`, {
-        account
+        account,
       })
       throw UserError.account.exist
     }
@@ -60,8 +67,8 @@ export default class UserService {
           'user',
           `新用户注册 手机号:${phone} 格式错误`,
           {
-            phone
-          }
+            phone,
+          },
         )
         throw UserError.mobile.fault
       }
@@ -69,7 +76,7 @@ export default class UserService {
       if (!code || code !== rightCode) {
         this.behaviorService.add('user', `新用户注册 验证码错误:${code}`, {
           code,
-          rightCode
+          rightCode,
         })
         throw UserError.code.fault
       }
@@ -93,8 +100,8 @@ export default class UserService {
       `新用户注册 账号:${account} 绑定手机:${bindPhone ? '是' : '否'} 注册成功`,
       {
         account,
-        bindPhone
-      }
+        bindPhone,
+      },
     )
     // 不存在则加入
     const u = new User()
@@ -115,8 +122,8 @@ export default class UserService {
         'user',
         `用户登录 账号:${account} 密码格式不正确`,
         {
-          account
-        }
+          account,
+        },
       )
 
       throw UserError.pwd.fault
@@ -128,7 +135,7 @@ export default class UserService {
     // 不存在&&不是手机号
     if (!user && !isPhone) {
       this.behaviorService.add('user', `用户登录 账号:${account} 不存在`, {
-        account
+        account,
       })
       throw UserError.account.fault
     }
@@ -139,21 +146,21 @@ export default class UserService {
     }
     if (!user) {
       this.behaviorService.add('user', `用户登录 账号:${account} 不存在`, {
-        account
+        account,
       })
 
       throw isPhone ? UserError.mobile.fault : UserError.account.fault
     }
     if (user.password !== encryption(pwd)) {
       this.behaviorService.add('user', `用户登录 账号:${account} 密码不正确`, {
-        account
+        account,
       })
 
       throw UserError.pwd.fault
     }
     this.checkUserStatus(user)
     this.behaviorService.add('user', `用户登录 账号:${account} 登录成功`, {
-      account
+      account,
     })
     return this.userRepository.update(user)
   }
@@ -164,7 +171,7 @@ export default class UserService {
     if (code !== v) {
       this.behaviorService.add('user', `验证码登录 验证码错误:${code}`, {
         code,
-        rightCode: v
+        rightCode: v,
       })
       throw UserError.code.fault
     }
@@ -172,7 +179,7 @@ export default class UserService {
 
     if (!user) {
       this.behaviorService.add('user', `验证码登录 手机号:${logPhone} 不存在`, {
-        phone: logPhone
+        phone: logPhone,
       })
 
       user = new User()
@@ -188,7 +195,7 @@ export default class UserService {
 
     this.checkUserStatus(user)
     this.behaviorService.add('user', `验证码登录 手机号:${logPhone} 登录成功`, {
-      phone: logPhone
+      phone: logPhone,
     })
     this.tokenService.expiredVerifyCode(phone)
     return this.userRepository.update(user)
@@ -206,8 +213,8 @@ export default class UserService {
         {
           phone: logPhone,
           code,
-          rightCode: v
-        }
+          rightCode: v,
+        },
       )
       throw UserError.code.fault
     }
@@ -215,7 +222,7 @@ export default class UserService {
 
     if (!user) {
       this.behaviorService.add('user', `重置密码 手机号:${logPhone} 不存在`, {
-        phone: logPhone
+        phone: logPhone,
       })
       throw UserError.mobile.noExist
     }
@@ -224,15 +231,15 @@ export default class UserService {
         'user',
         `重置密码 手机号:${logPhone} 密码格式不正确`,
         {
-          phone: logPhone
-        }
+          phone: logPhone,
+        },
       )
       throw UserError.pwd.fault
     }
     user.password = encryption(pwd)
     this.tokenService.expiredVerifyCode(phone)
     this.behaviorService.add('user', `重置密码 手机号:${logPhone} 重置成功`, {
-      phone: logPhone
+      phone: logPhone,
     })
 
     this.checkUserStatus(user)
@@ -250,8 +257,8 @@ export default class UserService {
         'user',
         `用户登录失败 账号:${account} 已被封禁`,
         {
-          account
-        }
+          account,
+        },
       )
 
       throw UserError.account.ban
@@ -262,19 +269,19 @@ export default class UserService {
         this.behaviorService.add(
           'user',
           `用户登录失败 账号:${account} 已被冻结 解冻时间${formatDate(
-            openDate
+            openDate,
           )}`,
           {
             account,
-            openDate
-          }
+            openDate,
+          },
         )
         throw {
           code: UserError.account.freeze.code,
           msg: UserError.account.freeze.msg,
           data: {
-            openTime: user.openTime
-          }
+            openTime: user.openTime,
+          },
         }
       }
       user.status = USER_STATUS.NORMAL

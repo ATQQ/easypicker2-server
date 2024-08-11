@@ -1,14 +1,17 @@
-import {
-  DataSource,
+import process from 'node:process'
+import type {
+  FindManyOptions,
   FindOneOptions,
   FindOptionsOrder,
   FindOptionsWhere,
-  Repository
+  Repository,
+} from 'typeorm'
+import {
+  DataSource,
 } from 'typeorm'
 import type { QueryDeepPartialEntity } from 'typeorm/query-builder/QueryPartialEntity'
 import { entities } from './entity'
 import LocalUserDB from '@/utils/user-local-db'
-
 // eslint-disable-next-line import/no-mutable-exports
 export let AppDataSource: DataSource
 
@@ -23,7 +26,7 @@ export async function initTypeORM() {
     database: cfg.database,
     entities,
     synchronize: false,
-    logging: process.env.NODE_ENV === 'development'
+    logging: process.env.NODE_ENV === 'development',
   })
 
   await AppDataSource.initialize()
@@ -39,23 +42,24 @@ export class BaseRepository<T> {
 
   findOne(where: FindOneOptions<T>['where']) {
     return this.repository.findOne({
-      where
+      where,
     })
   }
 
-  findMany(where: FindOneOptions<T>['where']) {
+  findMany(where: FindManyOptions<T>['where'], ops?: FindManyOptions<T>) {
     return this.repository.find({
-      where
+      where,
+      ...ops,
     })
   }
 
   findWithSpecifyColumn(
     where: FindOneOptions<T>['where'],
-    columns: (keyof T)[]
+    columns: (keyof T)[],
   ) {
     return this.repository
       .createQueryBuilder(this.entityName)
-      .select(columns.map((v) => `${this.entityName}.${String(v)}`))
+      .select(columns.map(v => `${this.entityName}.${String(v)}`))
       .where(where)
       .getMany()
   }
@@ -63,12 +67,12 @@ export class BaseRepository<T> {
   findWithLimitCount(
     where: FindOneOptions<T>['where'],
     limit: number,
-    order?: FindOptionsOrder<T>
+    order?: FindOptionsOrder<T>,
   ) {
     return this.repository.find({
       where,
       take: limit,
-      order
+      order,
     })
   }
 
@@ -86,7 +90,7 @@ export class BaseRepository<T> {
 
   updateSpecifyFields(
     where: FindOneOptions<T>['where'],
-    value: QueryDeepPartialEntity<T>
+    value: QueryDeepPartialEntity<T>,
   ) {
     return this.repository
       .createQueryBuilder(this.entityName)
@@ -98,5 +102,11 @@ export class BaseRepository<T> {
 
   delete(options: FindOptionsWhere<T>) {
     return this.repository.delete(options)
+  }
+
+  count(where: FindOptionsWhere<T>) {
+    return this.repository.count({
+      where,
+    })
   }
 }

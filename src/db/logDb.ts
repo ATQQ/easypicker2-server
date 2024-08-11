@@ -1,30 +1,31 @@
-import { FWRequest } from 'flash-wolves'
-import { FilterQuery, ObjectId } from 'mongodb'
+import type { FWRequest, FWResponse } from 'flash-wolves'
+import type { FilterQuery } from 'mongodb'
+import { ObjectId } from 'mongodb'
+import type {
+  Log,
+  LogBehaviorData,
+  LogData,
+  LogErrorData,
+  LogRequestData,
+  LogType,
+  PvData,
+} from './model/log'
 import { insertCollection, mongoDbQuery } from '@/lib/dbConnect/mongodb'
 import { getUniqueKey } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
-import {
-  Log,
-  LogType,
-  LogData,
-  LogRequestData,
-  LogBehaviorData,
-  LogErrorData,
-  PvData
-} from './model/log'
 
 function getLogData(type: LogType, data: LogData): Log {
   return {
     id: getUniqueKey(),
     type,
-    data
+    data,
   }
 }
 
 /**
  * 记录请求日志
  */
-export async function addRequestLog(req: FWRequest) {
+export async function addRequestLog(req: FWRequest, res: FWResponse) {
   const { query = {}, params = {}, method, url } = req
   let { body = {} } = req
   if ((method !== 'GET' && !body) || body instanceof Buffer) {
@@ -48,9 +49,14 @@ export async function addRequestLog(req: FWRequest) {
     userAgent,
     refer,
     ip,
-    userId
+    userId,
+    startTime: req.startTime,
+    endTime: Date.now(),
+    duration: Date.now() - req.startTime,
   }
-  insertCollection('log', getLogData('request', data))
+  res.on('close', () => {
+    insertCollection('log', getLogData('request', data))
+  })
 }
 
 /**
@@ -74,12 +80,12 @@ export async function addBehavior(req: FWRequest, info: LogBehaviorData.Info) {
       path: url,
       userAgent,
       refer,
-      ip
+      ip,
     },
     user: {
-      userId
+      userId,
     },
-    info
+    info,
   }
   insertCollection('log', getLogData('behavior', data))
 }
@@ -90,7 +96,7 @@ export async function addBehavior(req: FWRequest, info: LogBehaviorData.Info) {
 export async function addErrorLog(
   req: FWRequest,
   msg: string,
-  stack: any = {}
+  stack: any = {},
 ) {
   const { query = {}, params = {}, method, url } = req
   let { body = {} } = req
@@ -116,10 +122,10 @@ export async function addErrorLog(
       userAgent,
       refer,
       ip,
-      userId
+      userId,
     },
     msg,
-    stack
+    stack,
   }
   insertCollection('log', getLogData('error', data))
 }
@@ -136,18 +142,18 @@ export function addPvLog(req: FWRequest, path: string) {
     userAgent,
     refer,
     ip,
-    path
+    path,
   }
   insertCollection('log', getLogData('pv', data))
 }
 
 export function getClientIp(req: FWRequest): string {
-  return (req.headers['x-forwarded-for'] ||
-    req.connection.remoteAddress ||
-    req.socket.remoteAddress) as string
+  return (req.headers['x-forwarded-for']
+    || req.connection.remoteAddress
+    || req.socket.remoteAddress) as string
 }
 
-function timeToObjId(d: Date) {
+export function timeToObjId(d: Date) {
   const s = d.getTime() / 1000 // 转换成秒数
   return `${s.toString(16)}0000000000000000` // 转换成16进制的字符串，再加补齐16个0
 }
@@ -164,8 +170,8 @@ export function findLogWithTimeRange(start: Date, end?: Date) {
         .find({
           _id: {
             $gt: new ObjectId(timeToObjId(start)),
-            $lt: new ObjectId(timeToObjId(end))
-          }
+            $lt: new ObjectId(timeToObjId(end)),
+          },
         })
         .toArray()
         .then(resolve)
@@ -175,8 +181,8 @@ export function findLogWithTimeRange(start: Date, end?: Date) {
     db.collection<Log>('log')
       .find({
         _id: {
-          $gt: new ObjectId(timeToObjId(start))
-        }
+          $gt: new ObjectId(timeToObjId(start)),
+        },
       })
       .toArray()
       .then(resolve)
@@ -186,7 +192,7 @@ export function findLogWithTimeRange(start: Date, end?: Date) {
 export function findLogWithPageOffset(
   startIdx: number,
   pageSize: number,
-  query: FilterQuery<Log>
+  query: FilterQuery<Log>,
 ) {
   return mongoDbQuery<Log[]>((db, resolve) => {
     db.collection<Log>('log')
@@ -222,8 +228,8 @@ export function findPvLogWithRange(start: Date, end?: Date) {
           type: 'pv',
           _id: {
             $gt: new ObjectId(timeToObjId(start)),
-            $lt: new ObjectId(timeToObjId(end))
-          }
+            $lt: new ObjectId(timeToObjId(end)),
+          },
         })
         .toArray()
         .then(resolve)
@@ -234,8 +240,8 @@ export function findPvLogWithRange(start: Date, end?: Date) {
       .find({
         type: 'pv',
         _id: {
-          $gt: new ObjectId(timeToObjId(start))
-        }
+          $gt: new ObjectId(timeToObjId(start)),
+        },
       })
       .toArray()
       .then(resolve)

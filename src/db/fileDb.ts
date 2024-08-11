@@ -1,14 +1,14 @@
-import { OkPacket } from 'mysql'
+import type { OkPacket } from 'mysql'
 import { Provide } from 'flash-wolves'
+import type { File } from './model/file'
+import { Files } from './entity'
+import { AppDataSource, BaseRepository } from '.'
 import { query } from '@/lib/dbConnect/mysql'
 import {
   insertTableByModel,
   selectTableByModel,
-  updateTableByModel
+  updateTableByModel,
 } from '@/utils/sqlUtil'
-import { File } from './model/file'
-import { AppDataSource, BaseRepository } from '.'
-import { Files } from './entity'
 
 export function insertFile(file: File) {
   const { sql, params } = insertTableByModel('files', file)
@@ -20,7 +20,7 @@ export function selectFilesNew(options: File, columns: string[] = []) {
     data: options,
     columns,
     // 逆序
-    order: 'order by id desc'
+    order: 'order by id desc',
   })
   return query<File[]>(sql, ...params)
 }
@@ -29,11 +29,11 @@ export function selectFiles(options: File, columns: string[] = []) {
   const { sql, params } = selectTableByModel('files', {
     data: {
       del: 0,
-      ...options
+      ...options,
     },
     columns,
     // 逆序
-    order: 'order by id desc'
+    order: 'order by id desc',
   })
   return query<File[]>(sql, ...params)
 }
@@ -43,7 +43,7 @@ export function selectFilesLimitCount(options: File, count: number) {
     data: options,
     limit: count,
     // 逆序
-    order: 'order by id desc'
+    order: 'order by id desc',
   })
   return query<File[]>(sql, ...params)
 }
@@ -73,11 +73,11 @@ export function deleteFileRecord(file: File) {
   const { sql, params } = updateTableByModel(
     'files',
     {
-      del: 1
+      del: 1,
     },
     {
-      id: file.id
-    }
+      id: file.id,
+    },
   )
   // 物理删
   // const { sql, params } = deleteTableByModel('files', file)
@@ -85,7 +85,7 @@ export function deleteFileRecord(file: File) {
 }
 
 export function deleteFiles(files: File[]) {
-  const ids = files.map((v) => v.id)
+  const ids = files.map(v => v.id)
   // 逻辑删
   // const { sql, params } = updateTableByModel(
   //   'files',
@@ -100,11 +100,11 @@ export function deleteFiles(files: File[]) {
   const { sql, params } = updateTableByModel(
     'files',
     {
-      del: 1
+      del: 1,
     },
     {
-      id: ids
-    }
+      id: ids,
+    },
   )
   // 异步办事
   ;(async () => {

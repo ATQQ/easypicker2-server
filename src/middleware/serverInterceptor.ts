@@ -19,6 +19,7 @@ if (!existsSync(uploadFileDir)) {
 const interceptor: Middleware = async (req, res) => {
   // 开启CORS
   const { method } = req
+  req.startTime = Date.now()
   if (allowOrigins.includes(req.headers.origin)) {
     // 允许跨域
   }

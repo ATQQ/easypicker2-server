@@ -1,19 +1,21 @@
-/* eslint-disable */
-import { qiniuConfig } from '@/config'
-import { addBehavior, addErrorLog } from '@/db/logDb'
-import { FWRequest } from 'flash-wolves'
+/* eslint-disable unused-imports/no-unused-vars */
+/* eslint-disable eqeqeq */
+/* eslint-disable node/handle-callback-err */
+import type { FWRequest } from 'flash-wolves'
 import qiniu from 'qiniu'
 import { getKeyInfo } from './stringUtil'
 import LocalUserDB from './user-local-db'
+import { addBehavior, addErrorLog } from '@/db/logDb'
+import { qiniuConfig } from '@/config'
 // [node-sdk文档地址](https://developer.qiniu.com/kodo/1289/nodejs#server-upload)
 let privateBucketDomain = qiniuConfig.bucketDomain
 
 const bucketZoneMap = {
-  'huadong': qiniu.zone.Zone_z0,
-  'huabei': qiniu.zone.Zone_z1,
-  'huanan': qiniu.zone.Zone_z2,
-  'beimei': qiniu.zone.Zone_na0,
-  'SoutheastAsia': qiniu.zone.Zone_as0
+  huadong: qiniu.zone.Zone_z0,
+  huabei: qiniu.zone.Zone_z1,
+  huanan: qiniu.zone.Zone_z2,
+  beimei: qiniu.zone.Zone_na0,
+  SoutheastAsia: qiniu.zone.Zone_as0,
 }
 let bucketZone = bucketZoneMap[qiniuConfig.bucketZone] || qiniu.zone.Zone_z2
 
@@ -44,10 +46,9 @@ export function createDownloadUrl(key: string, expiredTime = getDeadline()): str
   const bucketManager = new qiniu.rs.BucketManager(mac, config)
 
   const paths = key.split('/')
-  const url = bucketManager.privateDownloadUrl(privateBucketDomain, 
+  const url = bucketManager.privateDownloadUrl(privateBucketDomain,
     // 对最后的文件名做encode，避免文件下载失败
-    paths.map((v,idx)=>idx===paths.length-1?encodeURIComponent(v):v).join('/'),
-     expiredTime)
+    paths.map((v, idx) => idx === paths.length - 1 ? encodeURIComponent(v) : v).join('/'), expiredTime)
   return url
 }
 
@@ -69,23 +70,25 @@ export function deleteFiles(prefix: string): void {
   }, (err, respBody) => {
     const files: any[] = respBody.items
     // 使用批量删除接口
-    batchDeleteFiles(files.map((f) => f.key))
+    batchDeleteFiles(files.map(f => f.key))
   })
 }
 
 export function batchDeleteFiles(keys: string[], req?: FWRequest) {
-  if (!keys.length) return
+  if (!keys.length)
+    return
   const config = new qiniu.conf.Config()
-  const delOptions = keys.map((k) => qiniu.rs.deleteOp(bucket, k))
+  const delOptions = keys.map(k => qiniu.rs.deleteOp(bucket, k))
   const bucketManager = new qiniu.rs.BucketManager(mac, config)
   bucketManager.batch(delOptions, (err, respBody, respInfo) => {
     if (err) {
       console.log(err)
       addErrorLog(req, `批量删除异常: ${err.message}`, err.stack)
       // throw err;
-    } else {
+    }
+    else {
       // 200 is success, 298 is part success
-      if (parseInt(`${respInfo.statusCode / 100}`, 10) === 2) {
+      if (Number.parseInt(`${respInfo.statusCode / 100}`, 10) === 2) {
         respBody.forEach((item) => {
           if ((+item.code) !== 200) {
             if (req) {
@@ -93,7 +96,8 @@ export function batchDeleteFiles(keys: string[], req?: FWRequest) {
             }
           }
         })
-      } else {
+      }
+      else {
         console.log(respInfo.deleteusCode)
         console.log(respBody)
         addErrorLog(req, `批量删除异常: ${respInfo.deleteusCode}`, respBody)
@@ -112,7 +116,7 @@ export function deleteObjByKey(key: string, req?: FWRequest): void {
       console.log(err)
       console.log('------删除失败 end-------')
       if (req) {
-        addErrorLog(req, '删除失败:' + key + err?.message, err?.stack)
+        addErrorLog(req, `删除失败:${key}${err?.message}`, err?.stack)
       }
     }
   })
@@ -125,15 +129,35 @@ export function judgeFileIsExist(key: string): Promise<boolean> {
     bucketManager.stat(bucket, key, (err, respBody, respInfo) => {
       if (respInfo?.statusCode) {
         res(respInfo.statusCode !== 612)
-      } else {
+      }
+      else {
         res(false)
       }
     })
   })
 }
 
-export function getOSSFiles(prefix: string): Promise<Qiniu.ItemInfo[]> {
-  let data = [], marker = '';
+function mergeRequest<T extends Function>(callback: T, delay = 1000) {
+  const pMap = new Map<string, Promise<any>>()
+  const cb: any = (...args) => {
+    const key = JSON.stringify(args)
+    let p = pMap.get(key)
+    if (!p) {
+      p = callback(...args)
+      pMap.set(key, p)
+      setTimeout(() => {
+        pMap.delete(key)
+      }, delay)
+    }
+    return p
+  }
+  return cb as T
+}
+
+// 同 prefix 缓存，避免重复请求
+export const getOSSFiles = mergeRequest((prefix: string): Promise<Qiniu.ItemInfo[]> => {
+  let data = []
+  let marker = ''
   const ops: any = {
     limit: 1000,
     prefix,
@@ -150,14 +174,15 @@ export function getOSSFiles(prefix: string): Promise<Qiniu.ItemInfo[]> {
         if (respBody?.marker) {
           marker = respBody.marker
           analyze()
-        } else {
+        }
+        else {
           res(data)
         }
       })
     }
     analyze()
   })
-}
+})
 
 export function getFileKeys(prefix: string): Promise<Qiniu.ItemInfo[]> {
   return new Promise((res) => {
@@ -166,7 +191,7 @@ export function getFileKeys(prefix: string): Promise<Qiniu.ItemInfo[]> {
     bucketManager.listPrefix(bucket, {
       prefix,
     }, (err, respBody) => {
-      res(respBody.items)
+      res(respBody?.items || [])
     })
   })
 }
@@ -186,7 +211,7 @@ export function makeZipByPrefixWithKeys(prefix: string, zipName: string, keys: s
       deleteFiles(`${prefix.slice(0, -1)}_package/`)
       const names = []
       // 上传内容,过滤掉数据库中不存在的
-      const content = files.filter((file) => keys.includes(file.key)).map((file) => {
+      const content = files.filter(file => keys.includes(file.key)).map((file) => {
         // 拼接原始url
         // 链接加密并进行Base64编码，别名去除前缀目录。
         const keyInfo = getKeyInfo(file.key)
@@ -209,8 +234,7 @@ export function makeZipByPrefixWithKeys(prefix: string, zipName: string, keys: s
       const putExtra = new qiniu.form_up.PutExtra()
       const key = `${Date.now()}-${~~(Math.random() * 1000)}.txt`
 
-      formUploader.put(getUploadToken(), key, content, putExtra, (respErr,
-        respBody, respInfo) => {
+      formUploader.put(getUploadToken(), key, content, putExtra, (respErr, respBody, respInfo) => {
         if (respErr) {
           throw respErr
         }
@@ -234,12 +258,14 @@ export function makeZipByPrefixWithKeys(prefix: string, zipName: string, keys: s
               console.log(statusUrl)
               // 这里只返回任务id，转由客户端发请求查询
               res(respBody.persistentId)
-            } else {
+            }
+            else {
               console.log(respInfo.statusCode)
               console.log(respBody)
             }
           })
-        } else {
+        }
+        else {
           console.log(respInfo.statusCode)
           console.log(respBody)
         }
@@ -279,8 +305,7 @@ export function makeZipWithKeys(keys: string[], zipName: string): Promise<string
     const inputKey = `${Date.now()}-${~~(Math.random() * 1000)}.txt`
     // 择机删除不然越来越多
     // 上传文本内容触发归档任务
-    formUploader.put(getUploadToken(), inputKey, content, putExtra, (respErr,
-      respBody, respInfo) => {
+    formUploader.put(getUploadToken(), inputKey, content, putExtra, (respErr, respBody, respInfo) => {
       if (respErr) {
         throw respErr
       }
@@ -304,12 +329,14 @@ export function makeZipWithKeys(keys: string[], zipName: string): Promise<string
             console.log(statusUrl)
             // 这里只返回任务id，转由客户端发请求查询
             res(respBody.persistentId)
-          } else {
+          }
+          else {
             console.log(respInfo.statusCode)
             console.log(respBody)
           }
         })
-      } else {
+      }
+      else {
         console.log(respInfo.statusCode)
         console.log(respBody)
       }
@@ -331,7 +358,8 @@ export function checkFopTaskStatus(persistentId: string): Promise<{ code: number
         const item = respBody.items[0]
         const { code, key, desc, error } = item
         res({ code, key, desc, error })
-      } else {
+      }
+      else {
         console.log(respInfo.statusCode)
         console.log(respBody)
       }
@@ -341,11 +369,11 @@ export function checkFopTaskStatus(persistentId: string): Promise<{ code: number
 interface FileStat {
   code: number
   data: {
-    md5?: string,
+    md5?: string
     error?: string
-    hash?: string,
-    mimeType?: string,
-    putTime?: number,
+    hash?: string
+    mimeType?: string
+    putTime?: number
     type?: number
     fsize?: number
   }
@@ -358,17 +386,19 @@ export function batchFileStatus(keys: string[]): Promise<FileStat[]> {
     if (keys.length === 0) {
       return []
     }
-    const statOperations = keys.map((k) => qiniu.rs.statOp(bucket, k))
+    const statOperations = keys.map(k => qiniu.rs.statOp(bucket, k))
     const config = new qiniu.conf.Config()
     const bucketManager = new qiniu.rs.BucketManager(mac, config)
     bucketManager.batch(statOperations, (err, respBody, respInfo) => {
       if (err) {
         reject(err)
-      } else {
+      }
+      else {
         // 200 is success, 298 is part success
-        if (parseInt(`${respInfo.statusCode / 100}`) == 2) {
+        if (Number.parseInt(`${respInfo.statusCode / 100}`) == 2) {
           resolve(respBody)
-        } else {
+        }
+        else {
           console.log(respInfo.statusCode)
           console.log(respBody)
         }
@@ -383,7 +413,7 @@ export function getQiniuStatus() {
       res({
         type: 'qiniu',
         status: false,
-        errMsg: '域名配置错误，必须包含协议 http:/// 或 https://'
+        errMsg: '域名配置错误，必须包含协议 http:/// 或 https://',
       })
       return
     }
@@ -393,8 +423,7 @@ export function getQiniuStatus() {
       const formUploader = new qiniu.form_up.FormUploader(config)
       const putExtra = new qiniu.form_up.PutExtra()
       const key = `${Date.now()}-${~~(Math.random() * 1000)}.txt`
-      formUploader.put(getUploadToken(), key, 'status test', putExtra, (respErr,
-        respBody, respInfo) => {
+      formUploader.put(getUploadToken(), key, 'status test', putExtra, (respErr, respBody, respInfo) => {
         const err = respErr || respBody?.error
         if (err) {
           rej(err)
@@ -408,14 +437,14 @@ export function getQiniuStatus() {
     const bucketManager = new qiniu.rs.BucketManager(mac, config)
     bucketManager.listPrefix(bucket, {
       prefix: 'easypicker2/',
-      limit: 1
+      limit: 1,
     }, (err, respBody) => {
       const errMsg = err?.message || respBody?.error
       if (errMsg) {
         res({
           type: 'qiniu',
           status: false,
-          errMsg
+          errMsg,
         })
         return
       }
@@ -430,7 +459,7 @@ export function getQiniuStatus() {
           res({
             type: 'qiniu',
             status: false,
-            errMsg: err + '，存储区域配置不正确，请参看文档重新选择'
+            errMsg: `${err}，存储区域配置不正确，请参看文档重新选择`,
           })
         })
     })
@@ -440,48 +469,52 @@ export function getQiniuStatus() {
 export function mvOssFile(oldKey: string, newKey: string, req?: FWRequest) {
   const config = new qiniu.conf.Config()
   const bucketManager = new qiniu.rs.BucketManager(mac, config)
-  const srcBucket = qiniuConfig.bucketName;
-  const destBucket = qiniuConfig.bucketName;
+  const srcBucket = qiniuConfig.bucketName
+  const destBucket = qiniuConfig.bucketName
   // 强制覆盖已有同名文件
-  var options = {
-    force: false
+  const options = {
+    force: false,
   }
   return new Promise((resolve, reject) => {
-    bucketManager.move(srcBucket, oldKey, destBucket, newKey, options, function (
-      err, respBody, respInfo) {
+    bucketManager.move(srcBucket, oldKey, destBucket, newKey, options, (
+      err,
+      respBody,
+      respInfo,
+    ) => {
       if (err) {
-        console.log(err);
+        console.log(err)
         if (req) {
           // 日志埋点
           addBehavior(req, {
-            'module': 'file',
-            'msg': `资源重命名失败：${srcBucket}:${oldKey} -> ${destBucket}:${newKey}`,
+            module: 'file',
+            msg: `资源重命名失败：${srcBucket}:${oldKey} -> ${destBucket}:${newKey}`,
             data: {
               oldKey,
               newKey,
-              err
-            }
+              err,
+            },
           })
         }
         reject(err)
-      } else {
+      }
+      else {
         resolve(true)
-        //200 is success
+        // 200 is success
         if (req) {
           // 日志埋点
           // TODO:埋点优化
           addBehavior(req, {
-            'module': 'file',
-            'msg': `OSS资源重命名成功：${srcBucket}:${oldKey} -> ${destBucket}:${newKey}`,
+            module: 'file',
+            msg: `OSS资源重命名成功：${srcBucket}:${oldKey} -> ${destBucket}:${newKey}`,
             data: {
               oldKey,
               newKey,
               respBody,
-              respInfo
-            }
+              respInfo,
+            },
           })
         }
       }
-    });
+    })
   })
 }

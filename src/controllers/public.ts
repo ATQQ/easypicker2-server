@@ -1,10 +1,10 @@
 import {
   Get,
+  Inject,
   Post,
+  ReqBody,
   ReqQuery,
   RouterController,
-  ReqBody,
-  Inject
 } from 'flash-wolves'
 
 import { PublicService, TokenService } from '@/service'
@@ -22,13 +22,14 @@ export default class PublicController {
   async getVerCode(@ReqQuery('phone') phone: string) {
     try {
       await this.publicService.getVerifyCode(phone)
-    } catch (error) {
+    }
+    catch (error) {
       return wrapperCatchError(error)
     }
   }
 
   @Get('report/pv', {
-    CORS: true
+    CORS: true,
   })
   @Post('report/pv')
   reportPv() {
@@ -39,7 +40,8 @@ export default class PublicController {
   async checkPhoneIsExist(@ReqQuery('phone') phone: string) {
     try {
       await this.publicService.checkPhoneIsExist(phone)
-    } catch (error) {
+    }
+    catch (error) {
       return wrapperCatchError(error)
     }
   }
@@ -51,7 +53,7 @@ export default class PublicController {
     data: {
       uid: number
       name: string
-    }[]
+    }[],
   ) {
     return this.publicService.getTipImage(key, data)
   }

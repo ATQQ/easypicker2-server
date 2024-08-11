@@ -1,11 +1,13 @@
-import { Context, Inject, InjectCtx, Provide } from 'flash-wolves'
+import type { Context } from 'flash-wolves'
+import { Inject, InjectCtx, Provide } from 'flash-wolves'
 import { In } from 'typeorm'
 import { TaskInfoRepository } from '@/db/taskInfoDb'
 import { TaskRepository } from '@/db/taskDb'
 import { BehaviorService, QiniuService } from '@/service'
 import { getUniqueKey } from '@/utils/stringUtil'
-import { TaskInfo } from '@/db/entity'
+import type { TaskInfo } from '@/db/entity'
 import { BOOLEAN } from '@/db/model/public'
+import { publicError } from '@/constants/errorMsg'
 
 @Provide()
 export default class TaskInfoService {
@@ -29,50 +31,56 @@ export default class TaskInfoService {
     const infoList = (
       await this.taskInfoRepository.findWithSpecifyColumn(
         {
-          userId: user.id
+          userId: user.id,
         },
-        ['taskKey', 'info']
+        ['taskKey', 'info'],
       )
-    ).filter((v) => v.taskKey !== taskKey)
+    ).filter(v => v.taskKey !== taskKey)
     if (!infoList.length) {
       return []
     }
 
     const taskInfo = await this.taskRepository.findWithSpecifyColumn(
       {
-        k: In(infoList.map((v) => v.taskKey))
+        k: In(infoList.map(v => v.taskKey)),
       },
-      ['k', 'name']
+      ['k', 'name'],
     )
 
     const data = taskInfo.map((v) => {
-      const { info } = infoList.find((v2) => v2.taskKey === v.k)
+      const { info } = infoList.find(v2 => v2.taskKey === v.k)
       return {
         taskKey: v.k,
         name: v.name,
-        info
+        info,
       }
     })
     return data
   }
 
-  delTipImage(payload: { uid: number; name: string; key: string }) {
+  async delTipImage(payload: { uid: number, name: string, key: string }) {
     const { uid, name, key } = payload
+    const task = await this.taskRepository.findOne({
+      k: key,
+      userId: this.ctx.req.userInfo.id,
+    })
+    if (!task) {
+      throw publicError.request.errorParams
+    }
     const tipImageKey = this.qiniuService.getTipImageKey(key, name, uid)
     this.behaviorService.add(
       'taskInfo',
       `${this.ctx.req.userInfo.account} 删除提示图片: ${tipImageKey}`,
       {
-        tipImageKey
-      }
+        tipImageKey,
+      },
     )
-    // TODO：未校验用户权限，存在水平越权漏洞，先观察一段时间看看(记录可回溯)
     this.qiniuService.deleteObjByKey(tipImageKey)
   }
 
   async getTaskInfo(key: string) {
     const taskInfo = await this.taskInfoRepository.findOne({
-      taskKey: key
+      taskKey: key,
     })
     const {
       template,
@@ -82,7 +90,7 @@ export default class TaskInfoService {
       shareKey: share,
       limitPeople: people,
       tip,
-      bindField
+      bindField,
     } = taskInfo || {}
     let { ddl } = taskInfo || {}
     if (ddl && ddl?.getTime) {
@@ -90,7 +98,7 @@ export default class TaskInfoService {
     }
     this.taskRepository
       .findOne({
-        k: key
+        k: key,
       })
       .then((task) => {
         if (task) {
@@ -99,8 +107,8 @@ export default class TaskInfoService {
             `获取任务属性 任务:${task.name} 成功`,
             {
               key,
-              name: task.name
-            }
+              name: task.name,
+            },
           )
         }
       })
@@ -114,13 +122,13 @@ export default class TaskInfoService {
       ddl,
       people,
       tip,
-      bindField
+      bindField,
     }
   }
 
   async updateTaskInfo(payload, key: string) {
-    const { template, rewrite, format, info, ddl, people, tip, bindField } =
-      payload
+    const { template, rewrite, format, info, ddl, people, tip, bindField }
+      = payload
     let { share } = payload
     const { id: userId, account: logAccount } = this.ctx.req.userInfo
 
@@ -140,7 +148,7 @@ export default class TaskInfoService {
       shareKey: share,
       limitPeople: people,
       tip,
-      bindField
+      bindField,
     }
     if (bindField === '') {
       options.bindField = undefined
@@ -148,14 +156,14 @@ export default class TaskInfoService {
     await this.taskInfoRepository.updateSpecifyFields(
       {
         taskKey: key,
-        userId
+        userId,
       },
-      options
+      options,
     )
 
     // 异步记录日志
     this.taskRepository.findOne({ k: key }).then((task) => {
-      const [ks] = Object.keys(options).filter((o) => options[o] !== undefined)
+      const [ks] = Object.keys(options).filter(o => options[o] !== undefined)
       const bType = {
         template: '修改模板',
         rewrite: '设置自动重命名',
@@ -163,7 +171,7 @@ export default class TaskInfoService {
         ddl: '设置截止日期',
         limitPeople: '限制提交人员',
         tip: '批注信息',
-        bindField: '设置绑定字段'
+        bindField: '设置绑定字段',
       }
 
       if (task) {
@@ -174,8 +182,8 @@ export default class TaskInfoService {
             key,
             name: task.name,
             account: logAccount,
-            data: payload
-          }
+            data: payload,
+          },
         )
       }
     })
@@ -189,7 +197,7 @@ export default class TaskInfoService {
       format: '',
       info: JSON.stringify(['姓名']),
       shareKey: getUniqueKey(),
-      ddl: null
+      ddl: null,
     }
     Object.assign(taskInfo, data)
 

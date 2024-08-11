@@ -10,15 +10,15 @@ import controllers from './controllers'
 
 // interceptor
 import {
-  serverInterceptor,
-  routeInterceptor,
   beforeRouteMatchInterceptor,
-  beforeRuntimeErrorInterceptor
+  beforeRuntimeErrorInterceptor,
+  routeInterceptor,
+  serverInterceptor,
 } from './middleware'
 import {
   initUserConfig,
   patchTable,
-  readyServerDepService
+  readyServerDepService,
 } from './utils/patch'
 import LocalUserDB from './utils/user-local-db'
 
@@ -27,7 +27,7 @@ console.time('server-start')
 const app = new App(serverInterceptor, {
   beforeMathRoute: beforeRouteMatchInterceptor,
   beforeRunRoute: routeInterceptor,
-  beforeReturnRuntimeError: beforeRuntimeErrorInterceptor
+  beforeReturnRuntimeError: beforeRuntimeErrorInterceptor,
 })
 
 // 注册路由
@@ -42,13 +42,15 @@ app.listen(serverConfig.port, serverConfig.hostname, async () => {
   await initUserConfig()
   try {
     await readyServerDepService()
-  } catch (err) {
+  }
+  catch (err) {
     console.log('❌ readyServerDepService', err?.message)
   }
   try {
     await patchTable()
     console.log('😄😄 mysql patch success')
-  } catch (err) {
+  }
+  catch (err) {
     console.log('😭😭 mysql 还未正常配置，请检查数据库是否配置正确或版本不匹配')
   }
 })

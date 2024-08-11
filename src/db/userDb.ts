@@ -1,21 +1,21 @@
-import { OkPacket } from 'mysql'
+import type { OkPacket } from 'mysql'
 import { Provide } from 'flash-wolves'
-import { FindOneOptions } from 'typeorm'
+import type { User } from './model/user'
+import { USER_STATUS } from './model/user'
+import { User as UserEntity } from './entity'
+import { AppDataSource, BaseRepository } from './index'
 import { query } from '@/lib/dbConnect/mysql'
 import {
   insertTableByModel,
   selectTableByModel,
-  updateTableByModel
+  updateTableByModel,
 } from '@/utils/sqlUtil'
-import { User, USER_STATUS } from './model/user'
-import { AppDataSource, BaseRepository } from './index'
-import { User as UserEntity } from './entity'
 
 export function selectUserByAccount(account: string): Promise<User[]> {
   const { sql, params } = selectTableByModel('user', {
     data: {
-      account
-    }
+      account,
+    },
   })
   return query<User[]>(sql, ...params)
 }
@@ -23,8 +23,8 @@ export function selectUserByAccount(account: string): Promise<User[]> {
 export function selectUserByPhone(phone: string): Promise<User[]> {
   const { sql, params } = selectTableByModel('user', {
     data: {
-      phone
-    }
+      phone,
+    },
   })
   return query<User[]>(sql, ...params)
 }
@@ -32,8 +32,8 @@ export function selectUserByPhone(phone: string): Promise<User[]> {
 export function selectUserById(id: number): Promise<User[]> {
   const { sql, params } = selectTableByModel('user', {
     data: {
-      id
-    }
+      id,
+    },
   })
   return query<User[]>(sql, ...params)
 }
@@ -41,7 +41,7 @@ export function selectUserById(id: number): Promise<User[]> {
 export function insertUser(options: User): Promise<OkPacket> {
   const { sql, params } = insertTableByModel('user', {
     status: USER_STATUS.NORMAL,
-    ...options
+    ...options,
   })
   return query<OkPacket>(sql, ...params)
 }
@@ -55,7 +55,7 @@ export function selectAllUser(columns: string[]): Promise<User[]> {
   const { sql, params } = selectTableByModel('user', {
     data: {},
     columns,
-    order: 'order by id desc'
+    order: 'order by id desc',
   })
   return query<User[]>(sql, ...params)
 }

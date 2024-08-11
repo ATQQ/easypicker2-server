@@ -1,15 +1,16 @@
-import { Get, Put, ReqBody, RouterController } from 'flash-wolves'
+import { Get, Put, ReqBody, ReqQuery, RouterController } from 'flash-wolves'
 import { USER_POWER } from '@/db/model/user'
 import { getRedisStatus } from '@/lib/dbConnect/redis'
 import { getMongoDBStatus, refreshMongoDb } from '@/lib/dbConnect/mongodb'
 import { getTxServiceStatus, refreshTxConfig } from '@/utils/tencent'
 import { getMysqlStatus, refreshPool } from '@/lib/dbConnect/mysql'
 import { getQiniuStatus, refreshQinNiuConfig } from '@/utils/qiniuUtil'
-import { UserConfig } from '@/db/model/config'
+import type { UserConfig } from '@/db/model/config'
 import { UserConfigLabels } from '@/constants'
 import LocalUserDB from '@/utils/user-local-db'
 import { initTypeORM } from '@/db'
 import { patchTable } from '@/utils/patch'
+import type { GlobalSiteConfig } from '@/types'
 
 @RouterController('config', { userPower: USER_POWER.SYSTEM, needLogin: true })
 export default class UserController {
@@ -20,7 +21,7 @@ export default class UserController {
       getTxServiceStatus(),
       getRedisStatus(),
       getMysqlStatus(),
-      getMongoDBStatus()
+      getMongoDBStatus(),
     ])
 
     const result = data.reduce((pre, cur) => {
@@ -38,7 +39,7 @@ export default class UserController {
         key,
         value: isSecret ? '******' : value,
         type,
-        label: UserConfigLabels[type][key]
+        label: UserConfigLabels[type][key],
       }
     })
   }
@@ -47,33 +48,33 @@ export default class UserController {
   async getUserConfig() {
     const tx = this.cleanUserConfig(
       LocalUserDB.findUserConfig({
-        type: 'tx'
-      })
+        type: 'tx',
+      }),
     )
 
     const mysql = this.cleanUserConfig(
       LocalUserDB.findUserConfig({
-        type: 'mysql'
-      })
+        type: 'mysql',
+      }),
     )
 
     const qiniu = this.cleanUserConfig(
       LocalUserDB.findUserConfig({
-        type: 'qiniu'
-      })
+        type: 'qiniu',
+      }),
     )
 
     const mongo = this.cleanUserConfig(
       LocalUserDB.findUserConfig({
-        type: 'mongo'
-      })
+        type: 'mongo',
+      }),
     )
 
     return [
       { title: 'MySQL', data: mysql },
       { title: 'MongoDB', data: mongo },
       { title: '七牛云', data: qiniu },
-      { title: '腾讯云', data: tx }
+      { title: '腾讯云', data: tx },
     ]
   }
 
@@ -97,18 +98,19 @@ export default class UserController {
     await LocalUserDB.updateUserConfig(
       {
         type: data.type,
-        key: data.key
+        key: data.key,
       },
       {
-        value: wrapperValue(data.key, data.value)
-      }
+        value: wrapperValue(data.key, data.value),
+      },
     )
     if (data.type === 'mysql') {
       await refreshPool()
       try {
         await initTypeORM()
         await patchTable()
-      } catch (error) {
+      }
+      catch (error) {
         // empty
       }
     }
@@ -122,5 +124,41 @@ export default class UserController {
       await refreshMongoDb()
     }
     await LocalUserDB.updateLocalEnv()
+  }
+
+  @Get('global', { needLogin: false, userPower: null })
+  async getGlobalConfig(@ReqQuery('type') key = 'site') {
+    const globalConfig = LocalUserDB.findUserConfig({
+      type: 'global',
+      key,
+    })
+    const filterKey: (keyof GlobalSiteConfig)[] = ['maxInputLength', 'openPraise', 'formLength', 'compressSizeLimit', 'needBindPhone', 'limitSpace', 'limitWallet', 'moneyStartDay']
+    return filterKey.reduce((pre, cur) => {
+      pre[cur] = globalConfig[0].value[cur]
+      return pre
+    }, {})
+  }
+
+  @Get('global/all', { userPower: USER_POWER.SUPER })
+  async getAllGlobalConfig(@ReqQuery('type') key = 'site') {
+    const globalConfig = LocalUserDB.findUserConfig({
+      type: 'global',
+      key,
+    })
+    return globalConfig[0].value
+  }
+
+  @Put('global', { userPower: USER_POWER.SUPER })
+  async updateGlobalConfig(@ReqBody() data) {
+    const { key, value } = data
+    await LocalUserDB.updateUserConfig(
+      {
+        type: 'global',
+        key,
+      },
+      {
+        value,
+      },
+    )
   }
 }
