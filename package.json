@@ -12,6 +12,7 @@
   "files": [
     ".env",
     "dist",
+    "docs",
     "package.json"
   ],
   "scripts": {
