@@ -146,11 +146,13 @@ export default class SuperUserController {
       })
       Object.assign(user, overviewData)
     }
+    const sumCost = users.reduce((acc, cur: any) => acc + cur.cost, 0)
     return {
       list: users.map(u => ({
         ...u,
         phone: u?.phone?.slice(-4),
       })),
+      sumCost: sumCost.toFixed(2),
     }
   }
 
