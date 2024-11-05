@@ -30,7 +30,7 @@ import { qiniuConfig } from '@/config'
 import { fileError, publicError } from '@/constants/errorMsg'
 import type { User } from '@/db/model/user'
 import { ReqUserInfo } from '@/decorator'
-import { BehaviorService, FileService, TaskInfoService, TaskService } from '@/service'
+import { BehaviorService, FileService, TaskService } from '@/service'
 import { wrapperCatchError } from '@/utils/context'
 import { findAction } from '@/db/actionDb'
 import { ActionType, type DownloadActionData } from '@/db/model/action'
@@ -351,7 +351,7 @@ export default class FileController {
     return data
   }
 
-  @Post('submit/people')
+  @Post('submit/people', noLogin)
   async checkSubmitInfo(@ReqBody() body) {
     const result = await this.fileService.checkSubmitInfo(body)
     return result
