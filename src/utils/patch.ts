@@ -311,6 +311,7 @@ export async function initUserConfig() {
       qiniuBackhaulTrafficPercentage: 0.8, // 七牛云回源流量占比
       qiniuCompressPrice: 0.05, // 七牛云压缩价格
       moneyStartDay: +new Date('2024-06-01'), // 开始计算日期
+      appName: '轻取', // 应用名称
     } as GlobalSiteConfig,
   })
   // 更新配置

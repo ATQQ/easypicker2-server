@@ -14,6 +14,7 @@ export interface GlobalSiteConfig {
   qiniuBackhaulTrafficPercentage: number
   qiniuCompressPrice: number
   moneyStartDay: number
+  appName: string
 }
 
 export interface DownloadLogAnalyzeItem {

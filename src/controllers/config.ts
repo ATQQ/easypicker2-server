@@ -132,7 +132,7 @@ export default class UserController {
       type: 'global',
       key,
     })
-    const filterKey: (keyof GlobalSiteConfig)[] = ['maxInputLength', 'openPraise', 'formLength', 'compressSizeLimit', 'needBindPhone', 'limitSpace', 'limitWallet', 'moneyStartDay']
+    const filterKey: (keyof GlobalSiteConfig)[] = ['maxInputLength', 'openPraise', 'formLength', 'compressSizeLimit', 'needBindPhone', 'limitSpace', 'limitWallet', 'moneyStartDay', 'appName']
     return filterKey.reduce((pre, cur) => {
       pre[cur] = globalConfig[0].value[cur]
       return pre
