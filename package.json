@@ -1,6 +1,6 @@
 {
   "name": "@sugarat/easypicker2-server",
-  "version": "2.7.2",
+  "version": "2.7.3",
   "description": "EasyPicker（轻取）- 服务端",
   "author": "ATQQ",
   "license": "MIT",
@@ -27,7 +27,6 @@
     "build": "tsup",
     "upload:oss": "pnpm build && q ep server -up",
     "update:version": "npm version prerelease --preid=beta --no-git-tag-version",
-    "postinstall": "npx simple-git-hooks",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
