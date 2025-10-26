@@ -28,7 +28,8 @@
     "upload:oss": "pnpm build && q ep server -up",
     "update:version": "npm version prerelease --preid=beta --no-git-tag-version",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "build:docker-local-server": "bash scripts/docker/docker-build-local.sh"
   },
   "dependencies": {
     "@swc/core": "^1.3.68",

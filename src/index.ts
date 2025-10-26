@@ -30,6 +30,10 @@ const app = new App(serverInterceptor, {
   beforeReturnRuntimeError: beforeRuntimeErrorInterceptor,
 })
 
+app.get('/health', (req, res) => {
+  res.statusCode = 200
+  res.end('ok')
+})
 // 注册路由
 app.addRoutes(routes)
 app.addController(controllers)
