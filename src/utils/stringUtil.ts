@@ -25,6 +25,11 @@ export function getUniqueKey() {
   return new ObjectId().toHexString()
 }
 
+export function timeToObjId(d: Date) {
+  const seconds = Math.floor(d.getTime() / 1000) // Mongo ObjectId 的时间戳精度为秒
+  return `${seconds.toString(16).padStart(8, '0')}0000000000000000`
+}
+
 export function getKeyInfo(key: string) {
   const { name, base, ext } = path.parse(key)
   return {
