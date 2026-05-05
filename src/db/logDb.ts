@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer'
 import type { FWRequest, FWResponse } from 'flash-wolves'
 import type { FilterQuery } from 'mongodb'
 import { ObjectId } from 'mongodb'
@@ -11,7 +12,7 @@ import type {
   PvData,
 } from './model/log'
 import { insertCollection, mongoDbQuery } from '@/lib/dbConnect/mongodb'
-import { getUniqueKey } from '@/utils/stringUtil'
+import { timeToObjId as getTimeObjectId, getUniqueKey } from '@/utils/stringUtil'
 import { getUserInfo } from '@/utils/userUtil'
 
 function getLogData(type: LogType, data: LogData): Log {
@@ -154,8 +155,7 @@ export function getClientIp(req: FWRequest): string {
 }
 
 export function timeToObjId(d: Date) {
-  const s = d.getTime() / 1000 // 转换成秒数
-  return `${s.toString(16)}0000000000000000` // 转换成16进制的字符串，再加补齐16个0
+  return getTimeObjectId(d)
 }
 
 export function findLogCount(q: FilterQuery<Log>) {

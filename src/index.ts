@@ -1,5 +1,6 @@
 import 'reflect-metadata'
-import { App } from 'flash-wolves'
+import type { Route } from 'flash-wolves'
+import { App, pathJoin } from 'flash-wolves'
 
 // 配置文件
 import { serverConfig } from './config'
@@ -30,9 +31,35 @@ const app = new App(serverInterceptor, {
   beforeReturnRuntimeError: beforeRuntimeErrorInterceptor,
 })
 
+function addRoutePrefixAlias(app: App, prefix: string) {
+  const routes = [...app.getRoutes()]
+  const routeKeys = new Set(routes.map(route => `${route.method}:${route.path}`))
+  const aliasRoutes = routes.reduce((prev, route) => {
+    if (route.path === prefix || route.path.startsWith(`${prefix}/`)) {
+      return prev
+    }
+
+    const aliasPath = pathJoin(prefix, route.path)
+    const routeKey = `${route.method}:${aliasPath}`
+    if (routeKeys.has(routeKey)) {
+      return prev
+    }
+
+    routeKeys.add(routeKey)
+    prev.push({
+      ...route,
+      path: aliasPath,
+    })
+    return prev
+  }, [] as Route[])
+
+  app.addRoutes(aliasRoutes)
+}
+
 // 注册路由
 app.addRoutes(routes)
 app.addController(controllers)
+addRoutePrefixAlias(app, '/api')
 
 app.listen(serverConfig.port, serverConfig.hostname, async () => {
   console.log('-----', new Date().toLocaleString(), '-----')

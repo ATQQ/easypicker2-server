@@ -1,7 +1,9 @@
 #!/usr/bin/env zx
 
+import { $ } from 'zx'
+
 // user config
-const originName = 'ep'
+const originName = 'ep2'
 const serverName = 'ep-prod'
 
 // not care
@@ -23,10 +25,10 @@ await $`rm -rf ${compressPkgName}`
 
 await $`echo ==✅ 部署代码 ==`
 if (destDir) {
-    await $`ssh -p22 ${user}@${origin} "mkdir -p ${baseServerDir}/${fullOrigin}/${destDir}"`
+  await $`ssh -p22 ${user}@${origin} "mkdir -p ${baseServerDir}/${fullOrigin}/${destDir}"`
 }
 await $`ssh -p22 ${user}@${origin} "tar -xf ${compressPkgName} -C ${baseServerDir}/${fullOrigin}/${destDir}"`
-await $`ssh -p22 ${user}@${origin} "cd ${baseServerDir}/${fullOrigin}/${destDir} && pnpm install"`
+await $`ssh -p22 ${user}@${origin} "cd ${baseServerDir}/${fullOrigin}/${destDir} && /www/server/nodejs/v22.11.0/bin/pnpm install"`
 
 await $`echo ==🏆︎ 重启服务 ==`
 await $`ssh -p22 ${user}@${origin} "pm2 restart ${serverName}"`
